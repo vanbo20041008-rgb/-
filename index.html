@@ -9,8 +9,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Vue.js 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -57,7 +55,7 @@
     <!-- ДЕМО-БАННЕР -->
     <div v-if="isDemoMode" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 flex items-center justify-center space-x-1.5 shadow-sm">
       <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите ключи подключения.</span>
+      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL Google Скрипта.</span>
     </div>
 
     <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
@@ -96,7 +94,7 @@
       </div>
     </header>
 
-    <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
+    <!-- БЫСТРЫЕ СИГНАЛЫ -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
       <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
       <div class="flex space-x-2 overflow-x-auto pb-1">
@@ -130,12 +128,10 @@
               <span>{{ currentPhaseInfo.name }}</span>
             </h2>
             
-            <!-- Сроки фазы -->
             <p v-if="currentPhaseInfo.duration" class="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mb-3">
               ⏳ Приблизительные сроки: {{ currentPhaseInfo.duration }}
             </p>
 
-            <!-- Текст с характеристиками -->
             <div class="space-y-3 text-xs text-stone-600 leading-relaxed font-medium">
               <div>
                 <p class="text-[9px] font-extrabold uppercase text-stone-400 tracking-wider mb-1">🧠 Физиологические и эмоциональные изменения:</p>
@@ -172,13 +168,11 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
                 </span>
                 
-                <!-- Заметные маркеры дней -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
@@ -350,7 +344,7 @@
               <span>Быстрый разбор всех данных базы</span>
             </h3>
             <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
-              Нажмите кнопку ниже, чтобы ИИ составил структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
+              Нажмите кнопку ниже, чтобы ИИ составил структурированный совет на основе всей текущей истории ваших циклов, планов и заметок.
             </p>
 
             <transition name="fade">
@@ -495,7 +489,7 @@
 
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
-              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, планы на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
             </div>
 
             <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
@@ -579,7 +573,6 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
-                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -658,7 +651,7 @@
 
         <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
           </svg>
           <span>Планы</span>
         </button>
@@ -680,13 +673,13 @@
 
         <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase URL</label>
-            <input type="text" v-model="settingsInput.url" placeholder="https://xxx.supabase.co" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL</label>
+            <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase Publishable Key</label>
-            <input type="text" v-model="settingsInput.key" placeholder="sb_publishable_xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ключ авторизации (не требуется для Google Таблиц)</label>
+            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none" disabled>
           </div>
 
           <div>
@@ -704,7 +697,7 @@
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- ВЫБОР МОДЕЛИ ИИ (ОБНОВЛЕНО НА 2026!) -->
+          <!-- ВЫБОР МОДЕЛИ ИИ -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">ИИ Модель (OpenRouter)</label>
             <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
@@ -719,7 +712,7 @@
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Резервный OpenRouter API Key (опционально)</label>
             <input type="password" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в Supabase в таблицу app_settings.</p>
+            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
           </div>
         </div>
 
@@ -741,13 +734,14 @@
   </div>
 
   <script>
-    // ==================== НАСТРОЙКИ SUPABASE И ТЕЛЕГРАМА ПО УМОЛЧАНИЮ ====================
-    const DEFAULT_SUPABASE_URL = "https://jliktyxhrmanjgmdcocd.supabase.co";
-    const DEFAULT_SUPABASE_KEY = "sb_publishable_FhIHxhvYJWNeHz2PMLLoLa_8RpcQ29Q";
+    // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
+    // Замените пустую строку на ваш URL веб-приложения из Apps Script, чтобы не вводить его каждый раз вручную
+    const DEFAULT_SUPABASE_URL = ""; 
+    const DEFAULT_SUPABASE_KEY = "";
 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
-    // =======================================================================
+    // ================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
@@ -770,7 +764,6 @@
         const activeTab = ref('calendar');
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
-        let db = null;
 
         const cycleLength = ref(parseInt(localStorage.getItem('user_cycle_length')) || 28);
         const periodLength = ref(parseInt(localStorage.getItem('user_period_length')) || 5);
@@ -790,7 +783,7 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 4500); // Немного увеличили время отображения для подробных ошибок Supabase
+          }, 4500);
         };
 
         const settingsInput = ref({
@@ -821,24 +814,21 @@
 
         async function initConnection() {
           const url = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
-          const key = localStorage.getItem('cfg_supabase_key') || DEFAULT_SUPABASE_KEY;
 
-          if (!url || !key) {
+          if (!url) {
             isDemoMode.value = true;
-            db = null;
             return;
           }
 
           try {
-            db = supabase.createClient(url, key);
             isDemoMode.value = false;
             await fetchData();
             await loadApiKey();
-            triggerToast("Подключение к Supabase активно! 🟢");
+            triggerToast("Подключение к Google Sheets активно! 🟢");
           } catch (e) {
-            console.error("Ошибка инициализации Supabase:", e);
+            console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
-            triggerToast(`Ошибка Supabase: ${e.message}. Приложение переведено в режим симуляции.`);
+            triggerToast(`Ошибка подключения: ${e.message}.`);
           }
         }
 
@@ -903,13 +893,12 @@
           }
 
           try {
-            const { data, error } = await db
-              .from('app_settings')
-              .select('key_value')
-              .eq('key_name', 'openrouter_api_key')
-              .single();
-            if (data && data.key_value) {
-              openRouterApiKey.value = data.key_value;
+            const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+            const response = await fetch(`${APPS_SCRIPT_URL}?sheet=app_settings`);
+            const settings = await response.json();
+            const found = settings.find(s => s.key_name === 'openrouter_api_key');
+            if (found && found.key_value) {
+              openRouterApiKey.value = found.key_value;
             } else {
               openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
             }
@@ -965,6 +954,8 @@
         const newPlanTitle = ref('');
 
         async function fetchData() {
+          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+
           if (isDemoMode.value) {
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
             partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
@@ -985,61 +976,52 @@
           try {
             const fetchTableSafe = async (name, defaultValue = []) => {
               try {
-                const { data, error } = await db.from(name).select('*');
-                if (error) throw error;
-                return data || [];
+                const response = await fetch(`${APPS_SCRIPT_URL}?sheet=${name}`);
+                if (!response.ok) throw new Error("HTTP error");
+                const resData = await response.json();
+                return Array.isArray(resData) ? resData : defaultValue;
               } catch (err) {
-                console.warn(`Таблица ${name} недоступна. Код ошибки:`, err);
+                console.warn(`Таблица ${name} недоступна. Ошибка:`, err);
                 return defaultValue;
-              }
-            };
-
-            const fetchWellbeingSafe = async () => {
-              try {
-                const { data, error } = await db.from('wellbeing').select('*').order('date', { ascending: false });
-                if (error) throw error;
-                return data || [];
-              } catch (err) {
-                console.warn("Таблица wellbeing недоступна", err);
-                return [];
-              }
-            };
-
-            const fetchCategoriesSafe = async () => {
-              try {
-                const { data, error } = await db.from('plan_categories').select('*').order('created_at', { ascending: true });
-                if (error) throw error;
-                return data || [];
-              } catch (err) {
-                console.warn("Таблица plan_categories недоступна", err);
-                return [
-                  { id: '1', name: 'Смотреть' },
-                  { id: '2', name: 'Посетить' },
-                  { id: '3', name: 'Поездки' },
-                  { id: '4', name: 'Любимая Музыка' },
-                  { id: '5', name: 'Прочее' }
-                ];
               }
             };
 
             cycles.value = await fetchTableSafe('cycles');
             partnerNotes.value = await fetchTableSafe('partner_notes');
-            wellbeingLogs.value = await fetchWellbeingSafe();
-            categories.value = await fetchCategoriesSafe();
+            wellbeingLogs.value = await fetchTableSafe('wellbeing');
+            categories.value = await fetchTableSafe('plan_categories');
             plans.value = await fetchTableSafe('plans');
             customShifts.value = await fetchTableSafe('work_shifts');
+
+            // Приведение булевых типов из текстового формата Google Sheets
+            plans.value = plans.value.map(p => ({
+              ...p,
+              is_completed: p.is_completed === true || p.is_completed === "true" || p.is_completed === 1
+            }));
+
+            if (categories.value.length === 0) {
+              categories.value = [
+                { id: '1', name: 'Смотреть' },
+                { id: '2', name: 'Посетить' },
+                { id: '3', name: 'Поездки' },
+                { id: '4', name: 'Любимая Музыка' },
+                { id: '5', name: 'Прочее' }
+              ];
+            }
 
             if (categories.value.length > 0) {
               const hasMisc = categories.value.some(c => c.name === 'Прочее');
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
           } catch (e) {
-            console.error("Критическая ошибка подключения к Supabase:", e);
+            console.error("Критическая ошибка чтения данных:", e);
             isDemoMode.value = true;
           }
         }
 
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
+          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+
           if (isDemoMode.value) {
             if (isDelete) {
               dataArray.value = dataArray.value.filter(item => item.id !== deleteId);
@@ -1049,17 +1031,49 @@
             localStorage.setItem(localKey, JSON.stringify(dataArray.value));
           } else {
             try {
+              let body = { sheet: tableName };
               if (isDelete) {
-                const { error } = await db.from(tableName).delete().eq('id', deleteId);
-                if (error) throw error;
+                body.action = "delete";
+                body.id = deleteId;
               } else {
-                const { error } = await db.from(tableName).insert([newRecord]);
-                if (error) throw error;
+                body.action = "insert";
+                body.data = newRecord;
               }
+
+              // Отправляем как текст для предотвращения CORS OPTIONS запросов в Google Script
+              const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(body)
+              });
+              if (!response.ok) throw new Error("Network error");
             } catch (err) {
-              console.error(`Ошибка при работе с таблицей ${tableName} в Supabase:`, err);
-              const detailMessage = err.message || (err.details ? `${err.message} (${err.details})` : "неизвестная ошибка");
-              triggerToast(`База отклонила запрос: ${detailMessage}. Ваш проект Supabase активен?`);
+              console.error(`Ошибка при работе с таблицей ${tableName}:`, err);
+              triggerToast(`Ошибка сохранения данных.`);
+            }
+          }
+          await fetchData();
+        }
+
+        async function updateLocalOrDB(tableName, localKey, id, updateData) {
+          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+
+          if (isDemoMode.value) {
+            fetchData();
+          } else {
+            try {
+              const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                  sheet: tableName,
+                  action: "update",
+                  id: id,
+                  data: updateData
+                })
+              });
+              if (!response.ok) throw new Error("HTTP error");
+            } catch (err) {
+              console.error("Ошибка обновления:", err);
+              triggerToast("Не удалось обновить данные.");
             }
           }
           await fetchData();
@@ -1353,8 +1367,7 @@
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
                 fetchData();
               } else {
-                await db.from('cycles').update({ end_date: prevDayStr }).eq('id', cycle.id);
-                fetchData();
+                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               }
               triggerToast("Длина менструации сокращена на 1 день");
             } else if (clickedDate === cycle.start_date) {
@@ -1367,8 +1380,7 @@
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
                 fetchData();
               } else {
-                await db.from('cycles').update({ start_date: nextDayStr }).eq('id', cycle.id);
-                fetchData();
+                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
               }
               triggerToast("Начало периода сдвинуто на 1 день вперед");
             } else {
@@ -1381,8 +1393,7 @@
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
                 fetchData();
               } else {
-                await db.from('cycles').update({ end_date: prevDayStr }).eq('id', cycle.id);
-                fetchData();
+                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               }
               triggerToast("Период менструации завершен досрочно");
             }
@@ -1403,8 +1414,7 @@
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
                 fetchData();
               } else {
-                await db.from('cycles').update({ end_date: clickedDate }).eq('id', cycleToExtendEnd.id);
-                fetchData();
+                await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendEnd.id, { end_date: clickedDate });
               }
               triggerToast("Период продлен на 1 день");
             } else if (cycleToExtendStart) {
@@ -1413,8 +1423,7 @@
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
                 fetchData();
               } else {
-                await db.from('cycles').update({ start_date: clickedDate }).eq('id', cycleToExtendStart.id);
-                fetchData();
+                await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendStart.id, { start_date: clickedDate });
               }
               triggerToast("Период увеличен на 1 день назад");
             } else {
@@ -1528,7 +1537,11 @@
               plans.value = plans.value.filter(item => item.id !== p.id);
             } else {
               try {
-                await db.from('plans').delete().eq('id', p.id);
+                const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+                await fetch(APPS_SCRIPT_URL, {
+                  method: 'POST',
+                  body: JSON.stringify({ sheet: 'plans', action: 'delete', id: p.id })
+                });
               } catch (err) {
                 console.error("Ошибка удаления планов группы:", err);
               }
@@ -1567,8 +1580,7 @@
             localStorage.setItem('demo_plans', JSON.stringify(plans.value));
             fetchData();
           } else {
-            await db.from('plans').update({ is_completed: !plan.is_completed }).eq('id', plan.id);
-            fetchData();
+            await updateLocalOrDB('plans', 'demo_plans', plan.id, { is_completed: !plan.is_completed });
           }
           if (plan.is_completed) {
             triggerToast("Дело выполнено! 🎉");
@@ -1588,7 +1600,6 @@
           return `${d}.${m}.${y}`;
         }
 
-        // ==================== ИНТЕГРАЦИЯ С ИИ С ДИНАМИЧЕСКИМ ВЫБОРОМ ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
@@ -1632,7 +1643,7 @@
 
 === ПОЛНАЯ БАЗА ДАННЫХ ПРИЛОЖЕНИЯ ===
 
-1. Все исторические циклы подруги:
+1. Все циклы подруги:
 ${cyclesData}
 
 2. Корректировки её рабочего графика (2/2):
@@ -1647,15 +1658,15 @@ ${wellbeingData}
 5. Текущие общие планы и музыка:
 ${plansData}
 
-На основе этих данных составь краткий дружеский отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
+На основе этих данных составь краткий отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
 1. **Дружеский климат**: Коротко опиши, как дела у подруги, какой у неё уровень энергии и стресса в последнее время.
 2. **Анализ цикла и работы**: Как её текущие рабочие дни пересекаются с самочувствием и фазой цикла? На что ей стоит обратить внимание?
-3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе (например, предложить интересный фильм, прислать трек в планы, напомнить отдохнуть, если стресс высокий).
+3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе.
 4. **Советы для Нее**: Как спланировать свои дела, поберечь силы и что можно обсудить с другом для поднятия настроения.
             `;
 
             const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-            const activeModel = settingsInput.value.aiModel || "openrouter/free"; // Связывание напрямую с реактивным выбором
+            const activeModel = settingsInput.value.aiModel || "openrouter/free";
 
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
@@ -1678,10 +1689,10 @@ ${plansData}
 
             if (!response.ok) {
               if (response.status === 401) {
-                throw new Error("Недействительный или заблокированный API-ключ OpenRouter. Пожалуйста, укажите рабочий ключ в настройках (⚙️).");
+                throw new Error("Недействительный или заблокированный API-ключ OpenRouter.");
               }
               if (response.status === 429) {
-                throw new Error("Слишком много запросов (429). Выбранная бесплатная модель сейчас перегружена. Рекомендуем переключиться на 'Авто-выбор' в настройках.");
+                throw new Error("Слишком много запросов (429). Попробуйте сменить модель.");
               }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
@@ -1692,7 +1703,7 @@ ${plansData}
               aiAnalysisResult.value = data.choices[0].message.content;
               triggerToast("Анализ готов! 🔮");
             } else {
-              aiAnalysisResult.value = "Не удалось обработать ответ от ИИ.";
+              aiAnalysisResult.value = "Не удалось получить ответ от ИИ.";
             }
 
           } catch (err) {
@@ -1704,7 +1715,6 @@ ${plansData}
           }
         }
 
-        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function sendAiChatMessage() {
           if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
@@ -1751,7 +1761,7 @@ ${plansData}
 
 ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
 
-Вот текущие данные из их общей базы данных Supabase:
+Текущие данные из общей базы данных:
 - Сегодняшняя дата: ${todayStr}
 - Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
 
@@ -1767,7 +1777,7 @@ ${plansData}
 Смены работы:
 ${shiftsData}
 
-Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как понимающий друг.
+Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или поддерживай беседу как друг.
             `;
 
             const apiMessages = [
@@ -1776,7 +1786,7 @@ ${shiftsData}
             ];
 
             const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-            const activeModel = settingsInput.value.aiModel || "openrouter/free"; // Прямая реактивная связь
+            const activeModel = settingsInput.value.aiModel || "openrouter/free";
 
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
@@ -1794,10 +1804,10 @@ ${shiftsData}
 
             if (!response.ok) {
               if (response.status === 401) {
-                throw new Error("Недействительный или заблокированный API-ключ OpenRouter. Пожалуйста, введите ваш личный бесплатный ключ в настройках (⚙️).");
+                throw new Error("Недействительный или заблокированный API-ключ OpenRouter.");
               }
               if (response.status === 429) {
-                throw new Error("Превышен лимит запросов (429) для выбранной модели. Попробуйте сменить её на 'Авто-выбор' в настройках (⚙️).");
+                throw new Error("Превышен лимит запросов.");
               }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
@@ -1895,7 +1905,8 @@ ${shiftsData}
           isSettingsOpen,
           settingsInput,
           saveConnectionSettings,
-          resetToDefaultSettings
+          resetToDefaultSettings,
+          updateLocalOrDB
         };
       }
     }).mount('#app');
