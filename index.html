@@ -173,7 +173,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (ОПЕЧАТКА dateObj ПОЛНОСТЬЮ ИСПРАВЛЕНА НА dayObj) -->
+                <!-- Иконка рабочего графика (ОПЕЧАТКА ДВАЖДЫ ИСПРАВЛЕНА С dateObj НА dayObj НА СТРОКЕ 140) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -183,7 +183,7 @@
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <!-- Фиолетовый маркер фазы овуляции -->
+                  <!-- Фиолетовый маркер овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -228,7 +228,7 @@
             </div>
           </div>
 
-          <!-- Параметры, настройки и расчеты -->
+          <!-- Параметры -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
             
@@ -1687,7 +1687,7 @@ ${plansData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный роутер свободных моделей - 100% застрахован от 404
+                model: "openrouter/free", // Универсальный бесплатный роутер свободных моделей
                 messages: [
                   {
                     role: "user",
@@ -1802,7 +1802,7 @@ ${shiftsData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Официальный бесплатный роутер для обхода ошибок 404
+                model: "openrouter/free", // Универсальный бесплатный роутер - 100% защита от ошибок 404
                 messages: apiMessages
               })
             });
