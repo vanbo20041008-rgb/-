@@ -344,7 +344,7 @@
               <span>Быстрый разбор всех данных базы</span>
             </h3>
             <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
-              Нажмите кнопку ниже, чтобы ИИ составил структурированный совет на основе всей текущей истории ваших циклов, планов и заметок.
+              Нажмите кнопку ниже, чтобы ИИ составил совет на основе всей истории ваших циклов, планов и заметок.
             </p>
 
             <transition name="fade">
@@ -735,7 +735,6 @@
 
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
-    // Замените пустую строку на ваш URL веб-приложения из Apps Script, чтобы не вводить его каждый раз вручную
     const DEFAULT_SUPABASE_URL = ""; 
     const DEFAULT_SUPABASE_KEY = "";
 
@@ -953,6 +952,7 @@
         const newPlanCategory = ref('Прочее');
         const newPlanTitle = ref('');
 
+        // ПАКЕТНАЯ И ОФЛАЙН-ПЕРВАЯ ЗАГРУЗКА ДАННЫХ (Один запрос вместо 6)
         async function fetchData() {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
 
@@ -974,26 +974,36 @@
           }
 
           try {
-            const fetchTableSafe = async (name, defaultValue = []) => {
-              try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?sheet=${name}`);
-                if (!response.ok) throw new Error("HTTP error");
-                const resData = await response.json();
-                return Array.isArray(resData) ? resData : defaultValue;
-              } catch (err) {
-                console.warn(`Таблица ${name} недоступна. Ошибка:`, err);
-                return defaultValue;
-              }
-            };
+            // Один единственный запрос к Google Скрипту за всеми данными
+            const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
+            if (!response.ok) throw new Error("HTTP error");
+            const allData = await response.json();
 
-            cycles.value = await fetchTableSafe('cycles');
-            partnerNotes.value = await fetchTableSafe('partner_notes');
-            wellbeingLogs.value = await fetchTableSafe('wellbeing');
-            categories.value = await fetchTableSafe('plan_categories');
-            plans.value = await fetchTableSafe('plans');
-            customShifts.value = await fetchTableSafe('work_shifts');
+            if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
+              cycles.value = allData.cycles || [];
+              partnerNotes.value = allData.partner_notes || [];
+              wellbeingLogs.value = allData.wellbeing || [];
+              categories.value = allData.plan_categories || [];
+              plans.value = allData.plans || [];
+              customShifts.value = allData.work_shifts || [];
+            } else {
+              // Совместимость со старой версией веб-приложения
+              const fetchTableSafe = async (name, defaultValue = []) => {
+                try {
+                  const r = await fetch(`${APPS_SCRIPT_URL}?sheet=${name}`);
+                  if (!r.ok) throw new Error();
+                  return await r.json();
+                } catch (err) { return defaultValue; }
+              };
+              cycles.value = await fetchTableSafe('cycles');
+              partnerNotes.value = await fetchTableSafe('partner_notes');
+              wellbeingLogs.value = await fetchTableSafe('wellbeing');
+              categories.value = await fetchTableSafe('plan_categories');
+              plans.value = await fetchTableSafe('plans');
+              customShifts.value = await fetchTableSafe('work_shifts');
+            }
 
-            // Приведение булевых типов из текстового формата Google Sheets
+            // Приведение типов
             plans.value = plans.value.map(p => ({
               ...p,
               is_completed: p.is_completed === true || p.is_completed === "true" || p.is_completed === 1
@@ -1013,70 +1023,98 @@
               const hasMisc = categories.value.some(c => c.name === 'Прочее');
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
+
+            // Дублируем свежие данные в локальный кэш (для мгновенной загрузки в будущем)
+            localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
+            localStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
+            localStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
+            localStorage.setItem('demo_categories', JSON.stringify(categories.value));
+            localStorage.setItem('demo_plans', JSON.stringify(plans.value));
+            localStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
+
           } catch (e) {
-            console.error("Критическая ошибка чтения данных:", e);
-            isDemoMode.value = true;
+            console.warn("Сеть недоступна, работаем в локальном режиме:", e);
+            // Если сеть лежит — плавно переключаемся на локальный кэш телефона
+            cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
+            partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
+            wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
+            customShifts.value = JSON.parse(localStorage.getItem('demo_work_shifts')) || [];
+            categories.value = JSON.parse(localStorage.getItem('demo_categories')) || [];
+            plans.value = JSON.parse(localStorage.getItem('demo_plans')) || [];
+            triggerToast("⚠️ Работаем автономно. Облако временно недоступно.");
           }
         }
 
+        // МГНОВЕННОЕ СОХРАНЕНИЕ / ОПТИМИСТИЧНЫЙ ИНТЕРФЕЙС (0мс задержки)
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
 
-          if (isDemoMode.value) {
-            if (isDelete) {
-              dataArray.value = dataArray.value.filter(item => item.id !== deleteId);
-            } else {
-              dataArray.value.push(newRecord);
-            }
-            localStorage.setItem(localKey, JSON.stringify(dataArray.value));
+          // 1. МГНОВЕННО ОБНОВЛЯЕМ ЛОКАЛЬНЫЙ ИНТЕРФЕЙС И КЭШ
+          if (isDelete) {
+            dataArray.value = dataArray.value.filter(item => item.id.toString() !== deleteId.toString());
           } else {
-            try {
-              let body = { sheet: tableName };
-              if (isDelete) {
-                body.action = "delete";
-                body.id = deleteId;
-              } else {
-                body.action = "insert";
-                body.data = newRecord;
-              }
-
-              // Отправляем как текст для предотвращения CORS OPTIONS запросов в Google Script
-              const response = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(body)
-              });
-              if (!response.ok) throw new Error("Network error");
-            } catch (err) {
-              console.error(`Ошибка при работе с таблицей ${tableName}:`, err);
-              triggerToast(`Ошибка сохранения данных.`);
-            }
+            dataArray.value.push(newRecord);
           }
-          await fetchData();
+          localStorage.setItem(localKey, JSON.stringify(dataArray.value));
+
+          if (isDemoMode.value) return;
+
+          // 2. ОТПРАВЛЯЕМ СИНХРОНИЗАЦИЮ В ОБЛАКО НА ФОНЕ (Без ожидания UI)
+          let body = { sheet: tableName };
+          if (isDelete) {
+            body.action = "delete";
+            body.id = deleteId;
+          } else {
+            body.action = "insert";
+            body.data = newRecord;
+          }
+
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(body)
+          }).then(response => {
+            if (!response.ok) throw new Error("Sync failed");
+          }).catch(err => {
+            console.error(`Ошибка фоновой синхронизации ${tableName}:`, err);
+            triggerToast(`⚠️ Данные сохранены на телефоне, но не ушли в облако.`);
+          });
         }
 
+        // МГНОВЕННОЕ ОБНОВЛЕНИЕ СТАТУСОВ И ДАТ (0мс задержки)
         async function updateLocalOrDB(tableName, localKey, id, updateData) {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
 
-          if (isDemoMode.value) {
-            fetchData();
-          } else {
-            try {
-              const response = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                  sheet: tableName,
-                  action: "update",
-                  id: id,
-                  data: updateData
-                })
-              });
-              if (!response.ok) throw new Error("HTTP error");
-            } catch (err) {
-              console.error("Ошибка обновления:", err);
-              triggerToast("Не удалось обновить данные.");
+          // 1. МГНОВЕННО ОБНОВЛЯЕМ ДАННЫЕ В ПАМЯТИ
+          let localRef = null;
+          if (tableName === 'cycles') localRef = cycles;
+          else if (tableName === 'plans') localRef = plans;
+          else if (tableName === 'work_shifts') localRef = customShifts;
+
+          if (localRef) {
+            const idx = localRef.value.findIndex(item => item.id.toString() === id.toString());
+            if (idx !== -1) {
+              localRef.value[idx] = { ...localRef.value[idx], ...updateData };
+              localStorage.setItem(localKey, JSON.stringify(localRef.value));
             }
           }
-          await fetchData();
+
+          if (isDemoMode.value) return;
+
+          // 2. ОТПРАВЛЯЕМ ЗАПРОС В ОБЛАКО НА ФОНЕ
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              sheet: tableName,
+              action: "update",
+              id: id,
+              data: updateData
+            })
+          }).then(response => {
+            if (!response.ok) throw new Error("Sync failed");
+          }).catch(err => {
+            console.error(`Ошибка фонового обновления ${tableName}:`, err);
+            triggerToast(`⚠️ Изменение сохранено локально. Проверьте сеть.`);
+          });
         }
 
         async function sendTelegramNotification(text, targetChatId) {
@@ -1189,6 +1227,7 @@
           return ((diffDays - 1) % cycleLength.value) + 1;
         }
 
+        // ИСПРАВЛЕННЫЙ РАСЧЕТ ФАЗ БЕЗ ХАОСА НА КАЛЕНДАРЕ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
@@ -1205,14 +1244,28 @@
           if (pastStarts.length === 0) return null;
           const closestCycle = pastStarts[0];
           
+          // 1. Если день попадает ровно в отмеченный период
           if (targetDate >= closestCycle.start && targetDate <= closestCycle.end) {
             return 'menstrual';
           }
           
           const diffTime = targetDate - closestCycle.start;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          const dayOfCycle = ((diffDays - 1) % cycleLength.value) + 1;
 
+          // 2. Считаем фазы только для текущего текущего цикла (до конца его длины)
+          if (diffDays > cycleLength.value) {
+            // Для будущих циклов строим прогноз
+            const cycleOffset = (diffDays - 1) % cycleLength.value;
+            const dayOfCycle = cycleOffset + 1;
+            const ovDay = cycleLength.value - 14;
+
+            if (dayOfCycle >= 1 && dayOfCycle <= periodLength.value) return 'menstrual';
+            if (dayOfCycle > periodLength.value && dayOfCycle < ovDay) return 'follicular';
+            if (dayOfCycle === ovDay) return 'ovulatory';
+            return 'luteal';
+          }
+
+          const dayOfCycle = diffDays;
           const ovDay = cycleLength.value - 14;
 
           if (dayOfCycle >= 1 && dayOfCycle <= periodLength.value) {
@@ -1224,7 +1277,10 @@
           if (dayOfCycle === ovDay) {
             return 'ovulatory';
           }
-          return 'luteal';
+          if (dayOfCycle > ovDay && dayOfCycle <= cycleLength.value) {
+            return 'luteal';
+          }
+          return null;
         }
 
         function isOvulationDay(dateStr) {
@@ -1362,39 +1418,21 @@
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
-              if (isDemoMode.value) {
-                cycle.end_date = prevDayStr;
-                localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                fetchData();
-              } else {
-                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
-              }
+              await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               triggerToast("Длина менструации сокращена на 1 день");
             } else if (clickedDate === cycle.start_date) {
               const nextDay = new Date(clickedDate + "T12:00:00");
               nextDay.setDate(nextDay.getDate() + 1);
               const nextDayStr = getLocalDateString(nextDay);
 
-              if (isDemoMode.value) {
-                cycle.start_date = nextDayStr;
-                localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                fetchData();
-              } else {
-                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
-              }
+              await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
               triggerToast("Начало периода сдвинуто на 1 день вперед");
             } else {
               const prevDay = new Date(clickedDate + "T12:00:00");
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
-              if (isDemoMode.value) {
-                cycle.end_date = prevDayStr;
-                localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                fetchData();
-              } else {
-                await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
-              }
+              await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               triggerToast("Период менструации завершен досрочно");
             }
           } else {
@@ -1409,22 +1447,10 @@
             const cycleToExtendStart = cycles.value.find(c => c.start_date === dayAfterStr);
 
             if (cycleToExtendEnd) {
-              if (isDemoMode.value) {
-                cycleToExtendEnd.end_date = clickedDate;
-                localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                fetchData();
-              } else {
-                await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendEnd.id, { end_date: clickedDate });
-              }
+              await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendEnd.id, { end_date: clickedDate });
               triggerToast("Период продлен на 1 день");
             } else if (cycleToExtendStart) {
-              if (isDemoMode.value) {
-                cycleToExtendStart.start_date = clickedDate;
-                localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                fetchData();
-              } else {
-                await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendStart.id, { start_date: clickedDate });
-              }
+              await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendStart.id, { start_date: clickedDate });
               triggerToast("Период увеличен на 1 день назад");
             } else {
               const start = new Date(clickedDate + "T12:00:00");
@@ -1532,32 +1558,33 @@
           if (!confirm(`Вы действительно хотите удалить группу "${cat.name}" и все планы внутри неё?`)) return;
 
           const plansInCat = plans.value.filter(p => p.category_name === cat.name);
-          for (const p of plansInCat) {
-            if (isDemoMode.value) {
-              plans.value = plans.value.filter(item => item.id !== p.id);
-            } else {
-              try {
-                const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
-                await fetch(APPS_SCRIPT_URL, {
-                  method: 'POST',
-                  body: JSON.stringify({ sheet: 'plans', action: 'delete', id: p.id })
-                });
-              } catch (err) {
-                console.error("Ошибка удаления планов группы:", err);
-              }
-            }
-          }
-          if (isDemoMode.value) {
-            localStorage.setItem('demo_plans', JSON.stringify(plans.value));
-          }
-
+          
+          // 1. Мгновенно обновляем интерфейс локально
+          plans.value = plans.value.filter(p => p.category_name !== cat.name);
+          categories.value = categories.value.filter(c => c.id !== cat.id);
+          localStorage.setItem('demo_plans', JSON.stringify(plans.value));
+          localStorage.setItem('demo_categories', JSON.stringify(categories.value));
+          
           if (newPlanCategory.value === cat.name) {
-            const remaining = categories.value.filter(c => c.id !== cat.id);
-            newPlanCategory.value = remaining.length > 0 ? remaining[0].name : '';
+            newPlanCategory.value = categories.value.length > 0 ? categories.value[0].name : '';
           }
-
-          await saveLocalOrDB('plan_categories', 'demo_categories', categories, null, true, cat.id);
           triggerToast(`Группа "${cat.name}" удалена`);
+
+          // 2. В фоновом режиме отправляем удаление в таблицы
+          if (isDemoMode.value) return;
+          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+          
+          fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ sheet: 'plan_categories', action: 'delete', id: cat.id })
+          });
+
+          plansInCat.forEach(p => {
+            fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              body: JSON.stringify({ sheet: 'plans', action: 'delete', id: p.id })
+            });
+          });
         }
 
         async function addPlan() {
