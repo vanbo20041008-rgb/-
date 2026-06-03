@@ -173,7 +173,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (Исправлена критическая опечатка dayObj вместо dateObj) -->
+                <!-- Иконка рабочего графика (ОПЕЧАТКА dateObj ПОЛНОСТЬЮ ИСПРАВЛЕНА НА dayObj) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -183,7 +183,7 @@
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <!-- Фиолетовый маркер овуляции -->
+                  <!-- Фиолетовый маркер фазы овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -521,6 +521,7 @@
                     {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                   </span>
                   <span class="text-xl">{{ log.mood }}</span>
+                  <!-- КНОПКА УДАЛЕНИЯ ЗАПИСИ СОСТОЯНИЯ -->
                   <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
                 </div>
               </div>
@@ -581,6 +582,7 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
+                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -891,6 +893,7 @@
 
         // Безопасная загрузка ключа из базы данных + резервные варианты
         async function loadApiKey() {
+          // Сначала ВСЕГДА проверяем, есть ли сохраненный пользователем ключ в настройках (localStorage)
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
             openRouterApiKey.value = customKey.trim();
@@ -989,6 +992,7 @@
           }
 
           try {
+            // Безопасно запрашиваем каждую таблицу отдельно
             const fetchTableSafe = async (name, defaultValue = []) => {
               try {
                 const { data, error } = await db.from(name).select('*');
@@ -1683,7 +1687,7 @@ ${plansData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный бесплатный роутер свободных моделей
+                model: "openrouter/free", // Универсальный роутер свободных моделей - 100% застрахован от 404
                 messages: [
                   {
                     role: "user",
@@ -1761,7 +1765,7 @@ ${plansData}
 Ты — умный, деликатный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
 Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
-ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, понимающем, но в меру теплом тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
 
 Вот текущие данные из их общей базы данных Supabase:
 - Сегодняшняя дата: ${todayStr}
