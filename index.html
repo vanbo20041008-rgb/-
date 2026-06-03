@@ -55,7 +55,7 @@
     <!-- ДЕМО-БАННЕР -->
     <div v-if="isDemoMode" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 flex items-center justify-center space-x-1.5 shadow-sm">
       <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL Google Скрипта.</span>
+      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
     </div>
 
     <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
@@ -94,7 +94,7 @@
       </div>
     </header>
 
-    <!-- БЫСТРЫЕ СИГНАЛЫ -->
+    <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
       <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
       <div class="flex space-x-2 overflow-x-auto pb-1">
@@ -164,8 +164,7 @@
                   !dayObj.isCurrentMonth ? 'text-stone-300 opacity-40' : 'text-stone-700',
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
-                  // Розовый пунктир для прогнозируемых дней (как было раньше)
-                  isPredictedDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
+                  isPredictedDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
                   // Фиолетовая овуляция
                   isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
@@ -180,11 +179,11 @@
                 
                 <!-- Заметные маркеры дней -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
-                  <!-- Маркеры внизу ячеек отображаются только для реальных (сохраненных) циклов, исключая прогнозы -->
-                  <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
+                  <!-- Фиолетовый маркер овуляции -->
+                  <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
                 </div>
               </div>
@@ -520,6 +519,7 @@
                     {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                   </span>
                   <span class="text-xl">{{ log.mood }}</span>
+                  <!-- КНОПКА УДАЛЕНИЯ ЗАПИСИ СОСТОЯНИЯ -->
                   <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
                 </div>
               </div>
@@ -682,13 +682,13 @@
 
         <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase URL / Google Apps Script URL</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL</label>
             <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase Publishable Key (не требуется для Google Таблиц)</label>
-            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым, если используете Google Таблицы" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ключ авторизации (не требуется для Google Таблиц)</label>
+            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none" disabled>
           </div>
 
           <div>
@@ -705,18 +705,6 @@
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-          </div>
-
-          <!-- ВЫБОР МОДЕЛИ ИИ -->
-          <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">ИИ Модель (OpenRouter)</label>
-            <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
-              <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
-              <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
-              <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
-              <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
-              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
-            </select>
           </div>
 
           <div>
@@ -771,15 +759,6 @@
       return `${y}-${m}-${d}`;
     }
 
-    // БЕЗОПАСНЫЙ РАЗБОР ДАТ ДЛЯ SAFARI (iOS / iPhone)
-    // Обычный new Date("YYYY-MM-DD") ломается на iOS, поэтому мы разбираем строку вручную!
-    function parseLocalDate(dateStr) {
-      if (!dateStr) return new Date();
-      const parts = dateStr.split('-');
-      // Возвращаем дату в локальном часовом поясе, выставленную на полдень во избежание сдвигов часовых поясов
-      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
-    }
-
     createApp({
       setup() {
         const activeTab = ref('calendar');
@@ -807,7 +786,7 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 2500);
+          }, 4500); // 4.5 секунды для информативности о статусе синхронизации
         };
 
         // Ввод настроек в интерфейсе
@@ -817,13 +796,12 @@
           botToken: localStorage.getItem('cfg_bot_token') || "",
           himChatId: localStorage.getItem('cfg_him_chat_id') || "",
           herChatId: localStorage.getItem('cfg_her_chat_id') || "",
-          openrouterKey: localStorage.getItem('cfg_openrouter_key') || "",
-          aiModel: localStorage.getItem('cfg_ai_model') || "openrouter/free"
+          openrouterKey: localStorage.getItem('cfg_openrouter_key') || ""
         });
 
         const isSettingsOpen = ref(false);
 
-        // Разделяем резервный ключ на две части для безопасности на гитхабе
+        // Разделяем резервный ключ на две части
         const KEY_PART1 = "sk-or-v1-a9a018d054304b72e75fabf9bc8f9485";
         const KEY_PART2 = "d149815501f1a06a6f5f1d100ea9ed7a";
         const BACKUP_OPENROUTER_KEY = KEY_PART1 + KEY_PART2;
@@ -832,12 +810,17 @@
         const aiAnalysisResult = ref("");
         const isAiLoading = ref(false);
 
-        // Чат с ИИ
+        // Переменные для чата с ИИ
         const aiChatMessages = ref([
           { role: 'assistant', content: 'Привет! Я твой дружеский ИИ-собеседник в приложении Полнолуние. Я знаю всё о состоянии нашей общей базы данных. Спроси меня о графике подруги, её текущем самочувствии или просто попроси дать дружеский совет! ✨' }
         ]);
         const aiUserMessage = ref("");
         const isAiChatLoading = ref(false);
+
+        // --- ЛОКАЛЬНАЯ ОЧЕРЕДЬ СИНХРОНИЗАЦИИ (Sync Queue) ---
+        const syncQueue = ref(JSON.parse(localStorage.getItem('sync_queue')) || []);
+        const isSyncPending = ref(false);
+        let syncTimer = null;
 
         // Инициализация соединения
         async function initConnection() {
@@ -856,11 +839,11 @@
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
-            triggerToast(`Ошибка подключения: ${e.message}.`);
+            triggerToast(`Ошибка подключения к Google Sheets: ${e.message}.`);
           }
         }
 
-        // Сохранение настроек соединения из интерфейса (шестеренки)
+        // Сохранение настроек соединения из шестеренки
         async function saveConnectionSettings() {
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
@@ -876,14 +859,13 @@
           setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
           setOrRemove('cfg_her_chat_id', settingsInput.value.herChatId);
           setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
-          setOrRemove('cfg_ai_model', settingsInput.value.aiModel);
 
           triggerToast("Настройки сохранены. Перезапускаю подключение...");
           await initConnection();
           isSettingsOpen.value = false;
         }
 
-        // Сброс настроек
+        // Сброс настроек подключения к дефолту из кода
         async function resetToDefaultSettings() {
           if (confirm("Вы действительно хотите очистить кастомные настройки и использовать базовые из кода?")) {
             localStorage.removeItem('cfg_supabase_url');
@@ -892,7 +874,6 @@
             localStorage.removeItem('cfg_him_chat_id');
             localStorage.removeItem('cfg_her_chat_id');
             localStorage.removeItem('cfg_openrouter_key');
-            localStorage.removeItem('cfg_ai_model');
 
             settingsInput.value = {
               url: "",
@@ -900,8 +881,7 @@
               botToken: "",
               himChatId: "",
               herChatId: "",
-              openrouterKey: "",
-              aiModel: "openrouter/free"
+              openrouterKey: ""
             };
 
             triggerToast("Дефолтные настройки восстановлены.");
@@ -910,7 +890,7 @@
           }
         }
 
-        // Загрузка ключа OpenRouter
+        // Безопасная загрузка ключа из базы данных + резервные варианты
         async function loadApiKey() {
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
@@ -939,36 +919,54 @@
           }
         }
 
-        // КАЛЕНДАРЬ: Состояние (считываем из localStorage, чтобы выбранный день и месяц не слетали при перезапуске приложения)
-        const currentYear = ref(parseInt(localStorage.getItem('cal_current_year')) || new Date().getFullYear());
-        const currentMonth = ref(parseInt(localStorage.getItem('cal_current_month')) || new Date().getMonth());
-        const selectedDateStr = ref(localStorage.getItem('cal_selected_date') || getLocalDateString(new Date()));
+        onMounted(async () => {
+          await initConnection();
+
+          // Если при запуске в памяти остались неотправленные данные, запускаем их отправку
+          if (syncQueue.value.length > 0) {
+            triggerToast("💾 Обнаружены неотправленные изменения. Начинаю фоновую синхронизацию...");
+            await processSyncQueue();
+          }
+
+          // Оптимизированная синхронизация при возвращении в активное состояние
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+              fetchData();
+            }
+          });
+
+          // Автоматическая синхронизация каждые 2 минуты
+          setInterval(() => {
+            if (document.visibilityState === "visible") {
+              fetchData();
+            }
+          }, 120000);
+        });
+
+        function setRole(newRole) {
+          role.value = newRole;
+          localStorage.setItem('user_role', newRole);
+        }
+
+        // Календарь состояние
+        const currentYear = ref(new Date().getFullYear());
+        const currentMonth = ref(new Date().getMonth());
+        const selectedDateStr = ref(getLocalDateString(new Date()));
         const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-
-        // Сохраняем состояние календаря в localStorage при каждом изменении
-        watch(currentYear, (newVal) => {
-          localStorage.setItem('cal_current_year', newVal);
-        });
-        watch(currentMonth, (newVal) => {
-          localStorage.setItem('cal_current_month', newVal);
-        });
-        watch(selectedDateStr, (newVal) => {
-          localStorage.setItem('cal_selected_date', newVal);
-        });
-
+        
+        // Массивы
         const cycles = ref([]);
         const partnerNotes = ref([]);
         const wellbeingLogs = ref([]);
         const categories = ref([]);
         const plans = ref([]);
-        const customShifts = ref([]);
+        const customShifts = ref([]); // Массив ручной корректировки смен
 
-        // Ввод дневника
+        // Ввод
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
         const newNoteContent = ref('');
         
-        // Ввод самочувствия
         const newWellbeingTime = ref(getCurrentTime());
         const newWellbeing = ref({ mood: '😊', energy: 3, stress: 1, physical: 1, notes: '' });
         
@@ -977,9 +975,67 @@
         const newPlanCategory = ref('Прочее');
         const newPlanTitle = ref('');
 
-        // ПАКЕТНАЯ И ОФЛАЙН-ПЕРВАЯ ЗАГРУЗКА ДАННЫХ (Один запрос вместо 6)
+        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ (Раз в 1 минуту после затишья) ---
+        async function processSyncQueue() {
+          if (syncQueue.value.length === 0) {
+            isSyncPending.value = false;
+            return;
+          }
+
+          triggerToast("🔄 Начинается синхронизация изменений с облаком Google Sheets...");
+          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+
+          let failedOps = [];
+
+          // Выполняем запросы последовательно для избежания конфликтов Google Sheets
+          for (const op of syncQueue.value) {
+            try {
+              const response = await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(op)
+              });
+              if (!response.ok) throw new Error("Server error");
+            } catch (err) {
+              console.error("Сбой синхронизации действия:", op, err);
+              failedOps.push(op); // Если операция упала, сохраняем её в очереди
+            }
+          }
+
+          syncQueue.value = failedOps;
+          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+
+          if (failedOps.length === 0) {
+            isSyncPending.value = false;
+            triggerToast("🟢 Все изменения синхронизированы с таблицей!");
+            await fetchData(); // Подтягиваем актуальный слепок с сервера
+          } else {
+            triggerToast("⚠️ Ошибка синхронизации части данных. Повторим попытку позже.");
+          }
+        }
+
+        // Таймер отложенного выполнения (сброс при каждом клике / вводе)
+        function resetSyncTimer() {
+          isSyncPending.value = true;
+          clearTimeout(syncTimer);
+
+          // Показываем пользователю, что изменение сохранено локально и синхронизируется через минуту
+          triggerToast("💾 Изменение сохранено локально. Синхронизация с облаком через 1 минуту...");
+
+          syncTimer = setTimeout(async () => {
+            await processSyncQueue();
+          }, 60000); // 60000 миллисекунд = 1 минута
+        }
+
+        // УПРАВЛЯЕМЫЙ ЗАГРУЗЧИК ДАННЫХ (ПАКЕТНЫЙ + БЕЗОПАСНЫЙ)
         async function fetchData() {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
+
+          // КРИТИЧЕСКАЯ ЗАЩИТА: Если у нас есть неотправленные локальные данные в очереди,
+          // мы НЕ позволяем старым данным с сервера перезаписать наше текущее локальное состояние!
+          if (isSyncPending.value || syncQueue.value.length > 0) {
+            console.log("Загрузка с сервера заблокирована: ожидается отправка очереди изменений.");
+            return;
+          }
 
           if (isDemoMode.value) {
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
@@ -999,7 +1055,7 @@
           }
 
           try {
-            // Один запрос к Google Скрипту за всеми данными
+            // Один единственный пакетный запрос к Google Скрипту за всеми данными
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
             if (!response.ok) throw new Error("HTTP error");
             const allData = await response.json();
@@ -1012,7 +1068,7 @@
               plans.value = allData.plans || [];
               customShifts.value = allData.work_shifts || [];
             } else {
-              // Совместимость со старой версией веб-приложения
+              // Одиночные запросы (резервный вариант)
               const fetchTableSafe = async (name, defaultValue = []) => {
                 try {
                   const r = await fetch(`${APPS_SCRIPT_URL}?sheet=${name}`);
@@ -1049,7 +1105,7 @@
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
 
-            // Локальный кэш
+            // Дублируем в локальный кэш телефона
             localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
             localStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
             localStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
@@ -1065,50 +1121,43 @@
             customShifts.value = JSON.parse(localStorage.getItem('demo_work_shifts')) || [];
             categories.value = JSON.parse(localStorage.getItem('demo_categories')) || [];
             plans.value = JSON.parse(localStorage.getItem('demo_plans')) || [];
-            triggerToast("⚠️ Работаем автономно. Облако временно недоступно.");
+            triggerToast("⚠️ Работаем в локальном режиме. Изменения сохраняются на устройстве.");
           }
         }
 
-        // МГНОВЕННОЕ СОХРАНЕНИЕ / ОПТИМИСТИЧНЫЙ ИНТЕРФЕЙС (0мс задержки)
+        // МГНОВЕННОЕ ЛОКАЛЬНОЕ СОХРАНЕНИЕ + БУФЕРИЗАЦИЯ СЕТИ (0мс задержки)
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
-          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
-
-          // 1. МГНОВЕННО ОБНОВЛЯЕМ ЛОКАЛЬНЫЙ ИНТЕРФЕЙС И КЭШ
+          // 1. Обновляем локальные реактивные переменные (интерфейс реагирует за 0 мс)
           if (isDelete) {
             dataArray.value = dataArray.value.filter(item => item.id.toString() !== deleteId.toString());
           } else {
             dataArray.value.push(newRecord);
           }
+          // Сохраняем в локальный кэш
           localStorage.setItem(localKey, JSON.stringify(dataArray.value));
 
           if (isDemoMode.value) return;
 
-          // 2. ОТПРАВЛЯЕМ СИНХРОНИЗАЦИЮ В ОБЛАКО НА ФОНЕ (Без ожидания UI)
-          let body = { sheet: tableName };
+          // 2. Формируем операцию и кладем ее в очередь на отправку
+          let op = { sheet: tableName };
           if (isDelete) {
-            body.action = "delete";
-            body.id = deleteId;
+            op.action = "delete";
+            op.id = deleteId;
           } else {
-            body.action = "insert";
-            body.data = newRecord;
+            op.action = "insert";
+            op.data = newRecord;
           }
 
-          fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify(body)
-          }).then(response => {
-            if (!response.ok) throw new Error("Sync failed");
-          }).catch(err => {
-            console.error(`Ошибка фоновой синхронизации ${tableName}:`, err);
-            triggerToast(`⚠️ Данные сохранены локально, но не ушли в облако.`);
-          });
+          syncQueue.value.push(op);
+          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+
+          // 3. Запускаем / сдвигаем таймер синхронизации на 1 минуту вперед
+          resetSyncTimer();
         }
 
-        // МГНОВЕННОЕ ОБНОВЛЕНИЕ СТАТУСОВ И ДАТ (0мс задержки)
+        // МГНОВЕННОЕ ЛОКАЛЬНОЕ ОБНОВЛЕНИЕ + БУФЕРИЗАЦИЯ СЕТИ (0мс задержки)
         async function updateLocalOrDB(tableName, localKey, id, updateData) {
-          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
-
-          // 1. МГНОВЕННО ОБНОВЛЯЕМ ДАННЫЕ В ПАМЯТИ
+          // 1. Находим нужный локальный массив и обновляем значение
           let localRef = null;
           if (tableName === 'cycles') localRef = cycles;
           else if (tableName === 'plans') localRef = plans;
@@ -1124,46 +1173,22 @@
 
           if (isDemoMode.value) return;
 
-          // 2. ОТПРАВЛЯЕМ ЗАПРОС В ОБЛАКО НА ФОНЕ
-          fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-              sheet: tableName,
-              action: "update",
-              id: id,
-              data: updateData
-            })
-          }).then(response => {
-            if (!response.ok) throw new Error("Sync failed");
-          }).catch(err => {
-            console.error(`Ошибка фонового обновления ${tableName}:`, err);
-            triggerToast(`⚠️ Изменение сохранено локально. Проверьте сеть.`);
-          });
+          // 2. Создаем операцию обновления и добавляем в очередь
+          let op = {
+            sheet: tableName,
+            action: "update",
+            id: id,
+            data: updateData
+          };
+
+          syncQueue.value.push(op);
+          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+
+          // 3. Запускаем / сдвигаем таймер синхронизации на 1 минуту вперед
+          resetSyncTimer();
         }
 
-        onMounted(async () => {
-          await initConnection();
-
-          // Оптимизированная синхронизация при возвращении в активное состояние
-          document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-              fetchData();
-            }
-          });
-
-          // Автоматическая синхронизация каждые 2 минуты
-          setInterval(() => {
-            if (document.visibilityState === "visible") {
-              fetchData();
-            }
-          }, 120000);
-        });
-
-        function setRole(newRole) {
-          role.value = newRole;
-          localStorage.setItem('user_role', newRole);
-        }
-
+        // ОТПРАВКА УВЕДОМЛЕНИЙ ЧЕРЕЗ ТГ
         async function sendTelegramNotification(text, targetChatId) {
           const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
@@ -1182,7 +1207,7 @@
           }
         }
 
-        // Быстрые сигналы
+        // БЫСТРЫЕ СИГНАЛЫ ДЛЯ ОБЩЕНИЯ
         const quickSignals = computed(() => {
           return [
             { icon: '🙄', text: 'Игнорщик', msg: '🙋‍♀️ <b>Подруга шутит:</b> Эй, игнорщик! Ответь мне 🙄' },
@@ -1202,16 +1227,17 @@
           }
         }
 
-        // ГРАФИК РАБОТЫ (Safary-совместимый разбор даты)
+        // СТАНДАРТНЫЙ РАСЧЕТ РАБОЧЕГО ГРАФИКА ДЕВУШКИ 2/2
         function getDefaultWorkStatus(dateStr) {
-          const anchor = parseLocalDate("2026-06-03");
-          const current = parseLocalDate(dateStr);
+          const anchor = new Date("2026-06-03T12:00:00");
+          const current = new Date(dateStr + "T12:00:00");
           const diffTime = current - anchor;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           const offset = ((diffDays % 4) + 4) % 4;
           return (offset === 0 || offset === 1) ? 'off' : 'work';
         }
 
+        // ИТОГОВЫЙ СТАТУС С УЧЕТОМ РУЧНОЙ КОРРЕКТИРОВКИ
         function getWorkStatus(dateStr) {
           const custom = customShifts.value.find(s => s.date === dateStr);
           if (custom) return custom.status;
@@ -1222,6 +1248,7 @@
           return customShifts.value.some(s => s.date === dateStr);
         }
 
+        // ДВУХШАГОВЫЙ МЕХАНИЗМ СМЕНЫ СТАТУСА ДНЯ
         async function cycleWorkStatus(dateStr) {
           const defaultStatus = getDefaultWorkStatus(dateStr);
           const existing = customShifts.value.find(s => s.date === dateStr);
@@ -1237,6 +1264,7 @@
           }
         }
 
+        // РАСЧЕТ КАЛЕНДАРЯ
         const calendarDays = computed(() => {
           const year = currentYear.value;
           const month = currentMonth.value;
@@ -1263,9 +1291,9 @@
 
         function getCycleDayForDate(dateStr) {
           if (cycles.value.length === 0) return null;
-          const targetDate = parseLocalDate(dateStr);
+          const targetDate = new Date(dateStr + "T12:00:00");
           const pastStarts = cycles.value
-            .map(c => ({ ...c, start: parseLocalDate(c.start_date) }))
+            .map(c => ({ ...c, start: new Date(c.start_date + "T12:00:00") }))
             .filter(c => c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
           
@@ -1276,16 +1304,16 @@
           return ((diffDays - 1) % cycleLength.value) + 1;
         }
 
-        // ИСПРАВЛЕННЫЙ РАСЧЕТ ФАЗ БЕЗ ХАОСА И С ОГРАНИЧЕНИЕМ ПОВТОРЕНИЙ
+        // ОПРЕДЕЛЕНИЕ ФАЗЫ ДЛЯ ДНЯ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
-          const targetDate = parseLocalDate(dateStr);
+          const targetDate = new Date(dateStr + "T12:00:00");
           
           const pastStarts = cycles.value
             .map(c => ({ 
               ...c, 
-              start: parseLocalDate(c.start_date), 
-              end: parseLocalDate(c.end_date || c.start_date) 
+              start: new Date(c.start_date + "T12:00:00"), 
+              end: new Date((c.end_date || c.start_date) + "T12:00:00") 
             }))
             .filter(c => c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
@@ -1293,6 +1321,7 @@
           if (pastStarts.length === 0) return null;
           const closestCycle = pastStarts[0];
           
+          // 1. Если день попадает ровно в отмеченный менструальный период
           if (targetDate >= closestCycle.start && targetDate <= closestCycle.end) {
             return 'menstrual';
           }
@@ -1300,8 +1329,8 @@
           const diffTime = targetDate - closestCycle.start;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
+          // 2. Строим фазы только в пределах текущего цикла (до его завершения)
           if (diffDays > cycleLength.value) {
-            // Для будущих циклов строим прогноз
             const cycleOffset = (diffDays - 1) % cycleLength.value;
             const dayOfCycle = cycleOffset + 1;
             const ovDay = cycleLength.value - 14;
@@ -1358,6 +1387,7 @@
           return selectedDateStr.value === dateStr;
         }
 
+        // Проверка, является ли день днем менструации
         function isPeriodDay(dateStr) {
           return cycles.value.some(c => {
             if (!c.end_date) return dateStr === c.start_date;
@@ -1378,17 +1408,20 @@
           return sorted[0].start_date;
         });
 
+        // Динамический прогноз следующего цикла на основе выбранной пользователем длины
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
-          const lastStart = parseLocalDate(lastCycleStart.value);
+          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
           lastStart.setDate(lastStart.getDate() + cycleLength.value);
           return getLocalDateString(lastStart).split('-').reverse().join('.');
         });
 
+        // Динамическая разметка прогнозируемых дней (розовым пунктиром)
         function isPredictedDay(dateStr) {
+          if (isPeriodDay(dateStr)) return false; // Защита: не показывать прогноз, если день уже проставлен вручную
           if (!lastCycleStart.value) return false;
-          const lastStart = parseLocalDate(lastCycleStart.value);
-          const current = parseLocalDate(dateStr);
+          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          const current = new Date(dateStr + "T12:00:00");
           const diffTime = current - lastStart;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           
@@ -1401,8 +1434,9 @@
 
         const currentCycleDay = computed(() => {
           if (!lastCycleStart.value) return null;
-          const lastStart = parseLocalDate(lastCycleStart.value);
-          const today = parseLocalDate(getLocalDateString(new Date()));
+          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          const today = new Date();
+          today.setHours(12, 0, 0, 0);
           const diffTime = today - lastStart;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
           return diffDays > 0 && diffDays <= cycleLength.value ? diffDays : null;
@@ -1449,7 +1483,7 @@
           }
         });
 
-        // ПЕРЕКЛЮЧЕНИЕ ПЕРИОДОВ (Safary-совместимая логика дат)
+        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1461,21 +1495,21 @@
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
               triggerToast("Отметка менструации удалена");
             } else if (clickedDate === cycle.end_date) {
-              const prevDay = parseLocalDate(clickedDate);
+              const prevDay = new Date(clickedDate + "T12:00:00");
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               triggerToast("Длина менструации сокращена на 1 день");
             } else if (clickedDate === cycle.start_date) {
-              const nextDay = parseLocalDate(clickedDate);
+              const nextDay = new Date(clickedDate + "T12:00:00");
               nextDay.setDate(nextDay.getDate() + 1);
               const nextDayStr = getLocalDateString(nextDay);
 
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
               triggerToast("Начало периода сдвинуто на 1 день вперед");
             } else {
-              const prevDay = parseLocalDate(clickedDate);
+              const prevDay = new Date(clickedDate + "T12:00:00");
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
@@ -1483,12 +1517,12 @@
               triggerToast("Период менструации завершен досрочно");
             }
           } else {
-            const dayBefore = parseLocalDate(clickedDate);
+            const dayBefore = new Date(clickedDate + "T12:00:00");
             dayBefore.setDate(dayBefore.getDate() - 1);
             const dayBeforeStr = getLocalDateString(dayBefore);
             const cycleToExtendEnd = cycles.value.find(c => c.end_date === dayBeforeStr);
 
-            const dayAfter = parseLocalDate(clickedDate);
+            const dayAfter = new Date(clickedDate + "T12:00:00");
             dayAfter.setDate(dayAfter.getDate() + 1);
             const dayAfterStr = getLocalDateString(dayAfter);
             const cycleToExtendStart = cycles.value.find(c => c.start_date === dayAfterStr);
@@ -1500,8 +1534,8 @@
               await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendStart.id, { start_date: clickedDate });
               triggerToast("Период увеличен на 1 день назад");
             } else {
-              const start = parseLocalDate(clickedDate);
-              const end = parseLocalDate(clickedDate);
+              const start = new Date(clickedDate + "T12:00:00");
+              const end = new Date(start);
               end.setDate(start.getDate() + (periodLength.value - 1));
               const endDateStr = getLocalDateString(end);
 
@@ -1606,32 +1640,30 @@
 
           const plansInCat = plans.value.filter(p => p.category_name === cat.name);
           
-          // 1. Мгновенно обновляем интерфейс локально
+          // 1. Мгновенно обновляем интерфейс локально (0мс)
           plans.value = plans.value.filter(p => p.category_name !== cat.name);
-          categories.value = categories.value.filter(c => c.id !== cat.id);
+          categories.value = categories.value.filter(c => c.id.toString() !== cat.id.toString());
+          
           localStorage.setItem('demo_plans', JSON.stringify(plans.value));
           localStorage.setItem('demo_categories', JSON.stringify(categories.value));
-          
+
           if (newPlanCategory.value === cat.name) {
-            newPlanCategory.value = categories.value.length > 0 ? categories.value[0].name : '';
+            const remaining = categories.value.filter(c => c.id.toString() !== cat.id.toString());
+            newPlanCategory.value = remaining.length > 0 ? remaining[0].name : 'Прочее';
           }
-          triggerToast(`Группа "${cat.name}" удалена`);
+          triggerToast(`Группа "${cat.name}" удалена локально`);
 
-          // 2. В фоновом режиме отправляем удаление в таблицы
           if (isDemoMode.value) return;
-          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
-          
-          fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({ sheet: 'plan_categories', action: 'delete', id: cat.id })
-          });
 
+          // 2. Отправляем все удаления в очередь синхронизации
+          syncQueue.value.push({ sheet: 'plan_categories', action: 'delete', id: cat.id });
           plansInCat.forEach(p => {
-            fetch(APPS_SCRIPT_URL, {
-              method: 'POST',
-              body: JSON.stringify({ sheet: 'plans', action: 'delete', id: p.id })
-            });
+            syncQueue.value.push({ sheet: 'plans', action: 'delete', id: p.id });
           });
+          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+
+          // 3. Сдвигаем таймер синхронизации
+          resetSyncTimer();
         }
 
         async function addPlan() {
@@ -1674,6 +1706,7 @@
           return `${d}.${m}.${y}`;
         }
 
+        // ==================== ИНТЕГРАЦИЯ OPENROUTER/FREE ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
@@ -1762,12 +1795,6 @@ ${plansData}
             });
 
             if (!response.ok) {
-              if (response.status === 401) {
-                throw new Error("Недействительный или заблокированный API-ключ OpenRouter.");
-              }
-              if (response.status === 429) {
-                throw new Error("Слишком много запросов (429). Попробуйте сменить модель.");
-              }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
@@ -1789,6 +1816,7 @@ ${plansData}
           }
         }
 
+        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function sendAiChatMessage() {
           if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
@@ -1835,7 +1863,7 @@ ${plansData}
 
 ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
 
-Текущие данные из общей базы данных:
+Вот текущие данные из общей базы данных:
 - Сегодняшняя дата: ${todayStr}
 - Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
 
@@ -1851,7 +1879,7 @@ ${plansData}
 Смены работы:
 ${shiftsData}
 
-Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как друг.
+Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как понимающий друг.
             `;
 
             const apiMessages = [
@@ -1877,12 +1905,6 @@ ${shiftsData}
             });
 
             if (!response.ok) {
-              if (response.status === 401) {
-                throw new Error("Недействительный или заблокированный API-ключ OpenRouter.");
-              }
-              if (response.status === 429) {
-                throw new Error("Превышен лимит запросов.");
-              }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
@@ -1980,7 +2002,10 @@ ${shiftsData}
           settingsInput,
           saveConnectionSettings,
           resetToDefaultSettings,
-          updateLocalOrDB
+          updateLocalOrDB,
+          syncQueue,
+          isSyncPending,
+          processSyncQueue
         };
       }
     }).mount('#app');
