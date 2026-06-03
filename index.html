@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" class="w-full" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
   <!-- Tailwind CSS -->
@@ -94,7 +94,7 @@
       </div>
     </header>
 
-    <!-- БЫСТРЫЕ СИГНАЛЫ -->
+    <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
       <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
       <div class="flex space-x-2 overflow-x-auto pb-1">
@@ -171,7 +171,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ВЕРХНИЙ ПРАВЫЙ УГОЛ) -->
+                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -645,7 +645,7 @@
 
         <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002-2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
           </svg>
           <span>Наблюдения</span>
         </button>
@@ -715,7 +715,7 @@
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
             <input type="password" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в облачной таблице app_settings.</p>
+            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
           </div>
         </div>
 
@@ -740,7 +740,7 @@
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ (ПРЕДЗАПОЛНЕННЫЕ) ====================
     // 1. Вставьте сюда URL вашего развернутого Google Скрипта (из шага 6, оканчивается на /exec):
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXX_XXXXXXXX/exec"; 
 
     // 2. Вставьте токен вашего Телеграм-бота:
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
@@ -820,7 +820,7 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 3500);
+          }, 3500); // 3.5 секунды для информирования о статусе
         };
 
         // Ввод настроек в интерфейсе (Реактивно связаны)
@@ -1771,7 +1771,7 @@
           return `${d}.${m}.${y}`;
         }
 
-        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
+        // ==================== ИНТЕГРАЦИЯ OPENROUTER/FREE ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
@@ -1881,6 +1881,7 @@ ${plansData}
           }
         }
 
+        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function sendAiChatMessage() {
           if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
@@ -2069,7 +2070,8 @@ ${shiftsData}
           updateLocalOrDB,
           syncQueue,
           isSyncPending,
-          processSyncQueue
+          processSyncQueue,
+          appSettingsList
         };
       }
     }).mount('#app');
