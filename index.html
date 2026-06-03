@@ -59,7 +59,7 @@
     </div>
 
     <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
-    <div v-if="showToast" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 max-w-[90%] text-center">
+    <div v-if="showToast" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800">
       <span>⚡</span>
       <span>{{ toastMessage }}</span>
     </div>
@@ -71,7 +71,7 @@
       </div>
       
       <div class="flex items-center space-x-2.5">
-        <!-- Кнопка настроек -->
+        <!-- Кнопка шестеренки настроек -->
         <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
           ⚙️
         </button>
@@ -128,10 +128,12 @@
               <span>{{ currentPhaseInfo.name }}</span>
             </h2>
             
+            <!-- Сроки фазы -->
             <p v-if="currentPhaseInfo.duration" class="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mb-3">
               ⏳ Приблизительные сроки: {{ currentPhaseInfo.duration }}
             </p>
 
+            <!-- Текст с характеристиками -->
             <div class="space-y-3 text-xs text-stone-600 leading-relaxed font-medium">
               <div>
                 <p class="text-[9px] font-extrabold uppercase text-stone-400 tracking-wider mb-1">🧠 Физиологические и эмоциональные изменения:</p>
@@ -162,22 +164,27 @@
                   !dayObj.isCurrentMonth ? 'text-stone-300 opacity-40' : 'text-stone-700',
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
-                  isPredictedDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
+                  // Розовый пунктир для прогнозируемых дней (как было раньше)
+                  isPredictedDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
+                  // Фиолетовая овуляция
                   isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
               >
                 <span>{{ dayObj.day }}</span>
                 
+                <!-- Иконка рабочего графика -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
                 </span>
                 
+                <!-- Заметные маркеры дней -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
-                  <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
-                  <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
+                  <!-- Маркеры внизу ячеек отображаются только для реальных (сохраненных) циклов, исключая прогнозы -->
+                  <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date) && !isPredictedDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
                 </div>
               </div>
@@ -344,7 +351,7 @@
               <span>Быстрый разбор всех данных базы</span>
             </h3>
             <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
-              Нажмите кнопку ниже, чтобы ИИ составил совет на основе всей истории ваших циклов, планов и заметок.
+              Нажмите кнопку ниже, чтобы ИИ составил структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
             </p>
 
             <transition name="fade">
@@ -489,7 +496,7 @@
 
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
-              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, планы на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
             </div>
 
             <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
@@ -573,6 +580,7 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
+                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -651,7 +659,7 @@
 
         <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
           </svg>
           <span>Планы</span>
         </button>
@@ -659,7 +667,7 @@
       </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ -->
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (С ОФЛЕЙН-КЛИК-ЗАКРЫТИЕМ И ДВУМЯ ID) -->
     <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
         
@@ -668,18 +676,19 @@
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
+          <!-- Крупная и отзывчивая кнопка закрытия для смартфонов -->
           <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
         <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase URL / Google Apps Script URL</label>
             <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ключ авторизации (не требуется для Google Таблиц)</label>
-            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none" disabled>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Supabase Publishable Key (не требуется для Google Таблиц)</label>
+            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым, если используете Google Таблицы" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
           <div>
@@ -692,6 +701,7 @@
             <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
+          <!-- НОВОЕ ПОЛЕ: ID ДЛЯ ПОДРУГИ -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
@@ -725,6 +735,7 @@
           </button>
         </div>
 
+        <!-- Крупная кнопка Закрыть внизу для мобильного удобства -->
         <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
           ✕ Закрыть настройки
         </button>
@@ -740,10 +751,11 @@
 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
-    // ================================================================
+    // =======================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
+    // Получение времени HH:MM
     function getCurrentTime() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -751,11 +763,21 @@
       return `${h}:${m}`;
     }
 
+    // Форматирование локальной даты YYYY-MM-DD
     function getLocalDateString(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
       const d = String(dateObj.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
+    }
+
+    // БЕЗОПАСНЫЙ РАЗБОР ДАТ ДЛЯ SAFARI (iOS / iPhone)
+    // Обычный new Date("YYYY-MM-DD") ломается на iOS, поэтому мы разбираем строку вручную!
+    function parseLocalDate(dateStr) {
+      if (!dateStr) return new Date();
+      const parts = dateStr.split('-');
+      // Возвращаем дату в локальном часовом поясе, выставленную на полдень во избежание сдвигов часовых поясов
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
     }
 
     createApp({
@@ -764,9 +786,11 @@
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
 
+        // Настройки параметров цикла
         const cycleLength = ref(parseInt(localStorage.getItem('user_cycle_length')) || 28);
         const periodLength = ref(parseInt(localStorage.getItem('user_period_length')) || 5);
 
+        // Синхронизация с localStorage
         watch(cycleLength, (newVal) => {
           localStorage.setItem('user_cycle_length', newVal);
         });
@@ -774,6 +798,7 @@
           localStorage.setItem('user_period_length', newVal);
         });
 
+        // Всплывающие уведомления (тосты)
         const showToast = ref(false);
         const toastMessage = ref('');
 
@@ -782,9 +807,10 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 4500);
+          }, 2500);
         };
 
+        // Ввод настроек в интерфейсе
         const settingsInput = ref({
           url: localStorage.getItem('cfg_supabase_url') || "",
           key: localStorage.getItem('cfg_supabase_key') || "",
@@ -797,6 +823,7 @@
 
         const isSettingsOpen = ref(false);
 
+        // Разделяем резервный ключ на две части для безопасности на гитхабе
         const KEY_PART1 = "sk-or-v1-a9a018d054304b72e75fabf9bc8f9485";
         const KEY_PART2 = "d149815501f1a06a6f5f1d100ea9ed7a";
         const BACKUP_OPENROUTER_KEY = KEY_PART1 + KEY_PART2;
@@ -805,12 +832,14 @@
         const aiAnalysisResult = ref("");
         const isAiLoading = ref(false);
 
+        // Чат с ИИ
         const aiChatMessages = ref([
           { role: 'assistant', content: 'Привет! Я твой дружеский ИИ-собеседник в приложении Полнолуние. Я знаю всё о состоянии нашей общей базы данных. Спроси меня о графике подруги, её текущем самочувствии или просто попроси дать дружеский совет! ✨' }
         ]);
         const aiUserMessage = ref("");
         const isAiChatLoading = ref(false);
 
+        // Инициализация соединения
         async function initConnection() {
           const url = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
 
@@ -831,6 +860,7 @@
           }
         }
 
+        // Сохранение настроек соединения из интерфейса (шестеренки)
         async function saveConnectionSettings() {
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
@@ -853,6 +883,7 @@
           isSettingsOpen.value = false;
         }
 
+        // Сброс настроек
         async function resetToDefaultSettings() {
           if (confirm("Вы действительно хотите очистить кастомные настройки и использовать базовые из кода?")) {
             localStorage.removeItem('cfg_supabase_url');
@@ -879,6 +910,7 @@
           }
         }
 
+        // Загрузка ключа OpenRouter
         async function loadApiKey() {
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
@@ -907,32 +939,23 @@
           }
         }
 
-        onMounted(async () => {
-          await initConnection();
+        // КАЛЕНДАРЬ: Состояние (считываем из localStorage, чтобы выбранный день и месяц не слетали при перезапуске приложения)
+        const currentYear = ref(parseInt(localStorage.getItem('cal_current_year')) || new Date().getFullYear());
+        const currentMonth = ref(parseInt(localStorage.getItem('cal_current_month')) || new Date().getMonth());
+        const selectedDateStr = ref(localStorage.getItem('cal_selected_date') || getLocalDateString(new Date()));
+        const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-          document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible") {
-              fetchData();
-            }
-          });
-
-          setInterval(() => {
-            if (document.visibilityState === "visible") {
-              fetchData();
-            }
-          }, 120000);
+        // Сохраняем состояние календаря в localStorage при каждом изменении
+        watch(currentYear, (newVal) => {
+          localStorage.setItem('cal_current_year', newVal);
+        });
+        watch(currentMonth, (newVal) => {
+          localStorage.setItem('cal_current_month', newVal);
+        });
+        watch(selectedDateStr, (newVal) => {
+          localStorage.setItem('cal_selected_date', newVal);
         });
 
-        function setRole(newRole) {
-          role.value = newRole;
-          localStorage.setItem('user_role', newRole);
-        }
-
-        const currentYear = ref(new Date().getFullYear());
-        const currentMonth = ref(new Date().getMonth());
-        const selectedDateStr = ref(getLocalDateString(new Date()));
-        const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-        
         const cycles = ref([]);
         const partnerNotes = ref([]);
         const wellbeingLogs = ref([]);
@@ -940,10 +963,12 @@
         const plans = ref([]);
         const customShifts = ref([]);
 
+        // Ввод дневника
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
         const newNoteContent = ref('');
         
+        // Ввод самочувствия
         const newWellbeingTime = ref(getCurrentTime());
         const newWellbeing = ref({ mood: '😊', energy: 3, stress: 1, physical: 1, notes: '' });
         
@@ -974,7 +999,7 @@
           }
 
           try {
-            // Один единственный запрос к Google Скрипту за всеми данными
+            // Один запрос к Google Скрипту за всеми данными
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
             if (!response.ok) throw new Error("HTTP error");
             const allData = await response.json();
@@ -1003,7 +1028,7 @@
               customShifts.value = await fetchTableSafe('work_shifts');
             }
 
-            // Приведение типов
+            // Приведение булевых типов из текстового формата Google Sheets
             plans.value = plans.value.map(p => ({
               ...p,
               is_completed: p.is_completed === true || p.is_completed === "true" || p.is_completed === 1
@@ -1024,7 +1049,7 @@
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
 
-            // Дублируем свежие данные в локальный кэш (для мгновенной загрузки в будущем)
+            // Локальный кэш
             localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
             localStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
             localStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
@@ -1034,7 +1059,6 @@
 
           } catch (e) {
             console.warn("Сеть недоступна, работаем в локальном режиме:", e);
-            // Если сеть лежит — плавно переключаемся на локальный кэш телефона
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
             partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
             wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
@@ -1076,7 +1100,7 @@
             if (!response.ok) throw new Error("Sync failed");
           }).catch(err => {
             console.error(`Ошибка фоновой синхронизации ${tableName}:`, err);
-            triggerToast(`⚠️ Данные сохранены на телефоне, но не ушли в облако.`);
+            triggerToast(`⚠️ Данные сохранены локально, но не ушли в облако.`);
           });
         }
 
@@ -1117,6 +1141,29 @@
           });
         }
 
+        onMounted(async () => {
+          await initConnection();
+
+          // Оптимизированная синхронизация при возвращении в активное состояние
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+              fetchData();
+            }
+          });
+
+          // Автоматическая синхронизация каждые 2 минуты
+          setInterval(() => {
+            if (document.visibilityState === "visible") {
+              fetchData();
+            }
+          }, 120000);
+        });
+
+        function setRole(newRole) {
+          role.value = newRole;
+          localStorage.setItem('user_role', newRole);
+        }
+
         async function sendTelegramNotification(text, targetChatId) {
           const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
@@ -1135,6 +1182,7 @@
           }
         }
 
+        // Быстрые сигналы
         const quickSignals = computed(() => {
           return [
             { icon: '🙄', text: 'Игнорщик', msg: '🙋‍♀️ <b>Подруга шутит:</b> Эй, игнорщик! Ответь мне 🙄' },
@@ -1154,9 +1202,10 @@
           }
         }
 
+        // ГРАФИК РАБОТЫ (Safary-совместимый разбор даты)
         function getDefaultWorkStatus(dateStr) {
-          const anchor = new Date("2026-06-03T12:00:00");
-          const current = new Date(dateStr + "T12:00:00");
+          const anchor = parseLocalDate("2026-06-03");
+          const current = parseLocalDate(dateStr);
           const diffTime = current - anchor;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           const offset = ((diffDays % 4) + 4) % 4;
@@ -1214,9 +1263,9 @@
 
         function getCycleDayForDate(dateStr) {
           if (cycles.value.length === 0) return null;
-          const targetDate = new Date(dateStr + "T12:00:00");
+          const targetDate = parseLocalDate(dateStr);
           const pastStarts = cycles.value
-            .map(c => ({ ...c, start: new Date(c.start_date + "T12:00:00") }))
+            .map(c => ({ ...c, start: parseLocalDate(c.start_date) }))
             .filter(c => c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
           
@@ -1227,16 +1276,16 @@
           return ((diffDays - 1) % cycleLength.value) + 1;
         }
 
-        // ИСПРАВЛЕННЫЙ РАСЧЕТ ФАЗ БЕЗ ХАОСА НА КАЛЕНДАРЕ
+        // ИСПРАВЛЕННЫЙ РАСЧЕТ ФАЗ БЕЗ ХАОСА И С ОГРАНИЧЕНИЕМ ПОВТОРЕНИЙ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
-          const targetDate = new Date(dateStr + "T12:00:00");
+          const targetDate = parseLocalDate(dateStr);
           
           const pastStarts = cycles.value
             .map(c => ({ 
               ...c, 
-              start: new Date(c.start_date + "T12:00:00"), 
-              end: new Date((c.end_date || c.start_date) + "T12:00:00") 
+              start: parseLocalDate(c.start_date), 
+              end: parseLocalDate(c.end_date || c.start_date) 
             }))
             .filter(c => c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
@@ -1244,7 +1293,6 @@
           if (pastStarts.length === 0) return null;
           const closestCycle = pastStarts[0];
           
-          // 1. Если день попадает ровно в отмеченный период
           if (targetDate >= closestCycle.start && targetDate <= closestCycle.end) {
             return 'menstrual';
           }
@@ -1252,7 +1300,6 @@
           const diffTime = targetDate - closestCycle.start;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-          // 2. Считаем фазы только для текущего текущего цикла (до конца его длины)
           if (diffDays > cycleLength.value) {
             // Для будущих циклов строим прогноз
             const cycleOffset = (diffDays - 1) % cycleLength.value;
@@ -1333,15 +1380,15 @@
 
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
-          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          const lastStart = parseLocalDate(lastCycleStart.value);
           lastStart.setDate(lastStart.getDate() + cycleLength.value);
           return getLocalDateString(lastStart).split('-').reverse().join('.');
         });
 
         function isPredictedDay(dateStr) {
           if (!lastCycleStart.value) return false;
-          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
-          const current = new Date(dateStr + "T12:00:00");
+          const lastStart = parseLocalDate(lastCycleStart.value);
+          const current = parseLocalDate(dateStr);
           const diffTime = current - lastStart;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           
@@ -1354,9 +1401,8 @@
 
         const currentCycleDay = computed(() => {
           if (!lastCycleStart.value) return null;
-          const lastStart = new Date(lastCycleStart.value + "T12:00:00");
-          const today = new Date();
-          today.setHours(12, 0, 0, 0);
+          const lastStart = parseLocalDate(lastCycleStart.value);
+          const today = parseLocalDate(getLocalDateString(new Date()));
           const diffTime = today - lastStart;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
           return diffDays > 0 && diffDays <= cycleLength.value ? diffDays : null;
@@ -1403,6 +1449,7 @@
           }
         });
 
+        // ПЕРЕКЛЮЧЕНИЕ ПЕРИОДОВ (Safary-совместимая логика дат)
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1414,21 +1461,21 @@
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
               triggerToast("Отметка менструации удалена");
             } else if (clickedDate === cycle.end_date) {
-              const prevDay = new Date(clickedDate + "T12:00:00");
+              const prevDay = parseLocalDate(clickedDate);
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
               triggerToast("Длина менструации сокращена на 1 день");
             } else if (clickedDate === cycle.start_date) {
-              const nextDay = new Date(clickedDate + "T12:00:00");
+              const nextDay = parseLocalDate(clickedDate);
               nextDay.setDate(nextDay.getDate() + 1);
               const nextDayStr = getLocalDateString(nextDay);
 
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
               triggerToast("Начало периода сдвинуто на 1 день вперед");
             } else {
-              const prevDay = new Date(clickedDate + "T12:00:00");
+              const prevDay = parseLocalDate(clickedDate);
               prevDay.setDate(prevDay.getDate() - 1);
               const prevDayStr = getLocalDateString(prevDay);
 
@@ -1436,12 +1483,12 @@
               triggerToast("Период менструации завершен досрочно");
             }
           } else {
-            const dayBefore = new Date(clickedDate + "T12:00:00");
+            const dayBefore = parseLocalDate(clickedDate);
             dayBefore.setDate(dayBefore.getDate() - 1);
             const dayBeforeStr = getLocalDateString(dayBefore);
             const cycleToExtendEnd = cycles.value.find(c => c.end_date === dayBeforeStr);
 
-            const dayAfter = new Date(clickedDate + "T12:00:00");
+            const dayAfter = parseLocalDate(clickedDate);
             dayAfter.setDate(dayAfter.getDate() + 1);
             const dayAfterStr = getLocalDateString(dayAfter);
             const cycleToExtendStart = cycles.value.find(c => c.start_date === dayAfterStr);
@@ -1453,8 +1500,8 @@
               await updateLocalOrDB('cycles', 'demo_cycles', cycleToExtendStart.id, { start_date: clickedDate });
               triggerToast("Период увеличен на 1 день назад");
             } else {
-              const start = new Date(clickedDate + "T12:00:00");
-              const end = new Date(start);
+              const start = parseLocalDate(clickedDate);
+              const end = parseLocalDate(clickedDate);
               end.setDate(start.getDate() + (periodLength.value - 1));
               const endDateStr = getLocalDateString(end);
 
@@ -1670,7 +1717,7 @@
 
 === ПОЛНАЯ БАЗА ДАННЫХ ПРИЛОЖЕНИЯ ===
 
-1. Все циклы подруги:
+1. Все исторические циклы подруги:
 ${cyclesData}
 
 2. Корректировки её рабочего графика (2/2):
@@ -1685,10 +1732,10 @@ ${wellbeingData}
 5. Текущие общие планы и музыка:
 ${plansData}
 
-На основе этих данных составь краткий отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
+На основе этих данных составь краткий дружеский отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
 1. **Дружеский климат**: Коротко опиши, как дела у подруги, какой у неё уровень энергии и стресса в последнее время.
 2. **Анализ цикла и работы**: Как её текущие рабочие дни пересекаются с самочувствием и фазой цикла? На что ей стоит обратить внимание?
-3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе.
+3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе (например, предложить интересный фильм, прислать трек в планы, напомнить отдохнуть, если стресс высокий).
 4. **Советы для Нее**: Как спланировать свои дела, поберечь силы и что можно обсудить с другом для поднятия настроения.
             `;
 
@@ -1730,7 +1777,7 @@ ${plansData}
               aiAnalysisResult.value = data.choices[0].message.content;
               triggerToast("Анализ готов! 🔮");
             } else {
-              aiAnalysisResult.value = "Не удалось получить ответ от ИИ.";
+              aiAnalysisResult.value = "Не удалось обработать ответ от ИИ.";
             }
 
           } catch (err) {
@@ -1804,7 +1851,7 @@ ${plansData}
 Смены работы:
 ${shiftsData}
 
-Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или поддерживай беседу как друг.
+Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как друг.
             `;
 
             const apiMessages = [
