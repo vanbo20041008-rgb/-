@@ -57,7 +57,7 @@
     <!-- ДЕМО-БАННЕР -->
     <div v-if="isDemoMode" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 flex items-center justify-center space-x-1.5 shadow-sm">
       <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и укажите ключи подключения.</span>
+      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите ключи подключения.</span>
     </div>
 
     <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
@@ -176,14 +176,14 @@
                 <!-- Иконка рабочего графика -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
-                  <span v-if="isCustomShift(dateObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
+                  <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
                 </span>
                 
                 <!-- Заметные маркеры дней -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <!-- Фиолетовый маркер фазы овуляции -->
+                  <!-- Фиолетовый маркер овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -192,7 +192,7 @@
             </div>
           </div>
 
-          <!-- Легенда (динамические сроки в зависимости от настроек) -->
+          <!-- Легенда -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3.5">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Пояснения к фазам и цветам:</h4>
             <div class="grid grid-cols-2 gap-3 text-[10px] font-bold text-stone-600">
@@ -228,7 +228,7 @@
             </div>
           </div>
 
-          <!-- Параметры, настройки и расчеты -->
+          <!-- Настройки цикла -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
             
@@ -364,7 +364,7 @@
             <button 
               @click="analyzeAllApplicationData" 
               :disabled="isAiLoading"
-              class="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
+              class="w-full py-3 bg-gradient-to-r from-indigo-505 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
             >
               <span v-if="isAiLoading">⏳ Анализирую...</span>
               <span v-else>✨ Запустить ИИ-анализ базы</span>
@@ -581,7 +581,6 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
-                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -668,15 +667,17 @@
       </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (ДИНАМИЧЕСКИЙ ВВОД КЛЮЧЕЙ ИЗ ИНТЕРФЕЙСА) -->
-    <div v-if="isSettingsOpen" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4">
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (С ОФЛЕЙН-КЛИК-ЗАКРЫТИЕМ И ДВУМЯ ID) -->
+    <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
+        
         <div class="flex justify-between items-center border-b border-stone-100 pb-3">
           <h3 class="text-xs font-black uppercase text-stone-700 tracking-wider flex items-center space-x-2">
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
-          <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-bold text-sm">✕</button>
+          <!-- Крупная и отзывчивая кнопка закрытия для смартфонов -->
+          <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
         <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
@@ -700,6 +701,12 @@
             <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
+          <!-- НОВОЕ ПОЛЕ: ID ДЛЯ ПОДРУГИ -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
+            <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Резервный OpenRouter API Key (опционально)</label>
             <input type="password" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
@@ -715,6 +722,11 @@
             Сохранить и связать
           </button>
         </div>
+
+        <!-- Крупная кнопка Закрыть внизу для мобильного удобства -->
+        <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
+          ✕ Закрыть настройки
+        </button>
       </div>
     </div>
 
@@ -784,6 +796,7 @@
           key: localStorage.getItem('cfg_supabase_key') || "",
           botToken: localStorage.getItem('cfg_bot_token') || "",
           himChatId: localStorage.getItem('cfg_him_chat_id') || "",
+          herChatId: localStorage.getItem('cfg_her_chat_id') || "",
           openrouterKey: localStorage.getItem('cfg_openrouter_key') || ""
         });
 
@@ -831,8 +844,6 @@
 
         // Сохранение настроек соединения из интерфейса (шестеренки)
         async function saveConnectionSettings() {
-          // Сохраняем в localStorage только те поля, которые пользователь заполнил.
-          // Если поле пустое, удаляем его из localStorage, чтобы приложение автоматически брало дефолты из кода.
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
               localStorage.setItem(key, val.trim());
@@ -845,6 +856,7 @@
           setOrRemove('cfg_supabase_key', settingsInput.value.key);
           setOrRemove('cfg_bot_token', settingsInput.value.botToken);
           setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
+          setOrRemove('cfg_her_chat_id', settingsInput.value.herChatId);
           setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
 
           triggerToast("Настройки сохранены. Перезапускаю подключение...");
@@ -859,6 +871,7 @@
             localStorage.removeItem('cfg_supabase_key');
             localStorage.removeItem('cfg_bot_token');
             localStorage.removeItem('cfg_him_chat_id');
+            localStorage.removeItem('cfg_her_chat_id');
             localStorage.removeItem('cfg_openrouter_key');
 
             settingsInput.value = {
@@ -866,6 +879,7 @@
               key: "",
               botToken: "",
               himChatId: "",
+              herChatId: "",
               openrouterKey: ""
             };
 
@@ -1298,7 +1312,6 @@
           return diffDays > 0 && diffDays <= cycleLength.value ? diffDays : null;
         });
 
-        // СРЕДНЕСТАТИСТИЧЕСКИЕ ХАРАКТЕРИСТИКИ БЕЗ ПОДДЕРЖИВАЮЩИХ ФРАЗ
         const currentPhaseInfo = computed(() => {
           const day = currentCycleDay.value;
           if (!day) return { 
@@ -1329,7 +1342,7 @@
             return {
               name: "Овуляция ✨",
               duration: `${ovDay}-й день цикла (пиковое окно 24–48 часов)`,
-              desc: "Фаза пиковых физических возможностей и наивысшей уверенности в себе. Повышается общительность, эмпатия и хорошее настроение."
+              desc: "Фаза пиковых физических возможностей и наивысшей уверенности в себе. Повышается общительность, эмпатия и настроение."
             };
           } else {
             return {
@@ -1340,7 +1353,7 @@
           }
         });
 
-        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
+        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1462,7 +1475,6 @@
           return partnerNotes.value.some(n => n.date === dateStr);
         }
 
-        // ЗАМЕТКИ С АВТОРАМИ И ВРЕМЕНЕМ
         const sortedNotes = computed(() => {
           return [...partnerNotes.value].sort((a,b) => b.date.localeCompare(a.date));
         });
@@ -1487,7 +1499,6 @@
           triggerToast("Запись удалена");
         }
 
-        // ПОКАЗАТЕЛИ С АВТОРАМИ И ВРЕМЕНЕМ
         async function saveWellbeing() {
           const newRecord = {
             id: Date.now().toString(),
@@ -1506,13 +1517,11 @@
           triggerToast("Состояние зафиксировано!");
         }
 
-        // УДАЛЕНИЕ ЗАПИСИ СОСТОЯНИЯ (ИСТОРИЯ СОСТОЯНИЯ)
         async function deleteWellbeing(id) {
           await saveLocalOrDB('wellbeing', 'demo_wellbeing', wellbeingLogs, null, true, id);
           triggerToast("Запись состояния удалена");
         }
 
-        // ПЛАНЫ И МУЗЫКА
         function getPlansByCategory(categoryName) {
           return plans.value.filter(p => p.category_name === categoryName);
         }
@@ -1598,6 +1607,230 @@
           if (!dateStr) return '';
           const [y, m, d] = dateStr.split('-');
           return `${d}.${m}.${y}`;
+        }
+
+        // ==================== ИНТЕГРАЦИЯ УНИВЕРСАЛЬНОГО ИИ-РОУТЕРА (OPENROUTER/FREE) ====================
+        async function analyzeAllApplicationData() {
+          if (isAiLoading.value) return;
+          
+          isAiLoading.value = true;
+          aiAnalysisResult.value = "Свободный ИИ изучает базу данных и ищет закономерности...";
+
+          try {
+            const todayStr = getLocalDateString(new Date());
+            const phase = currentPhaseInfo.value;
+            const cycleDay = currentCycleDay.value;
+
+            const cyclesData = cycles.value.map(c => 
+              `- С ${formatDateDisplay(c.start_date)} по ${formatDateDisplay(c.end_date || c.start_date)}`
+            ).join("\n") || "Нет данных.";
+
+            const notesData = sortedNotes.value.map(n => 
+              `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
+            ).join("\n") || "Нет данных.";
+
+            const wellbeingData = wellbeingLogs.value.map(w => 
+              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
+            ).join("\n") || "Нет данных.";
+
+            const plansData = plans.value.map(p => 
+              `- Категория [${p.category_name}]: "${p.title}" (${p.is_completed ? 'Выполнено' : 'Не выполнено'})`
+            ).join("\n") || "Нет данных.";
+
+            const shiftsData = customShifts.value.map(s => 
+              `- ${formatDateDisplay(s.date)}: ${s.status === 'work' ? 'Работа' : 'Выходной'}`
+            ).join("\n") || "Нет данных.";
+
+            const prompt = `
+Ты — умный и деликатный ИИ-помощник в дружеском приложении "Полнолуние".
+Перед тобой находятся все текущие данные из нашей общей базы данных. Твоя задача — проанализировать их и дать дружеские советы для двух онлайн-друзей (Он и Она).
+
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши строго в дружеском, понимающем, но платоническом тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+
+Системные параметры:
+- Текущая дата: ${todayStr}
+- Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
+
+=== ПОЛНАЯ БАЗА ДАННЫХ ПРИЛОЖЕНИЯ ===
+
+1. Все исторические циклы подруги:
+${cyclesData}
+
+2. Корректировки её рабочего графика (2/2):
+${shiftsData}
+
+3. Дневник дружеской поддержки (все записи):
+${notesData}
+
+4. История показателей её самочувствия:
+${wellbeingData}
+
+5. Текущие общие планы и музыка:
+${plansData}
+
+На основе этих данных составь краткий дружеский отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
+1. **Дружеский климат**: Коротко опиши, как дела у подруги, какой у неё уровень энергии и стресса в последнее время.
+2. **Анализ цикла и работы**: Как её текущие рабочие дни пересекаются с самочувствием и фазой цикла? На что ей стоит обратить внимание?
+3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе (например, предложить интересный фильм, прислать трек в планы, напомнить отдохнуть, если стресс высокий).
+4. **Советы для Нее**: Как спланировать свои дела, поберечь силы и что можно обсудить с другом для поднятия настроения.
+            `;
+
+            const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
+
+            // Запрос к бесплатному API OpenRouter с использованием универсального роутера
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${activeKey}`,
+                "HTTP-Referer": "https://github.com/your-username/your-repo",
+                "X-Title": "Fullmoon App"
+              },
+              body: JSON.stringify({
+                model: "openrouter/free", // Универсальный роутер свободных моделей - 100% застрахован от 404
+                messages: [
+                  {
+                    role: "user",
+                    content: prompt
+                  }
+                ]
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.choices && data.choices[0]?.message?.content) {
+              aiAnalysisResult.value = data.choices[0].message.content;
+              triggerToast("Анализ готов! 🔮");
+            } else {
+              aiAnalysisResult.value = "Не удалось обработать ответ от ИИ.";
+            }
+
+          } catch (err) {
+            console.error("ИИ Анализ завершился с ошибкой:", err);
+            aiAnalysisResult.value = `Не удалось выполнить анализ данных: ${err.message}`;
+            triggerToast("Ошибка работы ИИ");
+          } finally {
+            isAiLoading.value = false;
+          }
+        }
+
+        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
+        async function sendAiChatMessage() {
+          if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
+
+          const userText = aiUserMessage.value.trim();
+          aiChatMessages.value.push({ role: 'user', content: userText });
+          aiUserMessage.value = "";
+          isAiChatLoading.value = true;
+
+          // Автоматическая прокрутка чата вниз при добавлении сообщений
+          const chatContainer = document.querySelector('[ref="chatContainer"]');
+          if (chatContainer) {
+            setTimeout(() => {
+              chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 50);
+          }
+
+          try {
+            const todayStr = getLocalDateString(new Date());
+            const phase = currentPhaseInfo.value;
+            const cycleDay = currentCycleDay.value;
+
+            const cyclesData = cycles.value.map(c => 
+              `- С ${formatDateDisplay(c.start_date)} по ${formatDateDisplay(c.end_date || c.start_date)}`
+            ).join("\n") || "Нет данных.";
+
+            const notesData = sortedNotes.value.slice(0, 10).map(n => 
+              `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
+            ).join("\n") || "Нет данных.";
+
+            const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
+              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
+            ).join("\n") || "Нет данных.";
+
+            const plansData = plans.value.map(p => 
+              `- [${p.category_name}]: "${p.title}" (${p.is_completed ? 'Выполнено' : 'В планах'}, Автор: ${p.author === 'her' ? 'Она' : 'Он'})`
+            ).join("\n") || "Планы пусты.";
+
+            const shiftsData = customShifts.value.map(s => 
+              `- ${formatDateDisplay(s.date)}: ${s.status === 'work' ? 'Работа' : 'Выходной'}`
+            ).join("\n") || "График не изменен.";
+
+            const systemPrompt = `
+Ты — умный, деликатный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
+Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
+
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+
+Вот текущие данные из их общей базы данных Supabase:
+- Сегодняшняя дата: ${todayStr}
+- Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
+
+Заметки из дневника поддержки:
+${notesData}
+
+История самочувствия:
+${wellbeingData}
+
+Совместные планы:
+${plansData}
+
+Смены работы:
+${shiftsData}
+
+Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как понимающий друг.
+            `;
+
+            const apiMessages = [
+              { role: 'system', content: systemPrompt },
+              ...aiChatMessages.value.map(msg => ({ role: msg.role, content: msg.content }))
+            ];
+
+            const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
+
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${activeKey}`,
+                "HTTP-Referer": "https://github.com/your-username/your-repo",
+                "X-Title": "Fullmoon App"
+              },
+              body: JSON.stringify({
+                model: "openrouter/free", // Универсальный бесплатный роутер - 100% защита от ошибок 404
+                messages: apiMessages
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.choices && data.choices[0]?.message?.content) {
+              aiChatMessages.value.push({ role: 'assistant', content: data.choices[0].message.content });
+            } else {
+              aiChatMessages.value.push({ role: 'assistant', content: 'Извините, не удалось получить ответ от ИИ.' });
+            }
+
+          } catch (err) {
+            console.error("Ошибка чата ИИ:", err);
+            aiChatMessages.value.push({ role: 'assistant', content: `Ошибка связи с ИИ: ${err.message}` });
+          } finally {
+            isAiChatLoading.value = false;
+            // Прокрутка вниз после добавления ответа ИИ
+            setTimeout(() => {
+              if (chatContainer) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+              }
+            }, 50);
+          }
         }
 
         return {
