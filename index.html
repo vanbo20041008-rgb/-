@@ -15,6 +15,7 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
+    /* Анимация пульса */
     @keyframes pulse-anim {
       0% { stroke-dashoffset: 1000; }
       100% { stroke-dashoffset: 0; }
@@ -159,6 +160,7 @@
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
                   isPredictedDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
+                  // Фиолетовая овуляция
                   isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
               >
@@ -170,10 +172,11 @@
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
                 </span>
                 
-                <!-- Маркеры дней -->
+                <!-- Заметные маркеры дней -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
+                  <!-- Фиолетовый маркер фазы овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -182,7 +185,7 @@
             </div>
           </div>
 
-          <!-- Легенда -->
+          <!-- Легенда (динамические сроки в зависимости от настроек) -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3.5">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Пояснения к фазам и цветам:</h4>
             <div class="grid grid-cols-2 gap-3 text-[10px] font-bold text-stone-600">
@@ -218,10 +221,11 @@
             </div>
           </div>
 
-          <!-- Параметры -->
+          <!-- Параметры, настройки и расчеты -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
             
+            <!-- Селекторы индивидуальных параметров цикла -->
             <div class="grid grid-cols-2 gap-3.5">
               <div>
                 <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина цикла (дней)</label>
@@ -237,6 +241,7 @@
               </div>
             </div>
 
+            <!-- Результаты динамических расчетов -->
             <div class="border-t border-stone-50 pt-3 space-y-2 text-xs font-bold text-stone-600">
               <div class="flex justify-between">
                 <span>Параметры:</span>
@@ -261,6 +266,7 @@
             
             <p class="text-[10px] text-stone-400 italic text-center">💡 Кликните по дате повторно прямо на календаре, чтобы быстро добавить/удалить день менструации по одному</p>
 
+            <!-- Кнопки управления днем -->
             <div class="grid grid-cols-1 gap-2">
               <button 
                 @click="togglePeriodStart" 
@@ -269,6 +275,7 @@
                 {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить день менструации' : '🩸 Отметить как день менструации (на ' + periodLength + ' дней)' }}
               </button>
 
+              <!-- КНОПКА ПОЛНОГО УДАЛЕНИЯ ВЫБРАННОГО ПЕРИОДА -->
               <button 
                 v-if="selectedCycle"
                 @click="deleteEntireCycle"
@@ -277,6 +284,7 @@
                 🗑️ Удалить весь этот период менструации
               </button>
 
+              <!-- КНОПКА КОРРЕКТИРОВКИ ГРАФИКА ДЛЯ ВЫБРАННОГО ДНЯ -->
               <button 
                 @click="cycleWorkStatus(selectedDateStr)"
                 class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 active:scale-[0.98] text-stone-700 font-bold rounded-2xl text-xs transition border border-stone-200"
@@ -291,7 +299,7 @@
         <!-- ==================== ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ИИ) ==================== -->
         <div v-if="activeTab === 'notes'" class="space-y-5">
           
-          <!-- БЛОК СИНХРОННОГО ИИ АНАЛИЗА ДАННЫХ -->
+          <!-- НОВЫЙ БЛОК ДРУЖЕСКОГО ИИ-АНАЛИЗА -->
           <div class="p-5 rounded-3xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-indigo-150/40 shadow-sm space-y-4">
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
@@ -334,7 +342,7 @@
 
           <div class="p-5 rounded-3xl bg-gradient-to-tr from-amber-50/60 to-orange-50/50 border border-amber-100 shadow-sm">
             <h2 class="text-sm font-extrabold text-stone-800 mb-1">Дневник поддержки</h2>
-            <p class="text-[11px] text-stone-600 leading-relaxed">Обменивайтесь короткими записями о делах, увлечениях и самочувствии, чтобы оставаться на связи.</p>
+            <p class="text-[11px] text-stone-600 leading-relaxed">Здесь вы можете обмениваться заметками, фиксировать важные наблюдения и поддерживать друг друга.</p>
           </div>
 
           <!-- Создать заметку -->
@@ -352,7 +360,7 @@
               </div>
               <div>
                 <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Текст заметки</label>
-                <textarea v-model="newNoteContent" placeholder="Что произошло интересного или как дела..." rows="3" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none leading-relaxed"></textarea>
+                <textarea v-model="newNoteContent" placeholder="Опишите самочувствие или важную информацию здесь..." rows="3" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none leading-relaxed"></textarea>
               </div>
             </div>
             <button @click="savePartnerNote" class="w-full py-3.5 bg-gradient-to-r from-orange-400 to-amber-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-orange-100">
@@ -407,11 +415,13 @@
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h3 class="text-sm font-bold text-stone-700">Зафиксировать текущие показатели</h3>
             
+            <!-- Время внесения -->
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время записи</label>
               <input type="time" v-model="newWellbeingTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
             </div>
 
+            <!-- Эмодзи -->
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-2">Настроение</label>
               <div class="grid grid-cols-5 gap-2">
@@ -426,6 +436,7 @@
               </div>
             </div>
 
+            <!-- Ползунки -->
             <div class="space-y-3.5">
               <div>
                 <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
@@ -454,7 +465,7 @@
 
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
-              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, планы на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
             </div>
 
             <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
@@ -478,6 +489,7 @@
                     {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                   </span>
                   <span class="text-xl">{{ log.mood }}</span>
+                  <!-- КНОПКА УДАЛЕНИЯ ЗАПИСИ СОСТОЯНИЯ -->
                   <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
                 </div>
               </div>
@@ -521,7 +533,7 @@
               </div>
               <div>
                 <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Название / Ссылка на музыку</label>
-                <input type="text" v-model="newPlanTitle" placeholder="Пойти погулять или ссылка на трек..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+                <input type="text" v-model="newPlanTitle" placeholder="Пойти в кино или ссылка на трек..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
               </div>
             </div>
             <button @click="addPlan" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
@@ -538,6 +550,7 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
+                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -565,7 +578,7 @@
                     
                     <span v-if="isLink(plan.title)" class="truncate text-xs">
                       <a :href="plan.title" target="_blank" :class="['hover:underline font-bold flex items-center space-x-1', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-blue-500']">
-                        <span>🔊 Открыть ссылку</span>
+                        <span>🔊 Открыть трек / сообщение</span>
                       </a>
                     </span>
                     <span v-else :class="['text-xs font-semibold truncate', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-stone-700']">
@@ -593,28 +606,28 @@
     <nav class="fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-rose-100 py-3.5 px-6 rounded-3xl z-50 shadow-lg shadow-rose-100/35">
       <div class="max-w-md mx-auto flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-stone-400">
         
-        <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
+        <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
           <span>Календарь</span>
         </button>
 
-        <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-700']">
+        <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
           </svg>
           <span>Наблюдения</span>
         </button>
 
-        <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
+        <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
           </svg>
           <span>Самочувствие</span>
         </button>
 
-        <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
+        <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
           </svg>
@@ -628,18 +641,18 @@
 
   <script>
     // ==================== НАСТРОЙКИ SUPABASE И ТЕЛЕГРАМА ====================
-    // Замените эти значения на данные из вашего проекта в Supabase (Шаг 4)
     const SUPABASE_URL = "https://jliktyxhrmanjgmdcocd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_FhIHxhvYJWNeHz2PMLLolA_8RpcQ29Q";
 
-    // Настройки для уведомлений Telegram (Шаг 5)
+    // Настройки для уведомлений:
     const TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
-    const HIM_CHAT_ID = "1719296144"; 
-    const HER_CHAT_ID = "ВСТАВЬТЕ_ID_АККАУНТА_ДЕВУШКИ"; 
+    const HIM_CHAT_ID = "1719296144"; // ИД парня, куда придут сигналы
+    const HER_CHAT_ID = ""; // Оставлено пустым по вашей просьбе
     // =======================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
+    // Вспомогательная функция для получения текущего локального времени HH:MM
     function getCurrentTime() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -647,6 +660,7 @@
       return `${h}:${m}`;
     }
 
+    // Умный хелпер для форматирования локальной даты (лечит баг сдвига часовых поясов)
     function getLocalDateString(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -661,9 +675,11 @@
         const isDemoMode = ref(false);
         let db = null;
 
+        // Настройки параметров длины цикла и менструации
         const cycleLength = ref(parseInt(localStorage.getItem('user_cycle_length')) || 28);
         const periodLength = ref(parseInt(localStorage.getItem('user_period_length')) || 5);
 
+        // Синхронизация изменений настроек с localStorage
         watch(cycleLength, (newVal) => {
           localStorage.setItem('user_cycle_length', newVal);
         });
@@ -671,6 +687,7 @@
           localStorage.setItem('user_period_length', newVal);
         });
 
+        // Всплывающие уведомления (тосты)
         const showToast = ref(false);
         const toastMessage = ref('');
 
@@ -700,8 +717,12 @@
           }
         };
 
-        // Загрузка ключа OpenRouter из зашифрованной таблицы в Supabase
+        // Реактивные переменные для работы с ИИ
         const openRouterApiKey = ref("");
+        const aiAnalysisResult = ref("");
+        const isAiLoading = ref(false);
+
+        // Безопасная загрузка ключа из Supabase (защита от сканеров GitHub)
         async function loadApiKey() {
           if (isDemoMode.value) return;
           try {
@@ -714,7 +735,7 @@
               openRouterApiKey.value = data.key_value;
             }
           } catch (e) {
-            console.error("Не удалось прочитать ключ OpenRouter:", e);
+            console.error("Не удалось прочитать ключ OpenRouter из Supabase:", e);
           }
         }
 
@@ -727,14 +748,14 @@
           await fetchData();
           await loadApiKey();
 
-          // Оптимизированное обновление данных при возврате пользователя в приложение
+          // Оптимизированная синхронизация при возвращении в приложение
           document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
               fetchData();
             }
           });
 
-          // Автоматическая синхронизация раз в 2 минуты (только при активном экране)
+          // Автообновление каждые 2 минуты, если вкладка активна
           setInterval(() => {
             if (document.visibilityState === "visible") {
               fetchData();
@@ -753,15 +774,15 @@
         const selectedDateStr = ref(getLocalDateString(new Date()));
         const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
         
-        // Массивы данных
+        // Массивы
         const cycles = ref([]);
         const partnerNotes = ref([]);
         const wellbeingLogs = ref([]);
         const categories = ref([]);
         const plans = ref([]);
-        const customShifts = ref([]);
+        const customShifts = ref([]); // Массив ручной корректировки смен
 
-        // Ввод данных
+        // Ввод
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
         const newNoteContent = ref('');
@@ -773,9 +794,6 @@
         const newCategoryName = ref('');
         const newPlanCategory = ref('Прочее');
         const newPlanTitle = ref('');
-
-        const aiAnalysisResult = ref("");
-        const isAiLoading = ref(false);
 
         async function fetchData() {
           if (isDemoMode.value) {
@@ -817,7 +835,9 @@
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
           } catch (e) {
-            console.error("База данных временно недоступна. Автономный режим:", e);
+            console.error("Supabase offline:", e);
+            isDemoMode.value = true;
+            fetchData();
           }
         }
 
@@ -836,9 +856,10 @@
               await db.from(tableName).insert([newRecord]);
             }
           }
-          await fetchData();
+          fetchData();
         }
 
+        // ОТПРАВКА УВЕДОМЛЕНИЙ ЧЕРЕЗ ТГ
         async function sendTelegramNotification(text, targetChatId) {
           if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("ВСТАВЬТЕ") || !targetChatId || targetChatId.includes("ВСТАВЬТЕ")) return;
           try {
@@ -852,16 +873,17 @@
               })
             });
           } catch (e) {
-            console.error("Ошибка Telegram уведомления:", e);
+            console.error("Ошибка уведомления Telegram:", e);
           }
         }
 
+        // БЫСТРЫЕ СИГНАЛЫ ДЛЯ ОБЩЕНИЯ
         const quickSignals = computed(() => {
           return [
-            { icon: '🙄', text: 'Эй', msg: '🙋‍♀️ <b>Подруга шутит:</b> Отзовись, когда освободишься 🙄' },
-            { icon: '💬', text: 'Поговорим?', msg: '🙋‍♀️ <b>Подруга предлагает:</b> Есть минутка поболтать? 💬' },
-            { icon: '🏡', text: 'Я дома', msg: '🙋‍♀️ <b>Подруга сообщает:</b> Я уже дома! 🏡' },
-            { icon: '🔥', text: 'Класс', msg: '🙋‍♀️ <b>Подруга шлет сигнал:</b> Зацени это! 🔥' }
+            { icon: '🙄', text: 'Игнорщик', msg: '🙋‍♀️ <b>Подруга шутит:</b> Эй, игнорщик! Ответь мне 🙄' },
+            { icon: '💬', text: 'Поговори со мной', msg: '🙋‍♀️ <b>Подруга пишет:</b> Поговори со мной! 💬' },
+            { icon: '🏡', text: 'Я дома', msg: '🙋‍♀️ <b>Подруга пишет:</b> Я уже дома! 🏡' },
+            { icon: '🔥', text: 'Тыкни огонёк', msg: '🙋‍♀️ <b>Подруга просит:</b> Тыкни огонёк! 🔥' }
           ];
         });
 
@@ -875,6 +897,7 @@
           }
         }
 
+        // СТАНДАРТНЫЙ РАСЧЕТ РАБОЧЕГО ГРАФИКА ДЕВУШКИ 2/2
         function getDefaultWorkStatus(dateStr) {
           const anchor = new Date("2026-06-03T12:00:00");
           const current = new Date(dateStr + "T12:00:00");
@@ -884,6 +907,7 @@
           return (offset === 0 || offset === 1) ? 'off' : 'work';
         }
 
+        // ИТОГОВЫЙ СТАТУС С УЧЕТОМ РУЧНОЙ КОРРЕКТИРОВКИ
         function getWorkStatus(dateStr) {
           const custom = customShifts.value.find(s => s.date === dateStr);
           if (custom) return custom.status;
@@ -894,6 +918,7 @@
           return customShifts.value.some(s => s.date === dateStr);
         }
 
+        // ДВУХШАГОВЫЙ МЕХАНИЗМ СМЕНЫ СТАТУСА ДНЯ
         async function cycleWorkStatus(dateStr) {
           const defaultStatus = getDefaultWorkStatus(dateStr);
           const existing = customShifts.value.find(s => s.date === dateStr);
@@ -902,13 +927,14 @@
             const oppositeStatus = defaultStatus === 'work' ? 'off' : 'work';
             const newRecord = { id: Date.now().toString(), date: dateStr, status: oppositeStatus };
             await saveLocalOrDB('work_shifts', 'demo_work_shifts', customShifts, newRecord);
-            triggerToast(`График изменен: ${oppositeStatus === 'work' ? '💼 Работа' : '🏡 Выходной'}`);
+            triggerToast(`Установлено вручную: ${oppositeStatus === 'work' ? '💼 Работа' : '🏡 Выходной'}`);
           } else {
             await saveLocalOrDB('work_shifts', 'demo_work_shifts', customShifts, null, true, existing.id);
             triggerToast("Сброшено на стандартный график 2/2");
           }
         }
 
+        // РАСЧЕТ КАЛЕНДАРЯ
         const calendarDays = computed(() => {
           const year = currentYear.value;
           const month = currentMonth.value;
@@ -933,6 +959,22 @@
           return days;
         });
 
+        function getCycleDayForDate(dateStr) {
+          if (cycles.value.length === 0) return null;
+          const targetDate = new Date(dateStr + "T12:00:00");
+          const pastStarts = cycles.value
+            .map(c => ({ ...c, start: new Date(c.start_date + "T12:00:00") }))
+            .filter(c => c.start <= targetDate)
+            .sort((a, b) => b.start - a.start);
+          
+          if (pastStarts.length === 0) return null;
+          const closestCycle = pastStarts[0];
+          const diffTime = targetDate - closestCycle.start;
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          return ((diffDays - 1) % cycleLength.value) + 1;
+        }
+
+        // ОПРЕДЕЛЕНИЕ ФАЗЫ ДЛЯ ДНЯ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
@@ -957,6 +999,7 @@
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
           const dayOfCycle = ((diffDays - 1) % cycleLength.value) + 1;
 
+          // Биологическая норма: овуляция происходит примерно за 14 дней до следующего цикла
           const ovDay = cycleLength.value - 14;
 
           if (dayOfCycle >= 1 && dayOfCycle <= periodLength.value) {
@@ -999,6 +1042,7 @@
           return selectedDateStr.value === dateStr;
         }
 
+        // Проверка, является ли день днем менструации
         function isPeriodDay(dateStr) {
           return cycles.value.some(c => {
             if (!c.end_date) return dateStr === c.start_date;
@@ -1019,6 +1063,7 @@
           return sorted[0].start_date;
         });
 
+        // Динамический прогноз следующего цикла на основе выбранной пользователем длины
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
@@ -1026,6 +1071,7 @@
           return getLocalDateString(lastStart).split('-').reverse().join('.');
         });
 
+        // Динамическая разметка прогнозируемых дней по выбранным значениям
         function isPredictedDay(dateStr) {
           if (!lastCycleStart.value) return false;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
@@ -1050,6 +1096,7 @@
           return diffDays > 0 && diffDays <= cycleLength.value ? diffDays : null;
         });
 
+        // СРЕДНЕСТАТИСТИЧЕСКИЕ ХАРАКТЕРИСТИКИ БЕЗ ПОДДЕРЖИВАЮЩИХ ФРАЗ
         const currentPhaseInfo = computed(() => {
           const day = currentCycleDay.value;
           if (!day) return { 
@@ -1065,7 +1112,7 @@
             return {
               name: "Менструальная фаза 🩸",
               duration: `1–${periodLength.value} дни цикла`,
-              desc: "В этот период наблюдается физиологический спад сил, сонливость и быстрая утомляемость. Возможны ноющие боли в теле и повышенная чувствительность. Рекомендуется больше отдыхать."
+              desc: "В этот период наблюдается физиологический спад сил, сонливость и быстрая утомляемость. Возможны ноющие боли в теле и повышенная эмоциональная чувствительность. Организм требует деликатного отношения и покоя."
             };
           }
 
@@ -1074,23 +1121,24 @@
             return {
               name: "Фолликулярная фаза 🌱",
               duration: `${periodLength.value + 1}–${ovDay - 1} дни цикла`,
-              desc: "Активный прилив сил, улучшение памяти, скорости мышления и эмоциональной устойчивости. Повышается интерес к планированию дел и активному общению."
+              desc: "Под влиянием эстрогена происходит активный прилив сил, улучшается память, скорость мышления и эмоциональная устойчивость. Возрастает инициативность, повышается интерес к планированию и общению."
             };
           } else if (phase === 'ovulatory') {
             return {
               name: "Овуляция ✨",
-              duration: `${ovDay}-й день цикла (окно 24–48 часов)`,
-              desc: "Пик физической энергии и уверенности в себе. Период легкого общения, хорошего настроения и высокой эмпатии."
+              duration: `${ovDay}-й день цикла (пиковое окно 24–48 часов)`,
+              desc: "Фаза пиковых физических возможностей и наивысшей уверенности в себе. Отмечается отличный уровень общительности, эмпатии, красноречия и хорошего настроения."
             };
           } else {
             return {
               name: "Лютеиновая фаза 🍂",
               duration: `${ovDay + 1}–${cycleLength.value} дни цикла`,
-              desc: "Организм плавно готовится к новому циклу. Ресурсы идут на спад. Может проявляться утомляемость, перепады настроения и чувствительность к критике."
+              desc: "Организм плавно готовится к новому циклу, ресурсы идут на спад. Во второй половине фазы может проявляться предменструальный синдром (ПМС): тревожность, перепады настроения, утомляемость и чувствительность."
             };
           }
         });
 
+        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1100,7 +1148,7 @@
           if (cycle) {
             if (clickedDate === cycle.end_date && clickedDate === cycle.start_date) {
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
-              triggerToast("Отметка удалена");
+              triggerToast("Отметка менструации удалена");
             } else if (clickedDate === cycle.end_date) {
               const prevDay = new Date(clickedDate + "T12:00:00");
               prevDay.setDate(prevDay.getDate() - 1);
@@ -1109,12 +1157,12 @@
               if (isDemoMode.value) {
                 cycle.end_date = prevDayStr;
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                await fetchData();
+                fetchData();
               } else {
                 await db.from('cycles').update({ end_date: prevDayStr }).eq('id', cycle.id);
-                await fetchData();
+                fetchData();
               }
-              triggerToast("Период сокращен на 1 день");
+              triggerToast("Длина менструации сокращена на 1 день");
             } else if (clickedDate === cycle.start_date) {
               const nextDay = new Date(clickedDate + "T12:00:00");
               nextDay.setDate(nextDay.getDate() + 1);
@@ -1123,12 +1171,12 @@
               if (isDemoMode.value) {
                 cycle.start_date = nextDayStr;
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                await fetchData();
+                fetchData();
               } else {
                 await db.from('cycles').update({ start_date: nextDayStr }).eq('id', cycle.id);
-                await fetchData();
+                fetchData();
               }
-              triggerToast("Начало периода сдвинуто вперед");
+              triggerToast("Начало периода сдвинуто на 1 день вперед");
             } else {
               const prevDay = new Date(clickedDate + "T12:00:00");
               prevDay.setDate(prevDay.getDate() - 1);
@@ -1137,12 +1185,12 @@
               if (isDemoMode.value) {
                 cycle.end_date = prevDayStr;
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                await fetchData();
+                fetchData();
               } else {
                 await db.from('cycles').update({ end_date: prevDayStr }).eq('id', cycle.id);
-                await fetchData();
+                fetchData();
               }
-              triggerToast("Период завершен досрочно");
+              triggerToast("Период менструации завершен досрочно");
             }
           } else {
             const dayBefore = new Date(clickedDate + "T12:00:00");
@@ -1159,20 +1207,20 @@
               if (isDemoMode.value) {
                 cycleToExtendEnd.end_date = clickedDate;
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                await fetchData();
+                fetchData();
               } else {
                 await db.from('cycles').update({ end_date: clickedDate }).eq('id', cycleToExtendEnd.id);
-                await fetchData();
+                fetchData();
               }
               triggerToast("Период продлен на 1 день");
             } else if (cycleToExtendStart) {
               if (isDemoMode.value) {
                 cycleToExtendStart.start_date = clickedDate;
                 localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-                await fetchData();
+                fetchData();
               } else {
                 await db.from('cycles').update({ start_date: clickedDate }).eq('id', cycleToExtendStart.id);
-                await fetchData();
+                fetchData();
               }
               triggerToast("Период увеличен на 1 день назад");
             } else {
@@ -1187,11 +1235,11 @@
                 end_date: endDateStr 
               };
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
-              triggerToast(`Добавлен период менструации на ${periodLength.value} дней`);
+              triggerToast(`Добавлен цикл менструации на ${periodLength.value} дней`);
               
               if (role.value === 'her') {
                 sendTelegramNotification(
-                  `🌸 <b>Информация:</b> Подруга отметила новые даты в календаре (${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружеское внимание!`, 
+                  `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
                   HIM_CHAT_ID
                 );
               }
@@ -1204,13 +1252,14 @@
           if (!cycle) return;
           
           await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
-          triggerToast("Период полностью удален");
+          triggerToast("Период менструации полностью удален");
         }
 
         function hasNote(dateStr) {
           return partnerNotes.value.some(n => n.date === dateStr);
         }
 
+        // ЗАМЕТКИ С АВТОРАМИ И ВРЕМЕНЕМ
         const sortedNotes = computed(() => {
           return [...partnerNotes.value].sort((a,b) => b.date.localeCompare(a.date));
         });
@@ -1235,6 +1284,7 @@
           triggerToast("Запись удалена");
         }
 
+        // ПОКАЗАТЕЛИ С АВТОРАМИ И ВРЕМЕНЕМ
         async function saveWellbeing() {
           const newRecord = {
             id: Date.now().toString(),
@@ -1253,11 +1303,13 @@
           triggerToast("Состояние зафиксировано!");
         }
 
+        // УДАЛЕНИЕ ЗАПИСИ СОСТОЯНИЯ (ИСТОРИЯ СОСТОЯНИЯ)
         async function deleteWellbeing(id) {
           await saveLocalOrDB('wellbeing', 'demo_wellbeing', wellbeingLogs, null, true, id);
           triggerToast("Запись состояния удалена");
         }
 
+        // ПЛАНЫ И МУЗЫКА
         function getPlansByCategory(categoryName) {
           return plans.value.filter(p => p.category_name === categoryName);
         }
@@ -1277,7 +1329,7 @@
         }
 
         async function deleteCategory(cat) {
-          if (!confirm(`Вы действительно хотите удалить группу "${cat.name}" и все её элементы?`)) return;
+          if (!confirm(`Вы действительно хотите удалить группу "${cat.name}" и все планы внутри неё?`)) return;
 
           const plansInCat = plans.value.filter(p => p.category_name === cat.name);
           for (const p of plansInCat) {
@@ -1287,7 +1339,7 @@
               try {
                 await db.from('plans').delete().eq('id', p.id);
               } catch (err) {
-                console.error("Ошибка удаления:", err);
+                console.error("Ошибка удаления планов группы:", err);
               }
             }
           }
@@ -1322,21 +1374,21 @@
           if (isDemoMode.value) {
             plan.is_completed = !plan.is_completed;
             localStorage.setItem('demo_plans', JSON.stringify(plans.value));
-            await fetchData();
+            fetchData();
           } else {
             await db.from('plans').update({ is_completed: !plan.is_completed }).eq('id', plan.id);
-            await fetchData();
+            fetchData();
           }
           if (plan.is_completed) {
             triggerToast("Дело выполнено! 🎉");
           } else {
-            triggerToast("Дело вернулось в список");
+            triggerToast("Дело возвращено в планы");
           }
         }
 
         async function deletePlan(id) {
           await saveLocalOrDB('plans', 'demo_plans', plans, null, true, id);
-          triggerToast("План удален");
+          triggerToast("Дело полностью удалено");
         }
 
         function formatDateDisplay(dateStr) {
@@ -1386,7 +1438,7 @@
             // Строго дружеский промпт без какого-либо намека на романтику
             const prompt = `
 Ты — умный и деликатный ИИ-помощник в дружеском приложении "Полнолуние".
-Перед тобой находятся все текущие данные из общей базы данных. Твоя задача — проанализировать их и дать дружеские советы для двух онлайн-друзей (Он и Она).
+Перед тобой находятся все текущие данные из нашей общей базы данных. Твоя задача — проанализировать их и дать дружеские советы для двух онлайн-друзей (Он и Она).
 
 ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши строго в дружеском, понимающем, но платоническом тоне. Избегай слов "партнер", "пара", "любовь", "отношения". Делай упор на дружескую заботу и взаимопомощь.
 
@@ -1453,7 +1505,7 @@ ${plansData}
 
           } catch (err) {
             console.error("ИИ Анализ завершился с ошибкой:", err);
-            aiAnalysisResult.value = `Произошла ошибка при обращении к ИИ: ${err.message}`;
+            aiAnalysisResult.value = `Не удалось выполнить анализ данных: ${err.message}`;
             triggerToast("Ошибка работы ИИ");
           } finally {
             isAiLoading.value = false;
@@ -1520,10 +1572,11 @@ ${plansData}
           cycleWorkStatus,
           cycleLength,
           periodLength,
+          openRouterApiKey,
           aiAnalysisResult,
           isAiLoading,
           analyzeAllApplicationData,
-          fetchData
+          loadApiKey
         };
       }
     }).mount('#app');
