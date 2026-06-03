@@ -173,7 +173,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика -->
+                <!-- Иконка рабочего графика (Исправлена критическая опечатка dayObj вместо dateObj) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -228,7 +228,7 @@
             </div>
           </div>
 
-          <!-- Настройки цикла -->
+          <!-- Параметры, настройки и расчеты -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
             
@@ -364,7 +364,7 @@
             <button 
               @click="analyzeAllApplicationData" 
               :disabled="isAiLoading"
-              class="w-full py-3 bg-gradient-to-r from-indigo-505 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
+              class="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
             >
               <span v-if="isAiLoading">⏳ Анализирую...</span>
               <span v-else>✨ Запустить ИИ-анализ базы</span>
@@ -818,7 +818,7 @@
         const aiUserMessage = ref("");
         const isAiChatLoading = ref(false);
 
-        // Инициализация соединения на основе динамических настроек или базовых значений
+        // Инициализация соединения на основе настроек
         async function initConnection() {
           const url = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
           const key = localStorage.getItem('cfg_supabase_key') || DEFAULT_SUPABASE_KEY;
@@ -891,20 +891,17 @@
 
         // Безопасная загрузка ключа из базы данных + резервные варианты
         async function loadApiKey() {
-          // Сначала ВСЕГДА проверяем, есть ли сохраненный пользователем ключ в настройках (localStorage)
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
             openRouterApiKey.value = customKey.trim();
             return;
           }
 
-          // Если кастомного ключа нет и мы в демо-режиме, берем резервный ключ из кода
           if (isDemoMode.value) {
             openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
             return;
           }
 
-          // Иначе пытаемся прочитать его из таблицы Supabase
           try {
             const { data, error } = await db
               .from('app_settings')
@@ -917,7 +914,7 @@
               openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
             }
           } catch (e) {
-            console.warn("Ключ OpenRouter считывается из резервного хранилища кода (app_settings не найден в DB).");
+            console.warn("Ключ OpenRouter считывается из резервного хранилища кода.");
             openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
           }
         }
@@ -992,7 +989,6 @@
           }
 
           try {
-            // Безопасно запрашиваем каждую таблицу отдельно
             const fetchTableSafe = async (name, defaultValue = []) => {
               try {
                 const { data, error } = await db.from(name).select('*');
@@ -1336,7 +1332,7 @@
             return {
               name: "Фолликулярная фаза 🌱",
               duration: `${periodLength.value + 1}–${ovDay - 1} дни цикла`,
-              desc: "Под влиянием эстрогена происходит активный прилив сил, улучшается память, скорость мышления и эмоциональная устойчивость."
+              desc: "Под влиянием растущего эстрогена происходит активный прилив сил, улучшается память, скорость мышления и эмоциональная устойчивость."
             };
           } else if (phase === 'ovulatory') {
             return {
@@ -1353,7 +1349,7 @@
           }
         });
 
-        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ
+        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1687,7 +1683,7 @@ ${plansData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный роутер свободных моделей - 100% застрахован от 404
+                model: "openrouter/free", // Универсальный бесплатный роутер свободных моделей
                 messages: [
                   {
                     role: "user",
@@ -1765,7 +1761,7 @@ ${plansData}
 Ты — умный, деликатный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
 Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
-ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, понимающем, но в меру теплом тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
 
 Вот текущие данные из их общей базы данных Supabase:
 - Сегодняшняя дата: ${todayStr}
@@ -1802,7 +1798,7 @@ ${shiftsData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный бесплатный роутер - 100% защита от ошибок 404
+                model: "openrouter/free", // Официальный бесплатный роутер для обхода ошибок 404
                 messages: apiMessages
               })
             });
