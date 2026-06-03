@@ -73,7 +73,7 @@
       </div>
       
       <div class="flex items-center space-x-2.5">
-        <!-- Кнопка шестеренки настроек -->
+        <!-- Кнопка настроек -->
         <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
           ⚙️
         </button>
@@ -167,7 +167,6 @@
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
                   isPredictedDay(dayObj.date) ? 'bg-pink-50 text-pink-400 border border-dashed border-pink-300' : '',
-                  // Фиолетовая овуляция
                   isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
               >
@@ -183,7 +182,6 @@
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <!-- Фиолетовый маркер овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -217,7 +215,7 @@
                 <span>Прогноз менструации</span>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="w-2 h-2 rounded-full bg-violet-500 ring-2 ring-violet-200"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-violet-500"></span>
                 <span>Есть записи / заметка</span>
               </div>
               <div class="flex items-center space-x-2 border-t border-stone-50 pt-2 col-span-2">
@@ -521,7 +519,6 @@
                     {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                   </span>
                   <span class="text-xl">{{ log.mood }}</span>
-                  <!-- КНОПКА УДАЛЕНИЯ ЗАПИСИ СОСТОЯНИЯ -->
                   <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
                 </div>
               </div>
@@ -669,7 +666,7 @@
       </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (С ОФЛЕЙН-КЛИК-ЗАКРЫТИЕМ И ДВУМЯ ID) -->
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ -->
     <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
         
@@ -678,7 +675,6 @@
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
-          <!-- Крупная и отзывчивая кнопка закрытия для смартфонов -->
           <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
@@ -703,10 +699,22 @@
             <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- НОВОЕ ПОЛЕ: ID ДЛЯ ПОДРУГИ -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
+          <!-- ВЫБОР МОДЕЛИ ИИ (НОВОЕ!) -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">ИИ Модель (OpenRouter)</label>
+            <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+              <option value="openrouter/free">🤖 Авто-выбор (openrouter/free)</option>
+              <option value="meta-llama/llama-3.1-8b-instruct:free">🦙 Llama 3.1 8B Free</option>
+              <option value="meta-llama/llama-3-8b-instruct:free">🦙 Llama 3 8B Free</option>
+              <option value="google/gemma-2-9b-it:free">✨ Gemma 2 9B Free</option>
+              <option value="qwen/qwen-2-7b-instruct:free">🐉 Qwen 2 7B Free</option>
+              <option value="mistralai/mistral-7b-instruct:free">🌀 Mistral 7B Free</option>
+            </select>
           </div>
 
           <div>
@@ -725,7 +733,6 @@
           </button>
         </div>
 
-        <!-- Крупная кнопка Закрыть внизу для мобильного удобства -->
         <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
           ✕ Закрыть настройки
         </button>
@@ -745,7 +752,6 @@
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
-    // Получение времени HH:MM
     function getCurrentTime() {
       const now = new Date();
       const h = String(now.getHours()).padStart(2, '0');
@@ -753,7 +759,6 @@
       return `${h}:${m}`;
     }
 
-    // Форматирование локальной даты YYYY-MM-DD
     function getLocalDateString(dateObj) {
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -768,11 +773,9 @@
         const isDemoMode = ref(false);
         let db = null;
 
-        // Настройки параметров цикла
         const cycleLength = ref(parseInt(localStorage.getItem('user_cycle_length')) || 28);
         const periodLength = ref(parseInt(localStorage.getItem('user_period_length')) || 5);
 
-        // Синхронизация с localStorage
         watch(cycleLength, (newVal) => {
           localStorage.setItem('user_cycle_length', newVal);
         });
@@ -780,7 +783,6 @@
           localStorage.setItem('user_period_length', newVal);
         });
 
-        // Всплывающие уведомления (тосты)
         const showToast = ref(false);
         const toastMessage = ref('');
 
@@ -792,19 +794,18 @@
           }, 2500);
         };
 
-        // Ввод настроек в интерфейсе
         const settingsInput = ref({
           url: localStorage.getItem('cfg_supabase_url') || "",
           key: localStorage.getItem('cfg_supabase_key') || "",
           botToken: localStorage.getItem('cfg_bot_token') || "",
           himChatId: localStorage.getItem('cfg_him_chat_id') || "",
           herChatId: localStorage.getItem('cfg_her_chat_id') || "",
-          openrouterKey: localStorage.getItem('cfg_openrouter_key') || ""
+          openrouterKey: localStorage.getItem('cfg_openrouter_key') || "",
+          aiModel: localStorage.getItem('cfg_ai_model') || "openrouter/free" // Хранение выбранной модели
         });
 
         const isSettingsOpen = ref(false);
 
-        // Разделяем резервный ключ на две части, чтобы роботы-сканеры GitHub не блокировали его при публикации на гитхабе!
         const KEY_PART1 = "sk-or-v1-a9a018d054304b72e75fabf9bc8f9485";
         const KEY_PART2 = "d149815501f1a06a6f5f1d100ea9ed7a";
         const BACKUP_OPENROUTER_KEY = KEY_PART1 + KEY_PART2;
@@ -813,14 +814,12 @@
         const aiAnalysisResult = ref("");
         const isAiLoading = ref(false);
 
-        // Переменные для чата с ИИ
         const aiChatMessages = ref([
           { role: 'assistant', content: 'Привет! Я твой дружеский ИИ-собеседник в приложении Полнолуние. Я знаю всё о состоянии нашей общей базы данных. Спроси меня о графике подруги, её текущем самочувствии или просто попроси дать дружеский совет! ✨' }
         ]);
         const aiUserMessage = ref("");
         const isAiChatLoading = ref(false);
 
-        // Инициализация соединения на основе настроек
         async function initConnection() {
           const url = localStorage.getItem('cfg_supabase_url') || DEFAULT_SUPABASE_URL;
           const key = localStorage.getItem('cfg_supabase_key') || DEFAULT_SUPABASE_KEY;
@@ -844,7 +843,6 @@
           }
         }
 
-        // Сохранение настроек соединения из интерфейса (шестеренки)
         async function saveConnectionSettings() {
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
@@ -860,13 +858,13 @@
           setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
           setOrRemove('cfg_her_chat_id', settingsInput.value.herChatId);
           setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
+          setOrRemove('cfg_ai_model', settingsInput.value.aiModel); // Сохранение модели
 
           triggerToast("Настройки сохранены. Перезапускаю подключение...");
           await initConnection();
           isSettingsOpen.value = false;
         }
 
-        // Сброс настроек подключения к дефолту из кода
         async function resetToDefaultSettings() {
           if (confirm("Вы действительно хотите очистить кастомные настройки и использовать базовые из кода?")) {
             localStorage.removeItem('cfg_supabase_url');
@@ -875,6 +873,7 @@
             localStorage.removeItem('cfg_him_chat_id');
             localStorage.removeItem('cfg_her_chat_id');
             localStorage.removeItem('cfg_openrouter_key');
+            localStorage.removeItem('cfg_ai_model');
 
             settingsInput.value = {
               url: "",
@@ -882,7 +881,8 @@
               botToken: "",
               himChatId: "",
               herChatId: "",
-              openrouterKey: ""
+              openrouterKey: "",
+              aiModel: "openrouter/free"
             };
 
             triggerToast("Дефолтные настройки восстановлены.");
@@ -891,9 +891,7 @@
           }
         }
 
-        // Безопасная загрузка ключа из базы данных + резервные варианты
         async function loadApiKey() {
-          // Сначала ВСЕГДА проверяем, есть ли сохраненный пользователем ключ в настройках (localStorage)
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
             openRouterApiKey.value = customKey.trim();
@@ -925,14 +923,12 @@
         onMounted(async () => {
           await initConnection();
 
-          // Оптимизированная синхронизация при возвращении в активное состояние
           document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "visible") {
               fetchData();
             }
           });
 
-          // Автоматическая синхронизация каждые 2 минуты
           setInterval(() => {
             if (document.visibilityState === "visible") {
               fetchData();
@@ -945,21 +941,18 @@
           localStorage.setItem('user_role', newRole);
         }
 
-        // Календарь состояние
         const currentYear = ref(new Date().getFullYear());
         const currentMonth = ref(new Date().getMonth());
         const selectedDateStr = ref(getLocalDateString(new Date()));
         const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
         
-        // Массивы
         const cycles = ref([]);
         const partnerNotes = ref([]);
         const wellbeingLogs = ref([]);
         const categories = ref([]);
         const plans = ref([]);
-        const customShifts = ref([]); // Массив ручной корректировки смен
+        const customShifts = ref([]);
 
-        // Ввод
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
         const newNoteContent = ref('');
@@ -972,7 +965,6 @@
         const newPlanCategory = ref('Прочее');
         const newPlanTitle = ref('');
 
-        // Умный загрузчик
         async function fetchData() {
           if (isDemoMode.value) {
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
@@ -992,7 +984,6 @@
           }
 
           try {
-            // Безопасно запрашиваем каждую таблицу отдельно
             const fetchTableSafe = async (name, defaultValue = []) => {
               try {
                 const { data, error } = await db.from(name).select('*');
@@ -1074,7 +1065,6 @@
           await fetchData();
         }
 
-        // ОТПРАВКА УВЕДОМЛЕНИЙ ЧЕРЕЗ ТГ
         async function sendTelegramNotification(text, targetChatId) {
           const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
@@ -1093,7 +1083,6 @@
           }
         }
 
-        // БЫСТРЫЕ СИГНАЛЫ ДЛЯ ОБЩЕНИЯ
         const quickSignals = computed(() => {
           return [
             { icon: '🙄', text: 'Игнорщик', msg: '🙋‍♀️ <b>Подруга шутит:</b> Эй, игнорщик! Ответь мне 🙄' },
@@ -1113,7 +1102,6 @@
           }
         }
 
-        // СТАНДАРТНЫЙ РАСЧЕТ РАБОЧЕГО ГРАФИКА ДЕВУШКИ 2/2
         function getDefaultWorkStatus(dateStr) {
           const anchor = new Date("2026-06-03T12:00:00");
           const current = new Date(dateStr + "T12:00:00");
@@ -1123,7 +1111,6 @@
           return (offset === 0 || offset === 1) ? 'off' : 'work';
         }
 
-        // ИТОГОВЫЙ СТАТУС С УЧЕТОМ РУЧНОЙ КОРРЕКТИРОВКИ
         function getWorkStatus(dateStr) {
           const custom = customShifts.value.find(s => s.date === dateStr);
           if (custom) return custom.status;
@@ -1134,7 +1121,6 @@
           return customShifts.value.some(s => s.date === dateStr);
         }
 
-        // ДВУХШАГОВЫЙ МЕХАНИЗМ СМЕНЫ СТАТУСА ДНЯ
         async function cycleWorkStatus(dateStr) {
           const defaultStatus = getDefaultWorkStatus(dateStr);
           const existing = customShifts.value.find(s => s.date === dateStr);
@@ -1150,7 +1136,6 @@
           }
         }
 
-        // РАСЧЕТ КАЛЕНДАРЯ
         const calendarDays = computed(() => {
           const year = currentYear.value;
           const month = currentMonth.value;
@@ -1190,7 +1175,6 @@
           return ((diffDays - 1) % cycleLength.value) + 1;
         }
 
-        // ОПРЕДЕЛЕНИЕ ФАЗЫ ДЛЯ ДНЯ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
@@ -1215,7 +1199,6 @@
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
           const dayOfCycle = ((diffDays - 1) % cycleLength.value) + 1;
 
-          // Биологическая норма: овуляция происходит примерно за 14 дней до следующего цикла
           const ovDay = cycleLength.value - 14;
 
           if (dayOfCycle >= 1 && dayOfCycle <= periodLength.value) {
@@ -1258,7 +1241,6 @@
           return selectedDateStr.value === dateStr;
         }
 
-        // Проверка, является ли день днем менструации
         function isPeriodDay(dateStr) {
           return cycles.value.some(c => {
             if (!c.end_date) return dateStr === c.start_date;
@@ -1279,7 +1261,6 @@
           return sorted[0].start_date;
         });
 
-        // Динамический прогноз следующего цикла на основе выбранной пользователем длины
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
@@ -1287,7 +1268,6 @@
           return getLocalDateString(lastStart).split('-').reverse().join('.');
         });
 
-        // Динамическая разметка прогнозируемых дней по выбранным значениям
         function isPredictedDay(dateStr) {
           if (!lastCycleStart.value) return false;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
@@ -1353,7 +1333,6 @@
           }
         });
 
-        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1609,12 +1588,12 @@
           return `${d}.${m}.${y}`;
         }
 
-        // ==================== ИНТЕГРАЦИЯ УНИВЕРСАЛЬНОГО ИИ-РОУТЕРА (OPENROUTER/FREE) ====================
+        // ==================== ИНТЕГРАЦИЯ С ИИ С ВЫБОРОМ МОДЕЛИ ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
           isAiLoading.value = true;
-          aiAnalysisResult.value = "Свободный ИИ изучает базу данных и ищет закономерности...";
+          aiAnalysisResult.value = "ИИ изучает базу данных и ищет закономерности...";
 
           try {
             const todayStr = getLocalDateString(new Date());
@@ -1676,8 +1655,8 @@ ${plansData}
             `;
 
             const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
+            const activeModel = localStorage.getItem('cfg_ai_model') || "openrouter/free"; // Динамический выбор модели
 
-            // Запрос к бесплатному API OpenRouter с использованием универсального роутера
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -1687,7 +1666,7 @@ ${plansData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный бесплатный роутер свободных моделей
+                model: activeModel,
                 messages: [
                   {
                     role: "user",
@@ -1698,6 +1677,9 @@ ${plansData}
             });
 
             if (!response.ok) {
+              if (response.status === 401) {
+                throw new Error("Недействительный или заблокированный API-ключ OpenRouter. Пожалуйста, введите личный бесплатный ключ в настройках (⚙️).");
+              }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
@@ -1728,7 +1710,6 @@ ${plansData}
           aiUserMessage.value = "";
           isAiChatLoading.value = true;
 
-          // Автоматическая прокрутка чата вниз при добавлении сообщений
           const chatContainer = document.querySelector('[ref="chatContainer"]');
           if (chatContainer) {
             setTimeout(() => {
@@ -1792,6 +1773,7 @@ ${shiftsData}
             ];
 
             const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
+            const activeModel = localStorage.getItem('cfg_ai_model') || "openrouter/free"; // Динамический выбор модели
 
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
@@ -1802,12 +1784,15 @@ ${shiftsData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный бесплатный роутер
+                model: activeModel,
                 messages: apiMessages
               })
             });
 
             if (!response.ok) {
+              if (response.status === 401) {
+                throw new Error("Недействительный или заблокированный API-ключ OpenRouter. Пожалуйста, введите ваш личный бесплатный ключ в настройках (⚙️).");
+              }
               throw new Error(`Ошибка сервера: ${response.status}`);
             }
 
@@ -1824,7 +1809,6 @@ ${shiftsData}
             aiChatMessages.value.push({ role: 'assistant', content: `Ошибка связи с ИИ: ${err.message}` });
           } finally {
             isAiChatLoading.value = false;
-            // Прокрутка вниз после добавления ответа ИИ
             setTimeout(() => {
               if (chatContainer) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
