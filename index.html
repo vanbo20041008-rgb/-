@@ -173,7 +173,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (ОПЕЧАТКА ДВАЖДЫ ИСПРАВЛЕНА С dateObj НА dayObj НА СТРОКЕ 140) -->
+                <!-- Иконка рабочего графика -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-1 right-1 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -867,7 +867,7 @@
         }
 
         // Сброс настроек подключения к дефолту из кода
-        function resetToDefaultSettings() {
+        async function resetToDefaultSettings() {
           if (confirm("Вы действительно хотите очистить кастомные настройки и использовать базовые из кода?")) {
             localStorage.removeItem('cfg_supabase_url');
             localStorage.removeItem('cfg_supabase_key');
@@ -1076,7 +1076,7 @@
 
         // ОТПРАВКА УВЕДОМЛЕНИЙ ЧЕРЕЗ ТГ
         async function sendTelegramNotification(text, targetChatId) {
-          const activeBotToken = localStorage.getItem('cfg_bot_token') || TELEGRAM_BOT_TOKEN;
+          const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
           try {
             await fetch(`https://api.telegram.org/bot${activeBotToken}/sendMessage`, {
@@ -1104,7 +1104,7 @@
         });
 
         async function triggerQuickSignal(signal) {
-          const targetId = localStorage.getItem('cfg_him_chat_id') || HIM_CHAT_ID;
+          const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
           if (targetId && !targetId.includes("ВСТАВЬТЕ")) {
             await sendTelegramNotification(signal.msg, targetId);
             triggerToast("Сигнал отправлен другу в ТГ!");
@@ -1453,7 +1453,7 @@
               triggerToast(`Добавлен цикл менструации на ${periodLength.value} дней`);
               
               if (role.value === 'her') {
-                const targetId = localStorage.getItem('cfg_him_chat_id') || HIM_CHAT_ID;
+                const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
                 sendTelegramNotification(
                   `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
                   targetId
@@ -1802,7 +1802,7 @@ ${shiftsData}
                 "X-Title": "Fullmoon App"
               },
               body: JSON.stringify({
-                model: "openrouter/free", // Универсальный бесплатный роутер - 100% защита от ошибок 404
+                model: "openrouter/free", // Универсальный бесплатный роутер
                 messages: apiMessages
               })
             });
