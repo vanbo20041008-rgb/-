@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" class="w-full" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
   <!-- Tailwind CSS -->
@@ -94,7 +94,7 @@
       </div>
     </header>
 
-    <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
+    <!-- БЫСТРЫЕ СИГНАЛЫ -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
       <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
       <div class="flex space-x-2 overflow-x-auto pb-1">
@@ -171,7 +171,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
+                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ВЕРХНИЙ ПРАВЫЙ УГОЛ) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -667,7 +667,7 @@
       </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (С ОФЛЕЙН-КЛИК-ЗАКРЫТИЕМ И ДВУМЯ ID) -->
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (ОЧИЩЕННОЕ, БЕЗ ЛИШНИХ ПОЛЕЙ, БЕЗ СУПАБЕЙС И ЛИШНИХ ID) -->
     <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
         
@@ -676,40 +676,32 @@
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
-          <!-- Крупная и отзывчивая кнопка закрытия для смартфонов -->
+          <!-- Крупная кнопка закрытия для смартфонов -->
           <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
         <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+          <!-- URL скрипта -->
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL (url)</label>
             <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ключ авторизации (не требуется для Google Таблиц)</label>
-            <input type="text" v-model="settingsInput.key" placeholder="Оставьте пустым" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none" disabled>
-          </div>
-
-          <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Bot Token (опционально)</label>
-            <input type="text" v-model="settingsInput.botToken" placeholder="8825615830:xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-          </div>
-
+          <!-- Telegram Chat ID (Его) -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ваш Telegram Chat ID (для Него)</label>
             <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- НОВОЕ ПОЛЕ: ID ДЛЯ ПОДРУГИ -->
+          <!-- Telegram Chat ID (Её) -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- ВЫБОР МОДЕЛИ ИИ -->
+          <!-- Выбор ИИ-Бота (Выбор бота) -->
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">ИИ Модель (OpenRouter)</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели (Выбор Бота)</label>
             <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
               <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
               <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
@@ -719,10 +711,11 @@
             </select>
           </div>
 
+          <!-- Апи ключ ИИ-Бота (Апи ключ бота) -->
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Резервный OpenRouter API Key (опционально)</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
             <input type="password" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
+            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в облачной таблице app_settings.</p>
           </div>
         </div>
 
@@ -756,7 +749,7 @@
     const DEFAULT_HIM_CHAT_ID = "1719296144";
 
     // 4. Вставьте Chat ID подруги (для Неё):
-    const DEFAULT_HER_CHAT_ID = "1719296144"; 
+    const DEFAULT_HER_CHAT_ID = ""; // Пустой по умолчанию во избежание дублирования Его ID!
     // ===================================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
@@ -777,7 +770,7 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Умная нормализация дат для защиты от авто-форматирования Google Sheets (убирает T09:00:00.000Z)
+    // Умная нормализация дат для защиты от авто-форматирования Google Sheets (убирает T09:00:00.000Z и предотвращает NaN)
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
@@ -830,7 +823,7 @@
           }, 3500);
         };
 
-        // Ввод настроек в интерфейсе
+        // Ввод настроек в интерфейсе (Реактивно связаны)
         const settingsInput = ref({
           url: localStorage.getItem('cfg_supabase_url') || "",
           key: localStorage.getItem('cfg_supabase_key') || "",
@@ -843,6 +836,7 @@
 
         const isSettingsOpen = ref(false);
 
+        // Разделяем резервный ключ на две части
         const KEY_PART1 = "sk-or-v1-a9a018d054304b72e75fabf9bc8f9485";
         const KEY_PART2 = "d149815501f1a06a6f5f1d100ea9ed7a";
         const BACKUP_OPENROUTER_KEY = KEY_PART1 + KEY_PART2;
@@ -866,7 +860,7 @@
         // Инициализация соединения
         async function initConnection() {
           // Автоматическое предзаполнение полей по дефолтным константам
-          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT")) {
+          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
             localStorage.setItem('cfg_supabase_url', DEFAULT_GOOGLE_SCRIPT_URL);
           }
           if (!localStorage.getItem('cfg_bot_token') && DEFAULT_TELEGRAM_BOT_TOKEN) {
@@ -884,12 +878,14 @@
           settingsInput.value.botToken = localStorage.getItem('cfg_bot_token') || "";
           settingsInput.value.himChatId = localStorage.getItem('cfg_him_chat_id') || "";
           settingsInput.value.herChatId = localStorage.getItem('cfg_her_chat_id') || "";
+          settingsInput.value.openrouterKey = localStorage.getItem('cfg_openrouter_key') || "";
+          settingsInput.value.aiModel = localStorage.getItem('cfg_ai_model') || "openrouter/free";
 
           const url = localStorage.getItem('cfg_supabase_url');
 
           if (!url) {
             isDemoMode.value = true;
-            await fetchData();
+            await fetchData(); // Загружаем локальный кэш во избежание пустого календаря
             return;
           }
 
@@ -901,7 +897,7 @@
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
-            await fetchData();
+            await fetchData(); // Плавный запуск на оффлайн-кэше
             triggerToast(`Ошибка подключения: ${e.message}. Локальный режим активен.`);
           }
         }
@@ -985,7 +981,7 @@
           }
         }
 
-        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ ---
+        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ (Раз в 1 минуту после затишья) ---
         async function processSyncQueue() {
           if (syncQueue.value.length === 0) {
             isSyncPending.value = false;
@@ -997,6 +993,7 @@
 
           let failedOps = [];
 
+          // Выполняем запросы последовательно для избежания конфликтов в таблицах
           for (const op of syncQueue.value) {
             try {
               const response = await fetch(APPS_SCRIPT_URL, {
@@ -1038,12 +1035,14 @@
         async function fetchData() {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
+          // КРИТИЧЕСКАЯ ЗАЩИТА: Если у нас есть неотправленные локальные данные в очереди,
+          // мы НЕ позволяем старым данным с сервера перезаписать наше текущее локальное состояние!
           if (isSyncPending.value || syncQueue.value.length > 0) {
             console.log("Загрузка с сервера заблокирована: ожидается отправка очереди изменений.");
             return;
           }
 
-          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT")) {
+          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
             partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
             wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
@@ -1061,6 +1060,7 @@
           }
 
           try {
+            // Один единственный пакетный запрос к Google Скрипту за всеми данными
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
             if (!response.ok) throw new Error("HTTP error");
             const allData = await response.json();
@@ -1771,7 +1771,7 @@
           return `${d}.${m}.${y}`;
         }
 
-        // ==================== ИНТЕГРАЦИЯ OPENROUTER/FREE ====================
+        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
@@ -1881,7 +1881,6 @@ ${plansData}
           }
         }
 
-        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function sendAiChatMessage() {
           if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
