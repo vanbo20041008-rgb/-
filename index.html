@@ -58,14 +58,14 @@
       <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
     </div>
 
-    <!-- ТОСТ-УВЕДОМЛЕНИЕ (ОТОБРАЖАЕТСЯ НАД НИЖНЕЙ НАВИГАЦИЕЙ) -->
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
     <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
       <span>⚡</span>
       <span>{{ toastMessage }}</span>
     </div>
 
     <!-- ХЕДЕР -->
-    <header class="flex justify-between items-center mb-2 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm">
+    <header class="flex justify-between items-center mb-2 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm gap-2">
       <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
       
       <div class="flex items-center space-x-2 shrink-0">
@@ -268,49 +268,10 @@
               </div>
             </div>
           </div>
-
-          <!-- Действия с днем -->
-          <div v-if="selectedDateStr" class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-            <div class="flex justify-between items-center border-b border-stone-50 pb-2.5">
-              <h3 class="text-xs font-bold text-stone-600 uppercase">Выбран день: {{ formatDateDisplay(selectedDateStr) }}</h3>
-              <span class="text-[9px] font-bold uppercase text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-                График: {{ getWorkStatus(selectedDateStr) === 'work' ? '💼 Работа' : '🏡 Выходной' }}
-                <span v-if="isCustomShift(selectedDateStr)" class="text-[8px] text-red-500 font-black ml-1">(изменен)</span>
-              </span>
-            </div>
-            
-            <p class="text-[10px] text-stone-400 italic text-center">💡 Кликните по дате повторно прямо на календаре, чтобы быстро добавить/удалить день менструации по одному</p>
-
-            <div class="grid grid-cols-1 gap-2">
-              <button 
-                @click="togglePeriodStart" 
-                :class="['w-full py-2.5 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', isPeriodDay(selectedDateStr) ? 'bg-gradient-to-tr from-stone-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-200']"
-              >
-                {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить день менструации' : '🩸 Отметить как день менструации (на ' + periodLength + ' дней)' }}
-              </button>
-
-              <button 
-                v-if="selectedCycle"
-                @click="deleteEntireCycle"
-                class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-extrabold rounded-2xl text-xs tracking-wider transition shadow-sm"
-              >
-                🗑️ Удалить весь этот период менструации
-              </button>
-
-              <button 
-                @click="cycleWorkStatus(selectedDateStr)"
-                class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 active:scale-[0.98] text-stone-700 font-bold rounded-2xl text-xs transition border border-stone-200"
-              >
-                🔄 Изменить рабочий график на этот день
-              </button>
-            </div>
-          </div>
         </div>
-
 
         <!-- ==================== ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ЧАТ ИИ) ==================== -->
         <div v-if="activeTab === 'notes'" class="space-y-5">
-          
           <!-- ДИАЛОГОВОЕ ОКНО С ИИ (ЧАТ) -->
           <div class="p-5 rounded-3xl bg-gradient-to-tr from-violet-50 to-indigo-50 border border-violet-100 shadow-sm space-y-4 flex flex-col h-[400px]">
             <div class="flex items-center justify-between border-b border-violet-100/50 pb-2 flex-shrink-0">
@@ -436,7 +397,6 @@
 
         <!-- ==================== ВКЛАДКА 3: САМОЧУВСТВИЕ ==================== -->
         <div v-if="activeTab === 'wellbeing'" class="space-y-5">
-          
           <!-- ПУЛЬС -->
           <div class="relative w-full h-24 bg-rose-50/50 rounded-3xl overflow-hidden border border-rose-100 flex items-center justify-center shadow-inner">
             <div class="absolute inset-0 bg-gradient-to-r from-rose-200/10 via-pink-100/10 to-transparent animate-pulse"></div>
@@ -746,6 +706,60 @@
       </div>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО ДЕЙСТВИЙ С ВЫБРАННЫМ ДНЕМ (100% видимость на всех экранах) -->
+    <div v-if="isDayActionsOpen" @click.self="isDayActionsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative animate-fade-in-up">
+        
+        <div class="flex justify-between items-center border-b border-stone-100 pb-3">
+          <h3 class="text-xs font-black uppercase text-stone-700 tracking-wider">
+            Выбран день: {{ formatDateDisplay(selectedDateStr) }}
+          </h3>
+          <button @click="isDayActionsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-lg p-1.5 leading-none">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <p class="text-[10px] text-stone-500 font-bold uppercase tracking-wider">
+            График на день: {{ getWorkStatus(selectedDateStr) === 'work' ? '💼 Работа' : '🏡 Выходной' }}
+            <span v-if="isCustomShift(selectedDateStr)" class="text-[8px] text-red-500 font-black ml-1">(изменен)</span>
+          </p>
+
+          <div class="grid grid-cols-1 gap-2 pt-2">
+            <!-- Кнопка добавления/сокращения дня менструации -->
+            <button 
+              @click="handleTogglePeriod" 
+              :class="['w-full py-3 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', 
+                       isPeriodDay(selectedDateStr) 
+                         ? 'bg-gradient-to-r from-stone-500 to-rose-400' 
+                         : 'bg-gradient-to-r from-rose-500 to-pink-500 shadow-rose-100']"
+            >
+              {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить этот день' : '🩸 Отметить как день менструации' }}
+            </button>
+
+            <!-- Кнопка удаления ВСЕГО ПЕРИОДА (отображается только если день входит в цикл) -->
+            <button 
+              v-if="selectedCycle"
+              @click="handleDeleteEntireCycle"
+              class="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-extrabold rounded-2xl text-xs tracking-wider transition shadow-sm"
+            >
+              🗑️ Удалить весь этот период менструации
+            </button>
+
+            <!-- Смена рабочего графика -->
+            <button 
+              @click="handleCycleWorkStatus"
+              class="w-full py-3 bg-stone-100 hover:bg-stone-200 active:scale-[0.98] text-stone-700 font-bold rounded-2xl text-xs transition border border-stone-200"
+            >
+              🔄 Изменить рабочий график на этот день
+            </button>
+          </div>
+        </div>
+
+        <button @click="isDayActionsOpen = false" class="w-full py-2.5 bg-stone-50 hover:bg-stone-100 text-stone-600 font-bold rounded-2xl text-xs transition border border-stone-200/50">
+          ✕ Закрыть окно
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -831,6 +845,9 @@
         
         // Флаг инициализации для блокировки перезаписи настроек при первичном запуске
         let isInitialized = false;
+        
+        // Переменная состояния для модального окна действий с днем
+        const isDayActionsOpen = ref(false);
 
         const currentYear = ref(new Date().getFullYear());
         const currentMonth = ref(new Date().getMonth());
@@ -840,18 +857,46 @@
           "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
         ]);
 
-        const cycles = ref(safeJsonParse('demo_cycles', []));
-        const partnerNotes = ref(safeJsonParse('demo_notes', []));
-        const wellbeingLogs = ref(safeJsonParse('demo_wellbeing', []));
-        const customShifts = ref(safeJsonParse('demo_work_shifts', []));
-        const categories = ref(safeJsonParse('demo_categories', [
-          { id: '1', name: 'Смотреть' },
-          { id: '2', name: 'Посетить' },
-          { id: '3', name: 'Поездки' },
-          { id: '4', name: 'Любимая Музыка' },
-          { id: '5', name: 'Прочее' }
-        ]));
-        const plans = ref(safeJsonParse('demo_plans', []));
+        const cycles = ref([]);
+        const partnerNotes = ref([]);
+        const wellbeingLogs = ref([]);
+        const customShifts = ref([]);
+        const categories = ref([]);
+        const plans = ref([]);
+
+        // Предупредительное наполнение из кэша с фильтрацией дубликатов на старте
+        const populateLocalState = () => {
+          const cachedCycles = safeJsonParse('demo_cycles', []);
+          const uniqueCached = [];
+          const seenCachedStarts = new Set();
+          cachedCycles.forEach(c => {
+            if (c && c.start_date) {
+              const normalized = normalizeDateStr(c.start_date);
+              if (!seenCachedStarts.has(normalized)) {
+                seenCachedStarts.add(normalized);
+                uniqueCached.push({
+                  ...c,
+                  start_date: normalized,
+                  end_date: normalizeDateStr(c.end_date)
+                });
+              }
+            }
+          });
+          cycles.value = uniqueCached;
+          partnerNotes.value = safeJsonParse('demo_notes', []);
+          wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
+          customShifts.value = safeJsonParse('demo_work_shifts', []);
+          categories.value = safeJsonParse('demo_categories', [
+            { id: '1', name: 'Смотреть' },
+            { id: '2', name: 'Посетить' },
+            { id: '3', name: 'Поездки' },
+            { id: '4', name: 'Любимая Музыка' },
+            { id: '5', name: 'Прочее' }
+          ]);
+          plans.value = safeJsonParse('demo_plans', []);
+        };
+
+        populateLocalState();
 
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
@@ -1108,16 +1153,12 @@
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
           if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', []);
-            plans.value = safeJsonParse('demo_plans', []);
+            populateLocalState();
             return;
           }
 
           try {
+            // Очищаем текущие статусы очереди при принудительной загрузке правды из таблиц
             isSyncPending.value = false;
             syncQueue.value = [];
             localStorage.setItem('sync_queue', JSON.stringify([]));
@@ -1127,11 +1168,25 @@
             const allData = await response.json();
 
             if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
-              cycles.value = (allData.cycles || []).map(c => ({
-                ...c,
-                start_date: normalizeDateStr(c.start_date),
-                end_date: normalizeDateStr(c.end_date)
-              }));
+              
+              // Самовосстановление базы: фильтруем дубликаты периодов менструации
+              const uniqueCycles = [];
+              const seenStarts = new Set();
+              (allData.cycles || []).forEach(c => {
+                if (c && c.start_date) {
+                  const normalizedStart = normalizeDateStr(c.start_date);
+                  if (!seenStarts.has(normalizedStart)) {
+                    seenStarts.add(normalizedStart);
+                    uniqueCycles.push({
+                      ...c,
+                      start_date: normalizedStart,
+                      end_date: normalizeDateStr(c.end_date)
+                    });
+                  }
+                }
+              });
+              cycles.value = uniqueCycles;
+
               partnerNotes.value = (allData.partner_notes || []).map(n => ({
                 ...n,
                 date: normalizeDateStr(n.date)
@@ -1181,12 +1236,7 @@
 
           } catch (e) {
             console.warn("Сеть временно недоступна, загружен локальный кэш.", e);
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', []);
-            plans.value = safeJsonParse('demo_plans', []);
+            populateLocalState();
           }
         }
 
@@ -1224,6 +1274,9 @@
           } else {
             dataArray.value.push(newRecord);
           }
+          
+          // Принудительное пересоздание массива для 100% срабатывания реактивности Vue 3
+          dataArray.value = [...dataArray.value];
           localStorage.setItem(localKey, JSON.stringify(dataArray.value));
 
           if (isDemoMode.value) return;
@@ -1253,6 +1306,9 @@
             const idx = localRef.value.findIndex(item => item.id.toString() === id.toString());
             if (idx !== -1) {
               localRef.value[idx] = { ...localRef.value[idx], ...updateData };
+              
+              // Принудительное пересоздание массива для 100% срабатывания реактивности Vue 3
+              localRef.value = [...localRef.value];
               localStorage.setItem(localKey, JSON.stringify(localRef.value));
             }
           }
@@ -1445,13 +1501,11 @@
           }
         }
 
+        // КЛИК НА ДАТУ: Теперь всегда открывает всплывающее меню действий, исключая путаницу
         async function selectDate(dateStr) {
-          if (selectedDateStr.value === dateStr) {
-            await togglePeriodStart();
-          } else {
-            selectedDateStr.value = dateStr;
-            newNoteDate.value = dateStr;
-          }
+          selectedDateStr.value = dateStr;
+          newNoteDate.value = dateStr;
+          isDayActionsOpen.value = true;
         }
 
         function isSelected(dateStr) {
@@ -1756,7 +1810,6 @@
           triggerToast("Дело добавлено в планы!");
         }
 
-        // ИСПРАВЛЕНО: Четкое соответствие галочки и уведомления (без рассинхронизации ссылок)
         async function togglePlanStatus(plan) {
           const newStatus = !plan.is_completed;
           plan.is_completed = newStatus;
@@ -1784,6 +1837,21 @@
           if (!dateStr) return '';
           const [y, m, d] = dateStr.split('-');
           return `${d}.${m}.${y}`;
+        }
+
+        // Вспомогательные функции-обертки для модального окна действий с днем
+        async function handleTogglePeriod() {
+          await togglePeriodStart();
+          isDayActionsOpen.value = false;
+        }
+
+        async function handleDeleteEntireCycle() {
+          await deleteEntireCycle();
+          isDayActionsOpen.value = false;
+        }
+
+        async function handleCycleWorkStatus() {
+          await cycleWorkStatus(selectedDateStr.value);
         }
 
         // ==================== ИНТЕГРАЦИЯ OPENROUTER/FREE ====================
@@ -2078,7 +2146,11 @@ ${shiftsData}
           isSyncPending,
           processSyncQueue,
           appSettingsList,
-          forceSync
+          forceSync,
+          isDayActionsOpen,
+          handleTogglePeriod,
+          handleDeleteEntireCycle,
+          handleCycleWorkStatus
         };
       }
     }).mount('#app');
