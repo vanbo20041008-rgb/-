@@ -711,7 +711,7 @@
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- Выбор ИИ-Бота (ОБНОВЛЕННЫЙ СПИСОК С Gemma 4, DeepSeek V4 Flash, Llama 4) -->
+          <!-- Выбор ИИ-Бота (ОБНОВЛЕННЫЙ СПИСОК БЕСПЛАТНЫХ МОДЕЛЕЙ ИЗ OPENROUTER) -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
             <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
@@ -751,16 +751,16 @@
 
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
-    // Вставьте URL вашего развернутого Google Скрипта:
+    // 1. Вставьте сюда URL вашего развернутого Google Скрипта (из шага 6, оканчивается на /exec):
     const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
 
-    // Токен вашего Телеграм-бота:
+    // 2. Вставьте токен вашего Телеграм-бота:
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
 
-    // Chat ID партнера (для Него):
+    // 3. Вставьте Chat ID партнера (для Него):
     const DEFAULT_HIM_CHAT_ID = "1719296144";
 
-    // Chat ID подруги (для Неё):
+    // 4. Вставьте Chat ID подруги (для Неё):
     const DEFAULT_HER_CHAT_ID = ""; 
     // ===================================================================================
 
@@ -929,19 +929,25 @@
 
         // Инициализация соединения
         async function initConnection() {
-          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
-            localStorage.setItem('cfg_supabase_url', DEFAULT_GOOGLE_SCRIPT_URL);
+          // Автоматическое предзаполнение и обновление параметров из констант в коде на любом устройстве
+          const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
+          if (scriptUrl && !scriptUrl.includes("YOUR_SCRIPT_ID")) {
+            localStorage.setItem('cfg_supabase_url', scriptUrl);
           }
-          if (!localStorage.getItem('cfg_bot_token') && DEFAULT_TELEGRAM_BOT_TOKEN) {
-            localStorage.setItem('cfg_bot_token', DEFAULT_TELEGRAM_BOT_TOKEN);
+          const botToken = DEFAULT_TELEGRAM_BOT_TOKEN;
+          if (botToken && !botToken.includes("ВСТАВЬТЕ")) {
+            localStorage.setItem('cfg_bot_token', botToken);
           }
-          if (!localStorage.getItem('cfg_him_chat_id') && DEFAULT_HIM_CHAT_ID) {
-            localStorage.setItem('cfg_him_chat_id', DEFAULT_HIM_CHAT_ID);
+          const himId = DEFAULT_HIM_CHAT_ID;
+          if (himId && !himId.includes("ВСТАВЬТЕ")) {
+            localStorage.setItem('cfg_him_chat_id', himId);
           }
-          if (!localStorage.getItem('cfg_her_chat_id') && DEFAULT_HER_CHAT_ID) {
-            localStorage.setItem('cfg_her_chat_id', DEFAULT_HER_CHAT_ID);
+          const herId = DEFAULT_HER_CHAT_ID;
+          if (herId && !herId.includes("ВСТАВЬТЕ")) {
+            localStorage.setItem('cfg_her_chat_id', herId);
           }
 
+          // Обновление реактивных настроек для вывода на экран
           settingsInput.value.url = localStorage.getItem('cfg_supabase_url') || "";
           settingsInput.value.botToken = localStorage.getItem('cfg_bot_token') || "";
           settingsInput.value.himChatId = localStorage.getItem('cfg_him_chat_id') || "";
@@ -961,11 +967,12 @@
             // Сначала сразу отправляем накопившуюся очередь, если она есть
             if (syncQueue.value.length > 0) {
               await processSyncQueue();
+            } else {
+              // Если очереди нет, принудительно забираем последние данные из таблиц при открытии
+              await fetchData();
             }
-            // Затем стягиваем новые данные
-            await fetchData();
             await loadApiKey();
-            triggerToast("Подключение активно! 🟢");
+            triggerToast("Подключение активно! Данные обновлены 🟢");
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
@@ -1089,7 +1096,7 @@
           isSyncPending.value = true;
           clearTimeout(syncTimer);
 
-          // Таймер изменен на 15 секунд по вашему запросу
+          // Таймер 15 секунд
           syncTimer = setTimeout(async () => {
             await processSyncQueue();
           }, 15000); 
@@ -1903,6 +1910,7 @@ ${plansData}
               `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
             ).join("\n") || "Нет данных.";
 
+            // ИСПРАВЛЕНО: wellbeingLogs.value.slice (был вызов напрямую без .value, ломавший скрипт)
             const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
               `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
