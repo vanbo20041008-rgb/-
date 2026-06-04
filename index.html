@@ -58,7 +58,7 @@
       <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
     </div>
 
-    <!-- ТОСТ-УВЕДОМЛЕНИЕ (ПЕРЕНЕСЕНО ВНИЗ ВО ИЗБЕЖАНИЕ ПЕРЕКРЫТИЯ ПАНЕЛИ) -->
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ (ОТОБРАЖАЕТСЯ НАД НИЖНЕЙ НАВИГАЦИЕЙ) -->
     <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
       <span>⚡</span>
       <span>{{ toastMessage }}</span>
@@ -92,7 +92,7 @@
       </div>
     </header>
 
-    <!-- СИНХРО-БАР (ПЕРЕНЕСЕН ПОД ХЕДЕР ДЛЯ ИСКЛЮЧЕНИЯ ТЕСНОТЫ ВВЕРХУ) -->
+    <!-- СИНХРО-БАР -->
     <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
       <span class="text-stone-500">Облачная база:</span>
       <button 
@@ -251,7 +251,7 @@
               </div>
               <div>
                 <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина менструации</label>
-                <select v-model.number="periodLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+                <select v-model.number="periodLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
                   <option v-for="d in Array.from({length: 8}, (_, i) => i + 3)" :key="d" :value="d">{{ d }} дней</option>
                 </select>
               </div>
@@ -750,7 +750,7 @@
 
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjO9gerJc10Oo0k0WqTkGoZ4gYS_4UhvLGwjm3vpnDzBTpxQdJ72tXnRKb5zdIgW0/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDkdR0p2mK9LGj4kx3qGW99bIc9pkUrkMl_2y_8T7obCX_vH0OiBkykRR2NDYhlPI/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -772,7 +772,7 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Умная нормализация дат, включая поддержку регионального формата DD.MM.YYYY из Google Таблиц
+    // Умная нормализация дат, включая поддержку регионального формата DD.MM.YYYY и YYYY-M-D без нулей
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
@@ -783,13 +783,23 @@
         str = str.split("T")[0];
       }
       
-      // Распознавание формата ДД.ММ.ГГГГ из таблиц РФ
+      // 1. Распознавание формата ДД.ММ.ГГГГ (например, 03.06.2026 или 3.6.2026)
       const ddMmYyyyRegex = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
-      const match = str.match(ddMmYyyyRegex);
-      if (match) {
-        const d = String(match[1]).padStart(2, '0');
-        const m = String(match[2]).padStart(2, '0');
-        const y = match[3];
+      const matchDisplay = str.match(ddMmYyyyRegex);
+      if (matchDisplay) {
+        const d = String(matchDisplay[1]).padStart(2, '0');
+        const m = String(matchDisplay[2]).padStart(2, '0');
+        const y = matchDisplay[3];
+        return `${y}-${m}-${d}`;
+      }
+      
+      // 2. Распознавание формата ГГГГ-М-Д с возможным отсутствием ведущих нулей (например, 2026-6-3)
+      const yyyyMmDdRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+      const matchIso = str.match(yyyyMmDdRegex);
+      if (matchIso) {
+        const y = matchIso[1];
+        const m = String(matchIso[2]).padStart(2, '0');
+        const d = String(matchIso[3]).padStart(2, '0');
         return `${y}-${m}-${d}`;
       }
       
@@ -818,6 +828,9 @@
         const activeTab = ref('calendar');
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
+        
+        // Флаг инициализации для блокировки перезаписи настроек при первичном запуске
+        let isInitialized = false;
 
         const currentYear = ref(new Date().getFullYear());
         const currentMonth = ref(new Date().getMonth());
@@ -954,6 +967,9 @@
             // КРИТИЧЕСКИ: При заходе в приложение безусловно сразу подтягиваем свежие данные из таблицы!
             await fetchData();
             await loadApiKey();
+            
+            // Завершаем инициализацию и открываем наблюдателям доступ к отправке данных
+            isInitialized = true;
             triggerToast("Подключение активно! Данные обновлены 🟢");
           } catch (e) {
             console.error("Ошибка инициализации:", e);
@@ -1102,7 +1118,6 @@
           }
 
           try {
-            // Очищаем текущие статусы очереди при принудительной загрузке правды из таблиц
             isSyncPending.value = false;
             syncQueue.value = [];
             localStorage.setItem('sync_queue', JSON.stringify([]));
@@ -1133,7 +1148,8 @@
               }));
               appSettingsList.value = allData.app_settings || [];
 
-              const cycleLenSetting = appSettingsList.value.find(s => s.id === 'cycle_length');
+              // КРИТИЧЕСКИ: Чтение последнего (актуального) значения настройки во избежание багов дублирования
+              const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s.id === 'cycle_length');
               if (cycleLenSetting && cycleLenSetting.key_value) {
                 const val = parseInt(cycleLenSetting.key_value, 10);
                 if (!isNaN(val)) {
@@ -1141,7 +1157,7 @@
                   localStorage.setItem('user_cycle_length', val);
                 }
               }
-              const periodLenSetting = appSettingsList.value.find(s => s.id === 'period_length');
+              const periodLenSetting = [...appSettingsList.value].reverse().find(s => s.id === 'period_length');
               if (periodLenSetting && periodLenSetting.key_value) {
                 const val = parseInt(periodLenSetting.key_value, 10);
                 if (!isNaN(val)) {
@@ -1176,7 +1192,7 @@
 
         async function saveOrUpdateSetting(key, val) {
           if (isDemoMode.value) return;
-          const currentSetting = appSettingsList.value.find(s => s.id === key);
+          const currentSetting = [...appSettingsList.value].reverse().find(s => s.id === key);
           
           if (currentSetting && currentSetting.key_value === val.toString()) {
             return;
@@ -1191,11 +1207,15 @@
 
         watch(cycleLength, (newVal) => {
           localStorage.setItem('user_cycle_length', newVal);
-          saveOrUpdateSetting('cycle_length', newVal);
+          if (isInitialized) {
+            saveOrUpdateSetting('cycle_length', newVal);
+          }
         });
         watch(periodLength, (newVal) => {
           localStorage.setItem('user_period_length', newVal);
-          saveOrUpdateSetting('period_length', newVal);
+          if (isInitialized) {
+            saveOrUpdateSetting('period_length', newVal);
+          }
         });
 
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
@@ -1736,18 +1756,22 @@
           triggerToast("Дело добавлено в планы!");
         }
 
+        // ИСПРАВЛЕНО: Четкое соответствие галочки и уведомления (без рассинхронизации ссылок)
         async function togglePlanStatus(plan) {
+          const newStatus = !plan.is_completed;
+          plan.is_completed = newStatus;
+
           if (isDemoMode.value) {
-            plan.is_completed = !plan.is_completed;
             localStorage.setItem('demo_plans', JSON.stringify(plans.value));
             fetchData();
           } else {
-            await updateLocalOrDB('plans', 'demo_plans', plan.id, { is_completed: !plan.is_completed });
+            await updateLocalOrDB('plans', 'demo_plans', plan.id, { is_completed: newStatus });
           }
-          if (plan.is_completed) {
-            triggerToast("Дело выполнено! 🎉");
+          
+          if (newStatus) {
+            triggerToast("План выполнен! 🎉");
           } else {
-            triggerToast("Дело возвращено в планы");
+            triggerToast("План возвращен в список дел");
           }
         }
 
