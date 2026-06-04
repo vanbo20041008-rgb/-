@@ -58,30 +58,15 @@
       <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
     </div>
 
-    <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
-    <div v-if="showToast" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800">
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ (ПЕРЕНЕСЕНО ВНИЗ ВО ИЗБЕЖАНИЕ ПЕРЕКРЫТИЯ ПАНЕЛИ) -->
+    <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
       <span>⚡</span>
       <span>{{ toastMessage }}</span>
     </div>
 
     <!-- ХЕДЕР -->
-    <header class="flex justify-between items-center mb-4 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm gap-2">
-      <div class="flex items-center space-x-2 min-w-0">
-        <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
-        
-        <!-- КНОПКА СИНХРОНИЗАЦИИ (ПОЛНОСТЬЮ ВИДИМАЯ, ТЕКСТ БОЛЬШЕ НЕ СКРЫВАЕТСЯ) -->
-        <button 
-          @click="forceSync" 
-          :disabled="syncQueue.length === 0 && !isSyncPending"
-          :class="['px-2 py-1 rounded-lg text-[9px] font-extrabold transition-all border flex items-center space-x-1 whitespace-nowrap shrink-0', 
-                   syncQueue.length > 0 
-                     ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
-                     : 'bg-stone-50 text-stone-400 border-stone-200 cursor-not-allowed']"
-        >
-          <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '☁️') }}</span>
-          <span>{{ isSyncPending ? 'Запись...' : (syncQueue.length > 0 ? 'Сохранить' : 'В сети') }}</span>
-        </button>
-      </div>
+    <header class="flex justify-between items-center mb-2 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm">
+      <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
       
       <div class="flex items-center space-x-2 shrink-0">
         <!-- Кнопка шестеренки настроек -->
@@ -89,8 +74,8 @@
           ⚙️
         </button>
 
-        <!-- Селектор Роли (Компактный, кнопки Он/Она прямоугольные и строго равны по размеру) -->
-        <div class="flex bg-stone-100 p-0.5 rounded-xl text-[9px] font-black border border-stone-200/50 w-[105px] shrink-0">
+        <!-- Селектор Роли (Компактный, прямоугольный, кнопки равны) -->
+        <div class="flex bg-stone-100 p-0.5 rounded-xl text-[9px] font-black border border-stone-200/50 w-[100px] shrink-0">
           <button 
             @click="setRole('her')" 
             :class="['flex-1 py-1 rounded-lg transition-all text-center', role === 'her' ? 'bg-red-500 text-white shadow-sm' : 'text-stone-500']"
@@ -106,6 +91,22 @@
         </div>
       </div>
     </header>
+
+    <!-- СИНХРО-БАР (ПЕРЕНЕСЕН ПОД ХЕДЕР ДЛЯ ИСКЛЮЧЕНИЯ ТЕСНОТЫ ВВЕРХУ) -->
+    <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
+      <span class="text-stone-500">Облачная база:</span>
+      <button 
+        @click="forceSync" 
+        :disabled="syncQueue.length === 0 && !isSyncPending"
+        :class="['px-3 py-1.5 rounded-xl text-[9px] font-black transition-all border flex items-center space-x-1 whitespace-nowrap', 
+                 syncQueue.length > 0 
+                   ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
+                   : 'bg-white text-stone-500 border-stone-200/60 cursor-not-allowed']"
+      >
+        <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '🟢') }}</span>
+        <span>{{ isSyncPending ? 'Запись данных...' : (syncQueue.length > 0 ? `Сохранить изменения (${syncQueue.length})` : 'Синхронизировано') }}</span>
+      </button>
+    </div>
 
     <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
@@ -749,7 +750,7 @@
 
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdMmbfDXNBGL2gEibqGbUVvHjK3K4Jqrn8VJGwlRpEqfJdeWHmnBqzTJa7Mql8XQg/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjO9gerJc10Oo0k0WqTkGoZ4gYS_4UhvLGwjm3vpnDzBTpxQdJ72tXnRKb5zdIgW0/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -771,25 +772,32 @@
       return `${y}-${m}-${d}`;
     }
 
+    // Умная нормализация дат, включая поддержку регионального формата DD.MM.YYYY из Google Таблиц
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
         return getLocalDateString(val);
       }
-      if (typeof val === 'string') {
-        if (val.includes("T")) {
-          return val.split("T")[0];
-        }
-        if (val.length > 10 && !isNaN(Date.parse(val))) {
-          const d = new Date(val);
-          return getLocalDateString(d);
-        }
-        return val.trim();
+      let str = String(val).trim();
+      if (str.includes("T")) {
+        str = str.split("T")[0];
       }
-      if (typeof val === 'number') {
-        return getLocalDateString(new Date(val));
+      
+      // Распознавание формата ДД.ММ.ГГГГ из таблиц РФ
+      const ddMmYyyyRegex = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+      const match = str.match(ddMmYyyyRegex);
+      if (match) {
+        const d = String(match[1]).padStart(2, '0');
+        const m = String(match[2]).padStart(2, '0');
+        const y = match[3];
+        return `${y}-${m}-${d}`;
       }
-      return val;
+      
+      if (str.length > 10 && !isNaN(Date.parse(str))) {
+        const d = new Date(str);
+        return getLocalDateString(d);
+      }
+      return str;
     }
 
     function safeJsonParse(key, defaultVal = []) {
@@ -944,7 +952,6 @@
           try {
             isDemoMode.value = false;
             // КРИТИЧЕСКИ: При заходе в приложение безусловно сразу подтягиваем свежие данные из таблицы!
-            // Вся локальная очередь сбрасывается для синхронизации "правды" с сервера
             await fetchData();
             await loadApiKey();
             triggerToast("Подключение активно! Данные обновлены 🟢");
@@ -1880,7 +1887,6 @@ ${plansData}
               `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
             ).join("\n") || "Нет данных.";
 
-            // Скорректирован wellbeingLogs.value.slice
             const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
               `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
