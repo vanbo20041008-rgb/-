@@ -751,12 +751,38 @@
   </div>
 
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjiySUK6MgckeTn-7FPjujJrITUMAPL9w9KfcIvtV_O8FWEzBJBQ7yBqYw9ID1edE/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
+
+    // ЗАЩИТНЫЙ СЛОЙ LOCALSTORAGE (Предотвращает зависание Vue при запуске в песочницах Webview Telegram)
+    const safeStorage = {
+      getItem(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          console.warn("Storage read blocked:", e);
+          return null;
+        }
+      },
+      setItem(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (e) {
+          console.warn("Storage write blocked:", e);
+        }
+      },
+      removeItem(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn("Storage remove blocked:", e);
+        }
+      }
+    };
 
     function getCurrentTime() {
       const now = new Date();
@@ -766,13 +792,14 @@
     }
 
     function getLocalDateString(dateObj) {
+      if (!dateObj || isNaN(dateObj.getTime())) return "";
       const y = dateObj.getFullYear();
       const m = String(dateObj.getMonth() + 1).padStart(2, '0');
       const d = String(dateObj.getDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
     }
 
-    // Повышенная надежность нормализации дат для избежания "каши"
+    // Сверхнадежная нормализация дат с защитой от пустых строк и нативных сбоев
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
@@ -828,7 +855,7 @@
 
     function safeJsonParse(key, defaultVal = []) {
       try {
-        const val = localStorage.getItem(key);
+        const val = safeStorage.getItem(key);
         if (!val || val === "undefined" || val === "null" || val === "NaN") {
           return defaultVal;
         }
@@ -842,7 +869,7 @@
     createApp({
       setup() {
         const activeTab = ref('calendar');
-        const role = ref(localStorage.getItem('user_role') || 'her');
+        const role = ref(safeStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
         
         let isInitialized = false;
@@ -883,11 +910,11 @@
 
         const showAddCategory = ref(false);
         const newCategoryName = ref("");
-        const newPlanCategory = ref("");
+        const newPlanCategory = ref(categories.value[0]?.name || 'Прочее');
         const newPlanTitle = ref("");
 
         const getSafeLocalStorageInt = (key, defaultVal) => {
-          const val = localStorage.getItem(key);
+          const val = safeStorage.getItem(key);
           if (!val || val === "undefined" || val === "NaN" || val === "null") return defaultVal;
           const parsed = parseInt(val, 10);
           return isNaN(parsed) ? defaultVal : parsed;
@@ -910,13 +937,13 @@
         };
 
         const settingsInput = ref({
-          url: localStorage.getItem('cfg_supabase_url') || "",
-          key: localStorage.getItem('cfg_supabase_key') || "",
-          botToken: localStorage.getItem('cfg_bot_token') || "",
-          himChatId: localStorage.getItem('cfg_him_chat_id') || "",
-          herChatId: localStorage.getItem('cfg_her_chat_id') || "",
-          openrouterKey: localStorage.getItem('cfg_openrouter_key') || "",
-          aiModel: localStorage.getItem('cfg_ai_model') || "openrouter/free"
+          url: safeStorage.getItem('cfg_supabase_url') || "",
+          key: safeStorage.getItem('cfg_supabase_key') || "",
+          botToken: safeStorage.getItem('cfg_bot_token') || "",
+          himChatId: safeStorage.getItem('cfg_him_chat_id') || "",
+          herChatId: safeStorage.getItem('cfg_her_chat_id') || "",
+          openrouterKey: safeStorage.getItem('cfg_openrouter_key') || "",
+          aiModel: safeStorage.getItem('cfg_ai_model') || "openrouter/free"
         });
 
         const isSettingsOpen = ref(false);
@@ -941,54 +968,58 @@
 
         function setRole(newRole) {
           role.value = newRole;
-          localStorage.setItem('user_role', newRole);
+          safeStorage.setItem('user_role', newRole);
           triggerToast(`Выбрана роль: ${newRole === 'her' ? 'Она 🙋‍♀️' : 'Он 🙋‍♂️'}`);
         }
 
-        // ПРИОРИТЕТНЫЙ СТАРТ: Автосинхронизация локальных правок, затем загрузка актуальных облачных данных
+        // Автодетект ненастроенных/стандартных ссылок для предотвращения зависания сети
+        function isUrlInvalid(url) {
+          if (!url) return true;
+          return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
+        }
+
         async function initConnection() {
           const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
           if (scriptUrl && !scriptUrl.includes("YOUR_SCRIPT_ID")) {
-            localStorage.setItem('cfg_supabase_url', scriptUrl);
+            safeStorage.setItem('cfg_supabase_url', scriptUrl);
           }
           const botToken = DEFAULT_TELEGRAM_BOT_TOKEN;
           if (botToken && !botToken.includes("ВСТАВЬТЕ")) {
-            localStorage.setItem('cfg_bot_token', botToken);
+            safeStorage.setItem('cfg_bot_token', botToken);
           }
           const himId = DEFAULT_HIM_CHAT_ID;
           if (himId && !himId.includes("ВСТАВЬТЕ")) {
-            localStorage.setItem('cfg_him_chat_id', himId);
+            safeStorage.setItem('cfg_him_chat_id', himId);
           }
           const herId = DEFAULT_HER_CHAT_ID;
           if (herId && !herId.includes("ВСТАВЬТЕ")) {
-            localStorage.setItem('cfg_her_chat_id', herId);
+            safeStorage.setItem('cfg_her_chat_id', herId);
           }
 
-          settingsInput.value.url = localStorage.getItem('cfg_supabase_url') || "";
-          settingsInput.value.botToken = localStorage.getItem('cfg_bot_token') || "";
-          settingsInput.value.himChatId = localStorage.getItem('cfg_him_chat_id') || "";
-          settingsInput.value.herChatId = localStorage.getItem('cfg_her_chat_id') || "";
-          settingsInput.value.openrouterKey = localStorage.getItem('cfg_openrouter_key') || "";
-          settingsInput.value.aiModel = localStorage.getItem('cfg_ai_model') || "openrouter/free";
+          settingsInput.value.url = safeStorage.getItem('cfg_supabase_url') || "";
+          settingsInput.value.botToken = safeStorage.getItem('cfg_bot_token') || "";
+          settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || "";
+          settingsInput.value.herChatId = safeStorage.getItem('cfg_her_chat_id') || "";
+          settingsInput.value.openrouterKey = safeStorage.getItem('cfg_openrouter_key') || "";
+          settingsInput.value.aiModel = safeStorage.getItem('cfg_ai_model') || "openrouter/free";
 
-          const url = localStorage.getItem('cfg_supabase_url');
+          const url = safeStorage.getItem('cfg_supabase_url');
 
-          if (!url) {
+          if (isUrlInvalid(url)) {
             isDemoMode.value = true;
             await fetchData();
+            isInitialized = true;
             return;
           }
 
           try {
             isDemoMode.value = false;
 
-            // 1. Сначала пытаемся синхронизировать накопившуюся локальную очередь (если она была)
             if (syncQueue.value.length > 0) {
-              triggerToast("🔄 Загрузка локальных изменений перед обновлением...");
+              triggerToast("🔄 Загрузка локальных изменений...");
               await processSyncQueue();
             }
 
-            // 2. Затем скачиваем свежие актуальные данные с сервера
             await fetchData();
             await loadApiKey();
             
@@ -998,6 +1029,7 @@
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
             await fetchData();
+            isInitialized = true;
             triggerToast(`Локальный режим активен.`);
           }
         }
@@ -1005,9 +1037,9 @@
         async function saveConnectionSettings() {
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
-              localStorage.setItem(key, val.trim());
+              safeStorage.setItem(key, val.trim());
             } else {
-              localStorage.removeItem(key);
+              safeStorage.removeItem(key);
             }
           };
 
@@ -1026,13 +1058,13 @@
 
         async function resetToDefaultSettings() {
           if (confirm("Вы действительно хотите сбросить настройки на дефолтные?")) {
-            localStorage.removeItem('cfg_supabase_url');
-            localStorage.removeItem('cfg_supabase_key');
-            localStorage.removeItem('cfg_bot_token');
-            localStorage.removeItem('cfg_him_chat_id');
-            localStorage.removeItem('cfg_her_chat_id');
-            localStorage.removeItem('cfg_openrouter_key');
-            localStorage.removeItem('cfg_ai_model');
+            safeStorage.removeItem('cfg_supabase_url');
+            safeStorage.removeItem('cfg_supabase_key');
+            safeStorage.removeItem('cfg_bot_token');
+            safeStorage.removeItem('cfg_him_chat_id');
+            safeStorage.removeItem('cfg_her_chat_id');
+            safeStorage.removeItem('cfg_openrouter_key');
+            safeStorage.removeItem('cfg_ai_model');
 
             settingsInput.value = {
               url: "",
@@ -1051,7 +1083,7 @@
         }
 
         async function loadApiKey() {
-          const customKey = localStorage.getItem('cfg_openrouter_key');
+          const customKey = safeStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
             openRouterApiKey.value = customKey.trim();
             return;
@@ -1063,10 +1095,10 @@
           }
 
           try {
-            const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+            const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=app_settings`);
             const settings = await response.json();
-            const found = settings.find(s => s.id === 'openrouter_api_key');
+            const found = settings.find(s => s && s.id === 'openrouter_api_key');
             if (found && found.key_value) {
               openRouterApiKey.value = found.key_value;
             } else {
@@ -1077,7 +1109,7 @@
           }
         }
 
-        // ПАКЕТНАЯ СИНХРОНИЗАЦИЯ (Использует Content-Type: text/plain для обхода preflight-запроса OPTIONS)
+        // БЕЗОПАСНАЯ ПАКЕТНАЯ СИНХРОНИЗАЦИЯ (Content-Type: text/plain защищает от CORS preflight OPTIONS)
         async function processSyncQueue() {
           if (syncQueue.value.length === 0) {
             isSyncPending.value = false;
@@ -1086,10 +1118,9 @@
 
           isSyncPending.value = true;
           triggerToast("🔄 Синхронизация изменений с облаком...");
-          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+          const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
           try {
-            // КРИТИЧЕСКИЙ ФИКС CORS: Использование text/plain позволяет обойти предзапрос OPTIONS от браузера
             const response = await fetch(APPS_SCRIPT_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain' }, 
@@ -1101,7 +1132,7 @@
 
             if (resData && resData.batch) {
               syncQueue.value = [];
-              localStorage.setItem('sync_queue', JSON.stringify([]));
+              safeStorage.setItem('sync_queue', JSON.stringify([]));
               isSyncPending.value = false;
               triggerToast("🟢 Все изменения зафиксированы в облаке!");
             } else {
@@ -1128,10 +1159,19 @@
           await processSyncQueue();
         }
 
+        // Безопасное слияние диапазонов без риска зависания
         function cleanupCycles() {
           if (cycles.value.length === 0) return;
           
-          let sorted = [...cycles.value].sort((a, b) => a.start_date.localeCompare(b.start_date));
+          let validCycles = cycles.value.filter(c => c && c.start_date && c.end_date);
+          if (validCycles.length === 0) return;
+
+          let sorted = [...validCycles].sort((a, b) => {
+            const startA = String(a.start_date);
+            const startB = String(b.start_date);
+            return startA.localeCompare(startB);
+          });
+
           let merged = [];
           let current = sorted[0];
           
@@ -1152,17 +1192,17 @@
           merged.push(current);
           
           cycles.value = merged;
-          localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
+          safeStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
           if (syncQueue.value.length > 0) {
-            localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+            safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
             resetSyncTimer();
           }
         }
 
         async function fetchData() {
-          const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+          const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
-          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
+          if (isDemoMode.value || isUrlInvalid(APPS_SCRIPT_URL)) {
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1204,20 +1244,20 @@
               }));
               appSettingsList.value = allData.app_settings || [];
 
-              const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s.id === 'cycle_length');
+              const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
               if (cycleLenSetting && cycleLenSetting.key_value) {
                 const val = parseInt(cycleLenSetting.key_value, 10);
                 if (!isNaN(val)) {
                   cycleLength.value = val;
-                  localStorage.setItem('user_cycle_length', val);
+                  safeStorage.setItem('user_cycle_length', val);
                 }
               }
-              const periodLenSetting = [...appSettingsList.value].reverse().find(s => s.id === 'period_length');
+              const periodLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'period_length');
               if (periodLenSetting && periodLenSetting.key_value) {
                 const val = parseInt(periodLenSetting.key_value, 10);
                 if (!isNaN(val)) {
                   periodLength.value = val;
-                  localStorage.setItem('user_period_length', val);
+                  safeStorage.setItem('user_period_length', val);
                 }
               }
             }
@@ -1227,12 +1267,12 @@
               is_completed: p.is_completed === true || p.is_completed === "true" || p.is_completed === 1
             }));
 
-            localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
-            localStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
-            localStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
-            localStorage.setItem('demo_categories', JSON.stringify(categories.value));
-            localStorage.setItem('demo_plans', JSON.stringify(plans.value));
-            localStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
+            safeStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
+            safeStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
+            safeStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
+            safeStorage.setItem('demo_categories', JSON.stringify(categories.value));
+            safeStorage.setItem('demo_plans', JSON.stringify(plans.value));
+            safeStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
 
           } catch (e) {
             console.warn("Сеть недоступна, загружен локальный кэш.", e);
@@ -1247,7 +1287,7 @@
 
         async function saveOrUpdateSetting(key, val) {
           if (isDemoMode.value) return;
-          const currentSetting = [...appSettingsList.value].reverse().find(s => s.id === key);
+          const currentSetting = [...appSettingsList.value].reverse().find(s => s && s.id === key);
           
           if (currentSetting && currentSetting.key_value === val.toString()) {
             return;
@@ -1261,13 +1301,13 @@
         }
 
         watch(cycleLength, (newVal) => {
-          localStorage.setItem('user_cycle_length', newVal);
+          safeStorage.setItem('user_cycle_length', newVal);
           if (isInitialized) {
             saveOrUpdateSetting('cycle_length', newVal);
           }
         });
         watch(periodLength, (newVal) => {
-          localStorage.setItem('user_period_length', newVal);
+          safeStorage.setItem('user_period_length', newVal);
           if (isInitialized) {
             saveOrUpdateSetting('period_length', newVal);
           }
@@ -1275,11 +1315,11 @@
 
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
           if (isDelete) {
-            dataArray.value = dataArray.value.filter(item => item.id.toString() !== deleteId.toString());
+            dataArray.value = dataArray.value.filter(item => item && item.id.toString() !== deleteId.toString());
           } else {
             dataArray.value.push(newRecord);
           }
-          localStorage.setItem(localKey, JSON.stringify(dataArray.value));
+          safeStorage.setItem(localKey, JSON.stringify(dataArray.value));
 
           if (isDemoMode.value) return;
 
@@ -1293,7 +1333,7 @@
           }
 
           syncQueue.value.push(op);
-          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+          safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
           resetSyncTimer();
         }
 
@@ -1305,10 +1345,10 @@
           else if (tableName === 'app_settings') localRef = appSettingsList;
 
           if (localRef) {
-            const idx = localRef.value.findIndex(item => item.id.toString() === id.toString());
+            const idx = localRef.value.findIndex(item => item && item.id.toString() === id.toString());
             if (idx !== -1) {
               localRef.value[idx] = { ...localRef.value[idx], ...updateData };
-              localStorage.setItem(localKey, JSON.stringify(localRef.value));
+              safeStorage.setItem(localKey, JSON.stringify(localRef.value));
             }
           }
 
@@ -1322,12 +1362,12 @@
           };
 
           syncQueue.value.push(op);
-          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+          safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
           resetSyncTimer();
         }
 
         async function sendTelegramNotification(text, targetChatId) {
-          const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
+          const activeBotToken = safeStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
           try {
             await fetch(`https://api.telegram.org/bot${activeBotToken}/sendMessage`, {
@@ -1354,7 +1394,7 @@
         });
 
         async function triggerQuickSignal(signal) {
-          const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
+          const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
           if (targetId && !targetId.includes("ВСТАВЬТЕ")) {
             await sendTelegramNotification(signal.msg, targetId);
             triggerToast("Сигнал отправлен другу в ТГ!");
@@ -1373,18 +1413,18 @@
         }
 
         function getWorkStatus(dateStr) {
-          const custom = customShifts.value.find(s => s.date === dateStr);
+          const custom = customShifts.value.find(s => s && s.date === dateStr);
           if (custom) return custom.status;
           return getDefaultWorkStatus(dateStr);
         }
 
         function isCustomShift(dateStr) {
-          return customShifts.value.some(s => s.date === dateStr);
+          return customShifts.value.some(s => s && s.date === dateStr);
         }
 
         async function cycleWorkStatus(dateStr) {
           const defaultStatus = getDefaultWorkStatus(dateStr);
-          const existing = customShifts.value.find(s => s.date === dateStr);
+          const existing = customShifts.value.find(s => s && s.date === dateStr);
 
           if (!existing) {
             const oppositeStatus = defaultStatus === 'work' ? 'off' : 'work';
@@ -1424,6 +1464,8 @@
         function getCycleDayForDate(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
+          if (isNaN(targetDate.getTime())) return null;
+
           const pastStarts = cycles.value
             .filter(c => c && c.start_date)
             .map(c => ({ ...c, start: new Date(c.start_date + "T12:00:00") }))
@@ -1441,6 +1483,7 @@
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
+          if (isNaN(targetDate.getTime())) return null;
           
           const pastStarts = cycles.value
             .filter(c => c && c.start_date)
@@ -1525,6 +1568,7 @@
         const selectedCycle = computed(() => {
           if (!selectedDateStr.value) return null;
           return cycles.value.find(c => {
+            if (!c || !c.start_date || !c.end_date) return false;
             return selectedDateStr.value >= c.start_date && selectedDateStr.value <= c.end_date;
           });
         });
@@ -1539,6 +1583,7 @@
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          if (isNaN(lastStart.getTime())) return null;
           const cLength = parseInt(cycleLength.value, 10) || 28;
           lastStart.setDate(lastStart.getDate() + cLength);
           return getLocalDateString(lastStart).split('-').reverse().join('.');
@@ -1563,7 +1608,7 @@
         }
 
         const currentCycleDay = computed(() => {
-          if (!lastCycleStart.value || lastCycleStart.value.includes("NaN")) return null;
+          if (!lastCycleStart.value || String(lastCycleStart.value).includes("NaN")) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
           if (isNaN(lastStart.getTime())) return null;
           const today = new Date();
@@ -1617,14 +1662,13 @@
           }
         });
 
-        // Интуитивное day-by-day добавление, авто-объединение и защита от наложения
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
 
           const clickedTime = new Date(clickedDate + "T12:00:00").getTime();
 
-          const cycle = cycles.value.find(c => clickedDate >= c.start_date && clickedDate <= c.end_date);
+          const cycle = cycles.value.find(c => c && c.start_date && c.end_date && clickedDate >= c.start_date && clickedDate <= c.end_date);
 
           if (cycle) {
             if (cycle.start_date === cycle.end_date) {
@@ -1662,12 +1706,14 @@
             }
           } else {
             let adjacentToStart = cycles.value.find(c => {
+              if (!c || !c.start_date) return false;
               const start = new Date(c.start_date + "T12:00:00");
               const diff = start.getTime() - clickedTime;
               return Math.abs(diff) <= 86401000 && diff > 0;
             });
 
             let adjacentToEnd = cycles.value.find(c => {
+              if (!c || !c.end_date) return false;
               const end = new Date(c.end_date + "T12:00:00");
               const diff = clickedTime - end.getTime();
               return Math.abs(diff) <= 86401000 && diff > 0;
@@ -1695,6 +1741,7 @@
               const endDateStr = getLocalDateString(end);
 
               let overlappingCycle = cycles.value.find(c => {
+                if (!c || !c.start_date || !c.end_date) return false;
                 return c.start_date <= endDateStr && c.end_date >= clickedDate;
               });
 
@@ -1713,7 +1760,7 @@
                 triggerToast(`Добавлен период менструации на ${pLength} дней`);
                 
                 if (role.value === 'her') {
-                  const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
+                  const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
                   sendTelegramNotification(
                     `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
                     targetId
@@ -1725,7 +1772,6 @@
           cleanupCycles();
         }
 
-        // КНОПКА ОЧИСТКИ ВСЕХ ПЕРИОДОВ КАЛЕНДАРЯ
         async function clearCalendarData() {
           if (!confirm("Вы действительно хотите стереть ВСЕ периоды менструации в календаре? График работы, заметки, показатели самочувствия и планы останутся нетронутыми.")) {
             return;
@@ -1735,12 +1781,11 @@
           }
 
           cycles.value = [];
-          localStorage.setItem('demo_cycles', JSON.stringify([]));
+          safeStorage.setItem('demo_cycles', JSON.stringify([]));
 
           if (!isDemoMode.value) {
-            // Добавляем команду полной очистки таблицы 'cycles'
             syncQueue.value.push({ sheet: 'cycles', action: 'clear_all' });
-            localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+            safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
             await processSyncQueue();
           } else {
             triggerToast("Календарь очищен локально!");
@@ -1756,11 +1801,16 @@
         }
 
         function hasNote(dateStr) {
-          return partnerNotes.value.some(n => n.date === dateStr);
+          return partnerNotes.value.some(n => n && n.date === dateStr);
         }
 
+        // ЗАЩИТА: Безопасная сортировка без риска TypeErrors [2]
         const sortedNotes = computed(() => {
-          return [...partnerNotes.value].sort((a,b) => b.date.localeCompare(a.date));
+          return [...partnerNotes.value].sort((a, b) => {
+            const dateA = (a && a.date) ? String(a.date) : "";
+            const dateB = (b && b.date) ? String(b.date) : "";
+            return dateB.localeCompare(dateA);
+          });
         });
 
         async function savePartnerNote() {
@@ -1807,7 +1857,7 @@
         }
 
         function getPlansByCategory(categoryName) {
-          return plans.value.filter(p => p.category_name === categoryName);
+          return plans.value.filter(p => p && p.category_name === categoryName);
         }
 
         function isLink(text) {
@@ -1827,16 +1877,16 @@
         async function deleteCategory(cat) {
           if (!confirm(`Вы действительно хотите удалить группу "${cat.name}" и все планы внутри неё?`)) return;
 
-          const plansInCat = plans.value.filter(p => p.category_name === cat.name);
+          const plansInCat = plans.value.filter(p => p && p.category_name === cat.name);
           
-          plans.value = plans.value.filter(p => p.category_name !== cat.name);
-          categories.value = categories.value.filter(c => c.id.toString() !== cat.id.toString());
+          plans.value = plans.value.filter(p => p && p.category_name !== cat.name);
+          categories.value = categories.value.filter(c => c && c.id.toString() !== cat.id.toString());
           
-          localStorage.setItem('demo_plans', JSON.stringify(plans.value));
-          localStorage.setItem('demo_categories', JSON.stringify(categories.value));
+          safeStorage.setItem('demo_plans', JSON.stringify(plans.value));
+          safeStorage.setItem('demo_categories', JSON.stringify(categories.value));
 
           if (newPlanCategory.value === cat.name) {
-            const remaining = categories.value.filter(c => c.id.toString() !== cat.id.toString());
+            const remaining = categories.value.filter(c => c && c.id.toString() !== cat.id.toString());
             newPlanCategory.value = remaining.length > 0 ? remaining[0].name : 'Прочее';
           }
           triggerToast(`Группа "${cat.name}" удалена`);
@@ -1847,7 +1897,7 @@
           plansInCat.forEach(p => {
             syncQueue.value.push({ sheet: 'plans', action: 'delete', id: p.id });
           });
-          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+          safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
           resetSyncTimer();
         }
 
@@ -1870,7 +1920,7 @@
           plan.is_completed = newStatus;
 
           if (isDemoMode.value) {
-            localStorage.setItem('demo_plans', JSON.stringify(plans.value));
+            safeStorage.setItem('demo_plans', JSON.stringify(plans.value));
             fetchData();
           } else {
             await updateLocalOrDB('plans', 'demo_plans', plan.id, { is_completed: newStatus });
