@@ -7,7 +7,7 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue.js 3 (Переведено на Cloudflare CDN для абсолютной стабильности в РФ) -->
+  <!-- Vue.js 3 (Cloudflare CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -80,7 +80,7 @@
         <div class="flex bg-stone-100 p-1 rounded-xl text-[10px] font-extrabold border border-stone-200/50">
           <button 
             @click="setRole('her')" 
-            :class="['px-3 py-1.5 rounded-lg transition-all', role === 'her' ? 'bg-rose-50 text-white shadow-sm' : 'text-stone-500']"
+            :class="['px-3 py-1.5 rounded-lg transition-all', role === 'her' ? 'bg-rose-500 text-white shadow-sm' : 'text-stone-500']"
           >
             🙋‍♀️ Она
           </button>
@@ -170,7 +170,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
+                <!-- Иконка рабочего графика (В ПРАВОМ ВЕРХНЕМ УГЛУ) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -665,7 +665,7 @@
       </div>
     </nav>
 
-    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ (ОЧИЩЕННОЕ, БЕЗ ЛИШНИХ ПОЛЕЙ, БЕЗ СУПАБЕЙС И ЛИШНИХ ID) -->
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ -->
     <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
         
@@ -674,7 +674,7 @@
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
-          <!-- Крупная кнопка закрытия для смартфонов -->
+          <!-- Крупная кнопка закрытия -->
           <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
@@ -697,19 +697,18 @@
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- Выбор ИИ-Бота (Выбор бота) -->
+          <!-- Выбор ИИ-Бота -->
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели (Выбор Бота)</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
             <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
               <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
-              <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
-              <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
-              <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
-              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
+              <option value="deepseek/deepseek-r1:free">⚡ DeepSeek R1 (free)</option>
+              <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B (free)</option>
+              <option value="google/gemma-2-9b-it:free">✨ Google Gemma 2 9B (free)</option>
             </select>
           </div>
 
-          <!-- Апи ключ ИИ-Бота (Апи ключ бота) -->
+          <!-- Апи ключ ИИ-Бота -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
             <input type="password" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
@@ -726,7 +725,7 @@
           </button>
         </div>
 
-        <!-- Крупная кнопка Закрыть внизу для мобильного удобства -->
+        <!-- Крупная кнопка Закрыть внизу -->
         <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
           ✕ Закрыть настройки
         </button>
@@ -736,18 +735,18 @@
   </div>
 
   <script>
-    // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ (ПРЕДЗАПОЛНЕННЫЕ) ====================
-    // 1. Вставьте сюда URL вашего развернутого Google Скрипта (из шага 6, оканчивается на /exec):
+    // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
+    // Вставьте URL вашего развернутого Google Скрипта:
     const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
 
-    // 2. Вставьте токен вашего Телеграм-бота:
+    // Токен вашего Телеграм-бота:
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
 
-    // 3. Вставьте Chat ID партнера (для Него):
+    // Chat ID партнера (для Него):
     const DEFAULT_HIM_CHAT_ID = "1719296144";
 
-    // 4. Вставьте Chat ID подруги (для Неё):
-    const DEFAULT_HER_CHAT_ID = ""; // Пустой по умолчанию во избежание дублирования Его ID!
+    // Chat ID подруги (для Неё):
+    const DEFAULT_HER_CHAT_ID = ""; 
     // ===================================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
@@ -768,7 +767,7 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Умная нормализация дат для защиты от авто-форматирования Google Sheets (убирает T09:00:00.000Z и предотвращает NaN)
+    // Нормализация дат
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
@@ -790,7 +789,7 @@
       return val;
     }
 
-    // Безопасный JSON.parse для защиты от падения при наличии поврежденного локального кэша
+    // Безопасный JSON.parse
     function safeJsonParse(key, defaultVal = []) {
       try {
         const val = localStorage.getItem(key);
@@ -810,7 +809,40 @@
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
 
-        // Функция безопасного извлечения числовых настроек из localStorage во избежание багов с NaN
+        // Объявление недостающих реактивных переменных и списков
+        const currentYear = ref(new Date().getFullYear());
+        const currentMonth = ref(new Date().getMonth());
+        const selectedDateStr = ref(getLocalDateString(new Date()));
+        const monthNames = ref([
+          "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+          "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
+        ]);
+
+        const cycles = ref([]);
+        const partnerNotes = ref([]);
+        const wellbeingLogs = ref([]);
+        const customShifts = ref([]);
+        const categories = ref([]);
+        const plans = ref([]);
+
+        const newNoteDate = ref(getLocalDateString(new Date()));
+        const newNoteTime = ref(getCurrentTime());
+        const newNoteContent = ref("");
+
+        const newWellbeingTime = ref(getCurrentTime());
+        const newWellbeing = ref({
+          mood: '😊',
+          energy: 3,
+          stress: 1,
+          physical: 1,
+          notes: ''
+        });
+
+        const showAddCategory = ref(false);
+        const newCategoryName = ref("");
+        const newPlanCategory = ref("");
+        const newPlanTitle = ref("");
+
         const getSafeLocalStorageInt = (key, defaultVal) => {
           const val = localStorage.getItem(key);
           if (!val || val === "undefined" || val === "NaN" || val === "null") return defaultVal;
@@ -821,7 +853,7 @@
         const cycleLength = ref(getSafeLocalStorageInt('user_cycle_length', 28));
         const periodLength = ref(getSafeLocalStorageInt('user_period_length', 5));
 
-        const appSettingsList = ref([]); // Хранилище настроек из облака
+        const appSettingsList = ref([]); 
 
         // Всплывающие уведомления (тосты)
         const showToast = ref(false);
@@ -832,10 +864,10 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 3500); // 3.5 секунды для информирования о статусе
+          }, 3500);
         };
 
-        // Ввод настроек в интерфейсе (Реактивно связаны)
+        // Ввод настроек в интерфейсе
         const settingsInput = ref({
           url: localStorage.getItem('cfg_supabase_url') || "",
           key: localStorage.getItem('cfg_supabase_key') || "",
@@ -848,7 +880,6 @@
 
         const isSettingsOpen = ref(false);
 
-        // Разделяем резервный ключ на две части
         const KEY_PART1 = "sk-or-v1-a9a018d054304b72e75fabf9bc8f9485";
         const KEY_PART2 = "d149815501f1a06a6f5f1d100ea9ed7a";
         const BACKUP_OPENROUTER_KEY = KEY_PART1 + KEY_PART2;
@@ -857,22 +888,27 @@
         const aiAnalysisResult = ref("");
         const isAiLoading = ref(false);
 
-        // Переменные для чата с ИИ
+        // Чат с ИИ
         const aiChatMessages = ref([
           { role: 'assistant', content: 'Привет! Я твой дружеский ИИ-собеседник в приложении Полнолуние. Я знаю всё о состоянии нашей общей базы данных. Спроси меня о графике подруги, её текущем самочувствии или просто попроси дать дружеский совет! ✨' }
         ]);
         const aiUserMessage = ref("");
         const isAiChatLoading = ref(false);
 
-        // --- ЛОКАЛЬНАЯ ОЧЕРЕДЬ СИНХРОНИЗАЦИИ (Sync Queue) ---
+        // Очередь синхронизации
         const syncQueue = ref(safeJsonParse('sync_queue', []));
         const isSyncPending = ref(false);
         let syncTimer = null;
 
+        function setRole(newRole) {
+          role.value = newRole;
+          localStorage.setItem('user_role', newRole);
+          triggerToast(`Выбрана роль: ${newRole === 'her' ? 'Она 🙋‍♀️' : 'Он 🙋‍♂️'}`);
+        }
+
         // Инициализация соединения
         async function initConnection() {
-          // Автоматическое предзаполнение полей по дефолтным константам
-          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("XXXXXXXX")) {
+          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
             localStorage.setItem('cfg_supabase_url', DEFAULT_GOOGLE_SCRIPT_URL);
           }
           if (!localStorage.getItem('cfg_bot_token') && DEFAULT_TELEGRAM_BOT_TOKEN) {
@@ -885,7 +921,6 @@
             localStorage.setItem('cfg_her_chat_id', DEFAULT_HER_CHAT_ID);
           }
 
-          // Обновляем связанные поля ввода
           settingsInput.value.url = localStorage.getItem('cfg_supabase_url') || "";
           settingsInput.value.botToken = localStorage.getItem('cfg_bot_token') || "";
           settingsInput.value.himChatId = localStorage.getItem('cfg_him_chat_id') || "";
@@ -897,7 +932,7 @@
 
           if (!url) {
             isDemoMode.value = true;
-            await fetchData(); // Загружаем локальный кэш во избежание пустого календаря
+            await fetchData();
             return;
           }
 
@@ -909,12 +944,11 @@
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
-            await fetchData(); // Плавный запуск на оффлайн-кэше
-            triggerToast(`Ошибка подключения: ${e.message}. Локальный режим активен.`);
+            await fetchData();
+            triggerToast(`Локальный режим активен.`);
           }
         }
 
-        // Сохранение настроек соединения из шестеренки
         async function saveConnectionSettings() {
           const setOrRemove = (key, val) => {
             if (val && val.trim()) {
@@ -932,14 +966,13 @@
           setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
           setOrRemove('cfg_ai_model', settingsInput.value.aiModel);
 
-          triggerToast("Настройки сохранены. Перезапускаю подключение...");
+          triggerToast("Настройки сохранены. Перезапускаю...");
           await initConnection();
           isSettingsOpen.value = false;
         }
 
-        // Сброс настроек подключения к дефолту из кода
         async function resetToDefaultSettings() {
-          if (confirm("Вы действительно хотите очистить кастомные настройки и использовать базовые из кода?")) {
+          if (confirm("Вы действительно хотите сбросить настройки на дефолтные?")) {
             localStorage.removeItem('cfg_supabase_url');
             localStorage.removeItem('cfg_supabase_key');
             localStorage.removeItem('cfg_bot_token');
@@ -958,13 +991,12 @@
               aiModel: "openrouter/free"
             };
 
-            triggerToast("Дефолтные настройки восстановлены.");
+            triggerToast("Настройки сброшены.");
             await initConnection();
             isSettingsOpen.value = false;
           }
         }
 
-        // Безопасная загрузка ключа из базы данных + резервные варианты
         async function loadApiKey() {
           const customKey = localStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
@@ -988,24 +1020,21 @@
               openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
             }
           } catch (e) {
-            console.warn("Ключ OpenRouter считывается из резервного хранилища кода.");
             openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
           }
         }
 
-        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ ---
         async function processSyncQueue() {
           if (syncQueue.value.length === 0) {
             isSyncPending.value = false;
             return;
           }
 
-          triggerToast("🔄 Запуск автоматической фоновой синхронизации с облаком...");
+          triggerToast("🔄 Синхронизация изменений с облаком...");
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
           let failedOps = [];
 
-          // Выполняем запросы последовательно для избежания конфликтов в таблицах
           for (const op of syncQueue.value) {
             try {
               const response = await fetch(APPS_SCRIPT_URL, {
@@ -1014,7 +1043,7 @@
               });
               if (!response.ok) throw new Error("Server error");
             } catch (err) {
-              console.error("Сбой синхронизации действия:", op, err);
+              console.error("Сбой синхронизации:", op, err);
               failedOps.push(op);
             }
           }
@@ -1024,37 +1053,31 @@
 
           if (failedOps.length === 0) {
             isSyncPending.value = false;
-            triggerToast("🟢 Все изменения успешно сохранены в облачную таблицу!");
+            triggerToast("🟢 Данные синхронизированы!");
             await fetchData();
           } else {
-            triggerToast("⚠️ Ошибка синхронизации части данных. Повторим попытку позже.");
+            triggerToast("⚠️ Часть данных не синхронизирована. Повторим позже.");
           }
         }
 
-        // Сброс и перезапуск таймера синхронизации
         function resetSyncTimer() {
           isSyncPending.value = true;
           clearTimeout(syncTimer);
-
-          triggerToast("💾 Изменение сохранено локально. Синхронизация с облаком через 1 минуту...");
-
+          triggerToast("💾 Сохранено локально. Синхронизация через 1 мин...");
           syncTimer = setTimeout(async () => {
             await processSyncQueue();
-          }, 60000); // 60 секунд задержки
+          }, 60000);
         }
 
-        // УПРАВЛЯЕМЫЙ ЗАГРУЗЧИК ДАННЫХ (ПАКЕТНЫЙ + С НАДЕЖНОЙ НОРМАЛИЗАЦИЕЙ ДАТ)
         async function fetchData() {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
-          // КРИТИЧЕСКАЯ ЗАЩИТА: Если у нас есть неотправленные локальные данные в очереди,
-          // мы НЕ позволяем старым данным с сервера перезаписать наше текущее локальное состояние!
           if (isSyncPending.value || syncQueue.value.length > 0) {
-            console.log("Загрузка с сервера заблокирована: ожидается отправка очереди изменений.");
+            console.log("Загрузка отложена: есть несохраненные локальные изменения.");
             return;
           }
 
-          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("XXXXXXXX")) {
+          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1072,13 +1095,11 @@
           }
 
           try {
-            // Один единственный пакетный запрос к Google Скрипту за всеми данными
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
             if (!response.ok) throw new Error("HTTP error");
             const allData = await response.json();
 
             if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
-              // Критически важная нормализация дат во избежание сбоев прогноза после загрузки данных
               cycles.value = (allData.cycles || []).map(c => ({
                 ...c,
                 start_date: normalizeDateStr(c.start_date),
@@ -1100,7 +1121,6 @@
               }));
               appSettingsList.value = allData.app_settings || [];
 
-              // Синхронизация глобальной длины цикла и менструации из облачной таблицы настроек
               const cycleLenSetting = appSettingsList.value.find(s => s.id === 'cycle_length');
               if (cycleLenSetting && cycleLenSetting.key_value) {
                 const val = parseInt(cycleLenSetting.key_value, 10);
@@ -1119,7 +1139,6 @@
               }
             }
 
-            // Приведение булевых типов из текстового формата Google Sheets
             plans.value = plans.value.map(p => ({
               ...p,
               is_completed: p.is_completed === true || p.is_completed === "true" || p.is_completed === 1
@@ -1140,7 +1159,6 @@
               newPlanCategory.value = hasMisc ? 'Прочее' : categories.value[0].name;
             }
 
-            // Дублируем в локальный кэш телефона
             localStorage.setItem('demo_cycles', JSON.stringify(cycles.value));
             localStorage.setItem('demo_notes', JSON.stringify(partnerNotes.value));
             localStorage.setItem('demo_wellbeing', JSON.stringify(wellbeingLogs.value));
@@ -1149,23 +1167,21 @@
             localStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
 
           } catch (e) {
-            console.warn("Сеть недоступна, работаем в локальном режиме:", e);
+            console.warn("Сеть недоступна, оффлайн режим:", e);
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
             customShifts.value = safeJsonParse('demo_work_shifts', []);
             categories.value = safeJsonParse('demo_categories', []);
             plans.value = safeJsonParse('demo_plans', []);
-            triggerToast("⚠️ Работаем в локальном режиме. Изменения сохраняются на устройстве.");
+            triggerToast("Работа в оффлайн-режиме.");
           }
         }
 
-        // Универсальный апдейтер для настроек во избежание дублирования в таблице настроек
         async function saveOrUpdateSetting(key, val) {
           if (isDemoMode.value) return;
           const currentSetting = appSettingsList.value.find(s => s.id === key);
           
-          // Обновляем только в том случае, если значение в облаке действительно отличается
           if (currentSetting && currentSetting.key_value === val.toString()) {
             return;
           }
@@ -1177,7 +1193,6 @@
           }
         }
 
-        // Отслеживание изменений параметров цикла на экране и запуск их синхронизации
         watch(cycleLength, (newVal) => {
           localStorage.setItem('user_cycle_length', newVal);
           saveOrUpdateSetting('cycle_length', newVal);
@@ -1187,20 +1202,16 @@
           saveOrUpdateSetting('period_length', newVal);
         });
 
-        // МГНОВЕННОЕ ЛОКАЛЬНОЕ СОХРАНЕНИЕ + БУФЕРИЗАЦИЯ СЕТИ (0мс задержки)
         async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
-          // 1. Обновляем локальные реактивные переменные (интерфейс реагирует за 0 мс)
           if (isDelete) {
             dataArray.value = dataArray.value.filter(item => item.id.toString() !== deleteId.toString());
           } else {
             dataArray.value.push(newRecord);
           }
-          // Сохраняем в локальный кэш
           localStorage.setItem(localKey, JSON.stringify(dataArray.value));
 
           if (isDemoMode.value) return;
 
-          // 2. Формируем операцию и кладем ее в очередь на отправку
           let op = { sheet: tableName };
           if (isDelete) {
             op.action = "delete";
@@ -1212,14 +1223,10 @@
 
           syncQueue.value.push(op);
           localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
-
-          // 3. Запускаем / сдвигаем таймер синхронизации на 1 минуту вперед
           resetSyncTimer();
         }
 
-        // МГНОВЕННОЕ ЛОКАЛЬНОЕ ОБНОВЛЕНИЕ + БУФЕРИЗАЦИЯ СЕТИ (0мс задержки)
         async function updateLocalOrDB(tableName, localKey, id, updateData) {
-          // 1. Находим нужный локальный массив и обновляем значение
           let localRef = null;
           if (tableName === 'cycles') localRef = cycles;
           else if (tableName === 'plans') localRef = plans;
@@ -1236,7 +1243,6 @@
 
           if (isDemoMode.value) return;
 
-          // 2. Создаем операцию обновления и добавляем в очередь
           let op = {
             sheet: tableName,
             action: "update",
@@ -1246,12 +1252,9 @@
 
           syncQueue.value.push(op);
           localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
-
-          // 3. Запускаем / сдвигаем таймер синхронизации на 1 минуту вперед
           resetSyncTimer();
         }
 
-        // ОТПРАВКА УВЕДОМЛЕНИЙ ЧЕРЕЗ ТГ
         async function sendTelegramNotification(text, targetChatId) {
           const activeBotToken = localStorage.getItem('cfg_bot_token') || DEFAULT_TELEGRAM_BOT_TOKEN;
           if (!activeBotToken || activeBotToken.includes("ВСТАВЬТЕ") || !targetChatId) return;
@@ -1266,11 +1269,10 @@
               })
             });
           } catch (e) {
-            console.error("Ошибка уведомления Telegram:", e);
+            console.error("Telegram notification error:", e);
           }
         }
 
-        // БЫСТРЫЕ СИГНАЛЫ ДЛЯ ОБЩЕНИЯ
         const quickSignals = computed(() => {
           return [
             { icon: '🙄', text: 'Игнорщик', msg: '🙋‍♀️ <b>Подруга шутит:</b> Эй, игнорщик! Ответь мне 🙄' },
@@ -1290,7 +1292,6 @@
           }
         }
 
-        // СТАНДАРТНЫЙ РАСЧЕТ РАБОЧЕГО ГРАФИКА ДЕВУШКИ 2/2
         function getDefaultWorkStatus(dateStr) {
           const anchor = new Date("2026-06-03T12:00:00");
           const current = new Date(dateStr + "T12:00:00");
@@ -1300,7 +1301,6 @@
           return (offset === 0 || offset === 1) ? 'off' : 'work';
         }
 
-        // ИТОГОВЫЙ СТАТУС С УЧЕТОМ РУЧНОЙ КОРРЕКТИРОВКИ
         function getWorkStatus(dateStr) {
           const custom = customShifts.value.find(s => s.date === dateStr);
           if (custom) return custom.status;
@@ -1311,7 +1311,6 @@
           return customShifts.value.some(s => s.date === dateStr);
         }
 
-        // ДВУХШАГОВЫЙ МЕХАНИЗМ СМЕНЫ СТАТУСА ДНЯ
         async function cycleWorkStatus(dateStr) {
           const defaultStatus = getDefaultWorkStatus(dateStr);
           const existing = customShifts.value.find(s => s.date === dateStr);
@@ -1327,7 +1326,6 @@
           }
         }
 
-        // РАСЧЕТ КАЛЕНДАРЯ
         const calendarDays = computed(() => {
           const year = currentYear.value;
           const month = currentMonth.value;
@@ -1369,7 +1367,6 @@
           return ((diffDays - 1) % cLength) + 1;
         }
 
-        // ОПРЕДЕЛЕНИЕ ФАЗЫ ДЛЯ ДНЯ С УЧЕТОМ ДИНАМИЧЕСКИХ ДАННЫХ
         function getDayPhase(dateStr) {
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
@@ -1387,7 +1384,6 @@
           if (pastStarts.length === 0) return null;
           const closestCycle = pastStarts[0];
           
-          // 1. Если день попадает ровно в отмеченный менструальный период
           if (targetDate >= closestCycle.start && targetDate <= closestCycle.end) {
             return 'menstrual';
           }
@@ -1397,7 +1393,6 @@
           const cLength = parseInt(cycleLength.value, 10) || 28;
           const pLength = parseInt(periodLength.value, 10) || 5;
 
-          // 2. Строим фазы только в пределах текущего цикла (до его завершения)
           if (diffDays > cLength) {
             const cycleOffset = (diffDays - 1) % cLength;
             const dayOfCycle = cycleOffset + 1;
@@ -1412,18 +1407,10 @@
           const dayOfCycle = diffDays;
           const ovDay = cLength - 14;
 
-          if (dayOfCycle >= 1 && dayOfCycle <= pLength) {
-            return 'menstrual';
-          }
-          if (dayOfCycle > pLength && dayOfCycle < ovDay) {
-            return 'follicular';
-          }
-          if (dayOfCycle === ovDay) {
-            return 'ovulatory';
-          }
-          if (dayOfCycle > ovDay && dayOfCycle <= cLength) {
-            return 'luteal';
-          }
+          if (dayOfCycle >= 1 && dayOfCycle <= pLength) return 'menstrual';
+          if (dayOfCycle > pLength && dayOfCycle < ovDay) return 'follicular';
+          if (dayOfCycle === ovDay) return 'ovulatory';
+          if (dayOfCycle > ovDay && dayOfCycle <= cLength) return 'luteal';
           return null;
         }
 
@@ -1455,7 +1442,6 @@
           return selectedDateStr.value === dateStr;
         }
 
-        // Проверка, является ли день днем менструации
         function isPeriodDay(dateStr) {
           return cycles.value.some(c => {
             if (!c || !c.start_date) return false;
@@ -1479,7 +1465,6 @@
           return sorted[0].start_date;
         });
 
-        // Динамический прогноз следующего цикла на основе выбранной пользователем длины
         const nextPeriodPredictionDate = computed(() => {
           if (!lastCycleStart.value) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
@@ -1488,9 +1473,8 @@
           return getLocalDateString(lastStart).split('-').reverse().join('.');
         });
 
-        // Динамическая разметка прогнозируемых дней (розовым пунктиром)
         function isPredictedDay(dateStr) {
-          if (isPeriodDay(dateStr)) return false; // Защита: не показывать прогноз, если день уже проставлен вручную
+          if (isPeriodDay(dateStr)) return false; 
           if (!lastCycleStart.value || lastCycleStart.value.includes("NaN")) return false;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
           if (isNaN(lastStart.getTime())) return false;
@@ -1536,7 +1520,7 @@
             return {
               name: "Менструальная фаза 🩸",
               duration: `1–${pLength} дни цикла`,
-              desc: "В этот период наблюдается физиологический спад сил, сонливость и быстрая утомляемость. Возможны ноющие боли в теле и повышенная эмоциональная чувствительность."
+              desc: "В этот период наблюдается физиологический спад сил, сонливость и быстрая утомляемость."
             };
           }
 
@@ -1545,24 +1529,23 @@
             return {
               name: "Фолликулярная фаза 🌱",
               duration: `${pLength + 1}–${ovDay - 1} дни цикла`,
-              desc: "Под влиянием растущего эстрогена происходит активный прилив сил, улучшается память, скорость мышления и эмоциональная устойчивость."
+              desc: "Активный прилив сил под влиянием эстрогенов, повышается работоспособность и настроение."
             };
           } else if (phase === 'ovulatory') {
             return {
               name: "Овуляция ✨",
-              duration: `${ovDay}-й день цикла (пиковое окно 24–48 часов)`,
-              desc: "Фаза пиковых физических возможностей и наивысшей уверенности в себе. Повышается общительность, эмпатия и настроение."
+              duration: `${ovDay}-й день цикла (пиковое окно)`,
+              desc: "Энергетический пик. Повышается общительность, эмпатия и физический тонус."
             };
           } else {
             return {
               name: "Лютеиновая фаза 🍂",
               duration: `${ovDay + 1}–${cLength} дни цикла`,
-              desc: "Организм плавно готовится к новому циклу, ресурсы идут на спад. Во второй половине фазы может проявляться предменструальный синдром (ПМС): тревожность, перепады настроения, утомляемость и чувствительность."
+              desc: "Ресурсы организма плавно идут на спад. Может проявляться умеренная чувствительность и потребность в тихом отдыхе."
             };
           }
         });
 
-        // УПРАВЛЕНИЕ ДНЯМИ МЕНСТРУАЦИИ
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
@@ -1614,10 +1597,7 @@
               triggerToast("Период увеличен на 1 день назад");
             } else {
               const start = new Date(clickedDate + "T12:00:00");
-              if (isNaN(start.getTime())) {
-                console.error("Некорректная дата клика:", clickedDate);
-                return;
-              }
+              if (isNaN(start.getTime())) return;
               const end = new Date(start);
               const pLength = parseInt(periodLength.value, 10) || 5;
               end.setDate(start.getDate() + (pLength - 1));
@@ -1647,7 +1627,7 @@
           if (!cycle) return;
           
           await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
-          triggerToast("Период менструации полностью удален");
+          triggerToast("Период полностью удален");
         }
 
         function hasNote(dateStr) {
@@ -1724,7 +1704,6 @@
 
           const plansInCat = plans.value.filter(p => p.category_name === cat.name);
           
-          // 1. Мгновенно обновляем интерфейс локально (0мс)
           plans.value = plans.value.filter(p => p.category_name !== cat.name);
           categories.value = categories.value.filter(c => c.id.toString() !== cat.id.toString());
           
@@ -1735,18 +1714,15 @@
             const remaining = categories.value.filter(c => c.id.toString() !== cat.id.toString());
             newPlanCategory.value = remaining.length > 0 ? remaining[0].name : 'Прочее';
           }
-          triggerToast(`Группа "${cat.name}" удалена локально`);
+          triggerToast(`Группа "${cat.name}" удалена`);
 
           if (isDemoMode.value) return;
 
-          // 2. Отправляем все удаления в очередь синхронизации
           syncQueue.value.push({ sheet: 'plan_categories', action: 'delete', id: cat.id });
           plansInCat.forEach(p => {
             syncQueue.value.push({ sheet: 'plans', action: 'delete', id: p.id });
           });
           localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
-
-          // 3. Сдвигаем таймер синхронизации
           resetSyncTimer();
         }
 
@@ -1781,7 +1757,7 @@
 
         async function deletePlan(id) {
           await saveLocalOrDB('plans', 'demo_plans', plans, null, true, id);
-          triggerToast("Дело полностью удалено");
+          triggerToast("Дело удалено");
         }
 
         function formatDateDisplay(dateStr) {
@@ -1824,36 +1800,31 @@
 
             const prompt = `
 Ты — умный и деликатный ИИ-помощник в дружеском приложении "Полнолуние".
-Перед тобой находятся все текущие данные из нашей общей базы данных. Твоя задача — проанализировать их и дать дружеские советы для двух онлайн-друзей (Он и Она).
+Перед тобой находятся все текущие данные из нашей общей базы данных. Твоя задача — проанализировать их и дать дружеские советы для двух друзей (Он и Она).
 
-ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши строго в дружеском, понимающем, но платоническом тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши строго в дружеском, платоническом, но теплом тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
 
 Системные параметры:
 - Текущая дата: ${todayStr}
 - Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
 
 === ПОЛНАЯ БАЗА ДАННЫХ ПРИЛОЖЕНИЯ ===
-
 1. Все исторические циклы подруги:
 ${cyclesData}
-
 2. Корректировки её рабочего графика (2/2):
 ${shiftsData}
-
 3. Дневник дружеской поддержки (все записи):
 ${notesData}
-
 4. История показателей её самочувствия:
 ${wellbeingData}
-
 5. Текущие общие планы и музыка:
 ${plansData}
 
-На основе этих данных составь краткий дружеский отчет на русском языке. Будь лаконичным (до 250 слов), пиши тепло и структурируй ответ:
-1. **Дружеский климат**: Коротко опиши, как дела у подруги, какой у неё уровень энергии и стресса в последнее время.
-2. **Анализ цикла и работы**: Как её текущие рабочие дни пересекаются с самочувствием и фазой цикла? На что ей стоит обратить внимание?
-3. **Советы для Него**: Как он может поддержать подругу по-дружески в этой фазе (например, предложить интересный фильм, прислать трек в планы, напомнить отдохнуть, если стресс высокий).
-4. **Советы для Нее**: Как спланировать свои дела, поберечь силы и что можно обсудить с другом для поднятия настроения.
+На основе этих данных составь краткий дружеский отчет на русском языке (до 250 слов):
+1. Дружеский климат: какой уровень энергии и стресса в последнее время у подруги.
+2. Анализ цикла и работы: как её рабочие дни пересекаются с самочувствием и фазой цикла.
+3. Советы для Него: как он может дружески поддержать подругу в текущей фазе (предложить музыку, фильм или напомнить отдохнуть).
+4. Советы для Нее: как поберечь силы и спланировать дела.
             `;
 
             const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
@@ -1869,19 +1840,11 @@ ${plansData}
               },
               body: JSON.stringify({
                 model: activeModel,
-                messages: [
-                  {
-                    role: "user",
-                    content: prompt
-                  }
-                ]
+                messages: [{ role: "user", content: prompt }]
               })
             });
 
-            if (!response.ok) {
-              throw new Error(`Ошибка сервера: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
             const data = await response.json();
             
             if (data.choices && data.choices[0]?.message?.content) {
@@ -1928,8 +1891,9 @@ ${plansData}
               `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
             ).join("\n") || "Нет данных.";
 
-            const wellbeingData = wellbeingLogs.slice(0, 10).map(w => 
-              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
+            // ИСПРАВЛЕНО: wellbeingLogs.value.slice вместо wellbeingLogs.slice
+            const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
+              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
 
             const plansData = plans.value.map(p => 
@@ -1941,13 +1905,13 @@ ${plansData}
             ).join("\n") || "График не изменен.";
 
             const systemPrompt = `
-Ты — умный, деликатный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
+Ты — умный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
 Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
-ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто близкие онлайн-друзья. Пиши строго в дружеском, платоническом, но очень теплом и поддерживающем тоне. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга, понимать рабочие графики и оставаться на связи.
+ВАЖНОЕ П ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши тепло, по-дружески. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга и понимать рабочие смены.
 
 Вот текущие данные из общей базы данных:
-- Сегодняшняя дата: ${todayStr}
+- Сегодня: ${todayStr}
 - Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
 
 Заметки из дневника поддержки:
@@ -1962,7 +1926,7 @@ ${plansData}
 Смены работы:
 ${shiftsData}
 
-Отвечай тепло, коротко, по делу и дружелюбно. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу как понимающий друг.
+Отвечай тепло, коротко и по делу. Помогай анализировать эти данные, если тебя спрашивают, или просто поддерживай беседу.
             `;
 
             const apiMessages = [
@@ -1987,10 +1951,7 @@ ${shiftsData}
               })
             });
 
-            if (!response.ok) {
-              throw new Error(`Ошибка сервера: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
             const data = await response.json();
             
             if (data.choices && data.choices[0]?.message?.content) {
@@ -2011,6 +1972,15 @@ ${shiftsData}
             }, 50);
           }
         }
+
+        // Вызов инициализации при монтировании компонента
+        onMounted(() => {
+          if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.ready();
+            window.Telegram.WebApp.expand();
+          }
+          initConnection();
+        });
 
         return {
           isDemoMode,
