@@ -58,7 +58,7 @@
       <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
     </div>
 
-    <!-- ТОСТ-УВЕДОМЛЕНИЕ (ПЕРЕНЕСЕНО ВНИЗ НАД НАВИГАЦИЕЙ) -->
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
     <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
       <span>⚡</span>
       <span>{{ toastMessage }}</span>
@@ -69,12 +69,12 @@
       <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
       
       <div class="flex items-center space-x-2 shrink-0">
-        <!-- Кнопка шестеренки настроек -->
+        <!-- Кнопка настроек -->
         <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
           ⚙️
         </button>
 
-        <!-- Селектор Роли (Компактный, прямоугольный, кнопки равны) -->
+        <!-- Селектор Роли -->
         <div class="flex bg-stone-100 p-0.5 rounded-xl text-[9px] font-black border border-stone-200/50 w-[100px] shrink-0">
           <button 
             @click="setRole('her')" 
@@ -99,7 +99,7 @@
         @click="forceSync" 
         :disabled="syncQueue.length === 0 && !isSyncPending"
         :class="['px-3 py-1.5 rounded-xl text-[9px] font-black transition-all border flex items-center space-x-1 whitespace-nowrap', 
-                 syncQueue.length > 0 
+                 syncQueue.length > 0 || isSyncPending
                    ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
                    : 'bg-white text-stone-500 border-stone-200/60 cursor-not-allowed']"
       >
@@ -108,7 +108,7 @@
       </button>
     </div>
 
-    <!-- БЫСТРЫЕ СИГНАЛЫ (ОТОБРАЖАЮТСЯ ТОЛЬКО ЕСЛИ ВЫБРАНА ОНА) -->
+    <!-- БЫСТРЫЕ СИГНАЛЫ (ТОЛЬКО ДЛЯ НЕЁ) -->
     <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
       <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
       <div class="flex space-x-2 overflow-x-auto pb-1">
@@ -128,10 +128,10 @@
     <transition name="fade" mode="out-in">
       <div :key="activeTab" class="flex-grow flex flex-col space-y-5">
 
-        <!-- ==================== ВКЛАДКА 1: КАЛЕНДАРЬ ==================== -->
+        <!-- ВКЛАДКА 1: КАЛЕНДАРЬ -->
         <div v-if="activeTab === 'calendar'" class="space-y-5">
           
-          <!-- Описание текущей фазы -->
+          <!-- Состояние подруги -->
           <div class="p-5 rounded-3xl bg-gradient-to-br from-white/90 to-stone-50/50 border border-stone-150 shadow-sm">
             <div class="flex items-center justify-between mb-2.5">
               <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full">Состояние подруги</span>
@@ -142,12 +142,10 @@
               <span>{{ currentPhaseInfo.name }}</span>
             </h2>
             
-            <!-- Сроки фазы -->
             <p v-if="currentPhaseInfo.duration" class="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mb-3">
               ⏳ Приблизительные сроки: {{ currentPhaseInfo.duration }}
             </p>
 
-            <!-- Текст с характеристиками -->
             <div class="space-y-3 text-xs text-stone-600 leading-relaxed font-medium">
               <div>
                 <p class="text-[9px] font-extrabold uppercase text-stone-400 tracking-wider mb-1">🧠 Физиологические и эмоциональные изменения:</p>
@@ -190,7 +188,7 @@
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
                 </span>
                 
-                <!-- Заметные маркеры дней -->
+                <!-- Маркеры фаз -->
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
@@ -238,7 +236,7 @@
             </div>
           </div>
 
-          <!-- Параметры -->
+          <!-- Параметры расчета -->
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
             
@@ -279,7 +277,7 @@
               </span>
             </div>
             
-            <p class="text-[10px] text-stone-400 italic text-center">💡 Кликните по дате повторно прямо на календаре, чтобы быстро добавить/удалить день менструации по одному</p>
+            <p class="text-[10px] text-stone-400 italic text-center">💡 Нажмите на выделенный день в календаре повторно, чтобы гибко сдвинуть, расширить или убрать его</p>
 
             <div class="grid grid-cols-1 gap-2">
               <button 
@@ -307,11 +305,10 @@
           </div>
         </div>
 
-
-        <!-- ==================== ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ЧАТ ИИ) ==================== -->
+        <!-- ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ЧАТ ИИ) -->
         <div v-if="activeTab === 'notes'" class="space-y-5">
           
-          <!-- ДИАЛОГОВОЕ ОКНО С ИИ (ЧАТ) -->
+          <!-- ЧАТ С ИИ -->
           <div class="p-5 rounded-3xl bg-gradient-to-tr from-violet-50 to-indigo-50 border border-violet-100 shadow-sm space-y-4 flex flex-col h-[400px]">
             <div class="flex items-center justify-between border-b border-violet-100/50 pb-2 flex-shrink-0">
               <div class="flex items-center space-x-2">
@@ -321,7 +318,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
             </div>
 
-            <!-- Чат лента -->
+            <!-- Лента чата -->
             <div class="flex-grow overflow-y-auto space-y-2.5 pr-1.5 flex flex-col" ref="chatContainer">
               <div 
                 v-for="(msg, index) in aiChatMessages" 
@@ -335,7 +332,7 @@
               </div>
             </div>
 
-            <!-- Ввод сообщения -->
+            <!-- Ввод сообщения чата -->
             <div class="flex gap-2 flex-shrink-0 pt-2 border-t border-violet-100/40">
               <input 
                 type="text" 
@@ -355,14 +352,14 @@
             </div>
           </div>
 
-          <!-- БАЗОВЫЙ ИИ-АНАЛИЗ БАЗЫ -->
+          <!-- ИИ-АНАЛИЗ БАЗЫ -->
           <div class="p-5 rounded-3xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-indigo-150/40 shadow-sm space-y-4">
             <h3 class="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center space-x-1.5">
               <span>🔮</span>
               <span>Быстрый разбор всех данных базы</span>
             </h3>
             <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
-              Нажмите кнопку ниже, чтобы ИИ составил структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
+              ИИ составит структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
             </p>
 
             <transition name="fade">
@@ -433,8 +430,7 @@
           </div>
         </div>
 
-
-        <!-- ==================== ВКЛАДКА 3: САМОЧУВСТВИЕ ==================== -->
+        <!-- ВКЛАДКА 3: САМОЧУВСТВИЕ -->
         <div v-if="activeTab === 'wellbeing'" class="space-y-5">
           
           <!-- ПУЛЬС -->
@@ -457,7 +453,6 @@
           <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
             <h3 class="text-sm font-bold text-stone-700">Зафиксировать текущие показатели</h3>
             
-            <!-- Время внесения -->
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время записи</label>
               <input type="time" v-model="newWellbeingTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
@@ -507,7 +502,7 @@
 
             <div>
               <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
-              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, планы на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
             </div>
 
             <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
@@ -531,7 +526,6 @@
                     {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                   </span>
                   <span class="text-xl">{{ log.mood }}</span>
-                  <!-- КНОПКА УДАЛЕНИЯ ЗАПИСИ СОСТОЯНИЯ -->
                   <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
                 </div>
               </div>
@@ -545,8 +539,7 @@
           </div>
         </div>
 
-
-        <!-- ==================== ВКЛАДКА 4: СОВМЕСТНЫЕ ПЛАНЫ И МУЗЫКА ==================== -->
+        <!-- ВКЛАДКА 4: СОВМЕСТНЫЕ ПЛАНЫ И МУЗЫКА -->
         <div v-if="activeTab === 'plans'" class="space-y-5">
           <div class="flex justify-between items-center px-1">
             <h2 class="text-sm font-extrabold text-stone-700">Наши дела и музыка</h2>
@@ -592,7 +585,6 @@
                   <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
                 </h3>
                 
-                <!-- КНОПКА УДАЛЕНИЯ БЛОКА ПЛАНОВ -->
                 <button 
                   @click="deleteCategory(cat)" 
                   class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
@@ -739,7 +731,6 @@
           </button>
         </div>
 
-        <!-- Крупная кнопка Закрыть внизу -->
         <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
           ✕ Закрыть настройки
         </button>
@@ -749,12 +740,10 @@
   </div>
 
   <script>
-    // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ ====================
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzp7obESmldDQfl5WLz2lgBk2XY_FErXzM3UTwkADNGaDda5fE7qEU-mG8eLQgBSGk/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoVZDGo_CPGVpSztDS5_8fKsKtsO8rAyufeMApbI_S05cZlFIzkD0Ob7KZiUtaKwM/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
-    // ===================================================================================
 
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
@@ -772,18 +761,26 @@
       return `${y}-${m}-${d}`;
     }
 
-    // Умная нормализация дат, включая поддержку регионального формата DD.MM.YYYY и YYYY-M-D без нулей
+    // Повышенная надежность нормализации дат для избежания "каши"
     function normalizeDateStr(val) {
       if (!val) return "";
       if (val instanceof Date) {
         return getLocalDateString(val);
       }
       let str = String(val).trim();
+      if (!str) return "";
+
+      if (str.includes(" ")) {
+        let parsedDate = new Date(str);
+        if (!isNaN(parsedDate.getTime())) {
+          return getLocalDateString(parsedDate);
+        }
+        str = str.split(" ")[0];
+      }
       if (str.includes("T")) {
         str = str.split("T")[0];
       }
       
-      // 1. Распознавание формата ДД.ММ.ГГГГ (например, 03.06.2026 или 3.6.2026)
       const ddMmYyyyRegex = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
       const matchDisplay = str.match(ddMmYyyyRegex);
       if (matchDisplay) {
@@ -793,7 +790,6 @@
         return `${y}-${m}-${d}`;
       }
       
-      // 2. Распознавание формата ГГГГ-М-Д с возможным отсутствием ведущих нулей (например, 2026-6-3)
       const yyyyMmDdRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
       const matchIso = str.match(yyyyMmDdRegex);
       if (matchIso) {
@@ -802,10 +798,19 @@
         const d = String(matchIso[3]).padStart(2, '0');
         return `${y}-${m}-${d}`;
       }
+
+      const slashRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+      const matchSlash = str.match(slashRegex);
+      if (matchSlash) {
+        const p1 = parseInt(matchSlash[1], 10);
+        const p2 = parseInt(matchSlash[2], 10);
+        const y = matchSlash[3];
+        return `${y}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+      }
       
-      if (str.length > 10 && !isNaN(Date.parse(str))) {
-        const d = new Date(str);
-        return getLocalDateString(d);
+      const parsed = Date.parse(str);
+      if (!isNaN(parsed)) {
+        return getLocalDateString(new Date(parsed));
       }
       return str;
     }
@@ -829,7 +834,6 @@
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
         
-        // Флаг инициализации для блокировки перезаписи настроек при первичном запуске
         let isInitialized = false;
 
         const currentYear = ref(new Date().getFullYear());
@@ -930,6 +934,7 @@
           triggerToast(`Выбрана роль: ${newRole === 'her' ? 'Она 🙋‍♀️' : 'Он 🙋‍♂️'}`);
         }
 
+        // ПРИОРИТЕТНЫЙ СТАРТ: Автосинхронизация локальных правок, затем загрузка актуальных облачных данных
         async function initConnection() {
           const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
           if (scriptUrl && !scriptUrl.includes("YOUR_SCRIPT_ID")) {
@@ -959,21 +964,29 @@
 
           if (!url) {
             isDemoMode.value = true;
+            await fetchData();
             return;
           }
 
           try {
             isDemoMode.value = false;
-            // КРИТИЧЕСКИ: При заходе в приложение безусловно сразу подтягиваем свежие данные из таблицы!
+
+            // 1. Сначала пытаемся синхронизировать накопившуюся локальную очередь (если она была)
+            if (syncQueue.value.length > 0) {
+              triggerToast("🔄 Загрузка локальных изменений перед обновлением...");
+              await processSyncQueue();
+            }
+
+            // 2. Затем скачиваем свежие актуальные данные с сервера
             await fetchData();
             await loadApiKey();
             
-            // Завершаем инициализацию и открываем наблюдателям доступ к отправке данных
             isInitialized = true;
             triggerToast("Подключение активно! Данные обновлены 🟢");
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
+            await fetchData();
             triggerToast(`Локальный режим активен.`);
           }
         }
@@ -1053,6 +1066,7 @@
           }
         }
 
+        // ПАКЕТНАЯ СИНХРОНИЗАЦИЯ (Отправляет всю очередь изменений одним POST-запросом)
         async function processSyncQueue() {
           if (syncQueue.value.length === 0) {
             isSyncPending.value = false;
@@ -1063,28 +1077,27 @@
           triggerToast("🔄 Синхронизация изменений с облаком...");
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
-          let failedOps = [];
+          try {
+            const response = await fetch(APPS_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(syncQueue.value)
+            });
 
-          for (const op of syncQueue.value) {
-            try {
-              const response = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(op)
-              });
-              if (!response.ok) throw new Error("Server error");
-            } catch (err) {
-              console.error("Сбой синхронизации действия:", op, err);
-              failedOps.push(op);
+            if (!response.ok) throw new Error("Сервер вернул ошибку при синхронизации");
+            const resData = await response.json();
+
+            if (resData && resData.batch) {
+              syncQueue.value = [];
+              localStorage.setItem('sync_queue', JSON.stringify([]));
+              isSyncPending.value = false;
+              triggerToast("🟢 Все изменения зафиксированы в облаке!");
+            } else {
+              throw new Error("Неверный формат ответа от сервера");
             }
-          }
-
-          syncQueue.value = failedOps;
-          localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
-
-          isSyncPending.value = false;
-          if (failedOps.length === 0) {
-            triggerToast("🟢 Все изменения зафиксированы в облаке!");
-          } else {
+          } catch (err) {
+            console.error("Сбой пакетной синхронизации:", err);
+            isSyncPending.value = false;
             triggerToast("⚠️ Не удалось связаться с базой. Повторим позже.");
           }
         }
@@ -1093,7 +1106,6 @@
           isSyncPending.value = true;
           clearTimeout(syncTimer);
 
-          // Таймер автосохранения 15 секунд
           syncTimer = setTimeout(async () => {
             await processSyncQueue();
           }, 15000); 
@@ -1104,7 +1116,6 @@
           await processSyncQueue();
         }
 
-        // Автоматическое объединение дублирующихся и пересекающихся циклов в памяти (и отправка удаления дубликатов в БД)
         function cleanupCycles() {
           if (cycles.value.length === 0) return;
           
@@ -1151,8 +1162,6 @@
 
           try {
             isSyncPending.value = false;
-            syncQueue.value = [];
-            localStorage.setItem('sync_queue', JSON.stringify([]));
 
             const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
             if (!response.ok) throw new Error("HTTP error");
@@ -1165,7 +1174,6 @@
                 end_date: normalizeDateStr(c.end_date)
               }));
               
-              // Запуск чистки дубликатов на лету
               cleanupCycles();
 
               partnerNotes.value = (allData.partner_notes || []).map(n => ({
@@ -1184,7 +1192,6 @@
               }));
               appSettingsList.value = allData.app_settings || [];
 
-              // КРИТИЧЕСКИ: Чтение последнего (актуального) значения настройки во избежание багов дублирования
               const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s.id === 'cycle_length');
               if (cycleLenSetting && cycleLenSetting.key_value) {
                 const val = parseInt(cycleLenSetting.key_value, 10);
@@ -1216,7 +1223,7 @@
             localStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
 
           } catch (e) {
-            console.warn("Сеть временно недоступна, загружен локальный кэш.", e);
+            console.warn("Сеть недоступна, загружен локальный кэш.", e);
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1598,85 +1605,122 @@
           }
         });
 
-        // ИСПРАВЛЕНО: Интеллектуальный точечный сброс и разделение интервала менструации при кликах
+        // ИСПРАВЛЕНО И УЛУЧШЕНО: Интуитивное day-by-day добавление, авто-объединение и защита от наложения
         async function togglePeriodStart() {
           const clickedDate = selectedDateStr.value;
           if (!clickedDate) return;
 
+          const clickedTime = new Date(clickedDate + "T12:00:00").getTime();
+
+          // Поиск существующего пересекающегося цикла
           const cycle = cycles.value.find(c => clickedDate >= c.start_date && clickedDate <= c.end_date);
 
           if (cycle) {
-            // Если период состоит из одного дня - полностью удаляем запись
+            // Если выбранный день уже помечен как менструация:
             if (cycle.start_date === cycle.end_date) {
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, cycle.id);
-              triggerToast("Выделение удалено");
-            } 
-            // Если кликнули на начальный день - сдвигаем старт на день вперед
-            else if (clickedDate === cycle.start_date) {
-              const nextDay = new Date(clickedDate + "T12:00:00");
-              nextDay.setDate(nextDay.getDate() + 1);
+              triggerToast("День менструации удален");
+            } else if (clickedDate === cycle.start_date) {
+              // Сдвигаем начало вперед на один день
+              const nextDay = new Date(clickedTime + 86400000);
               const nextDayStr = getLocalDateString(nextDay);
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { start_date: nextDayStr });
-              triggerToast("Выделение снято");
-            } 
-            // Если кликнули на конечный день - сдвигаем конец на день назад
-            else if (clickedDate === cycle.end_date) {
-              const prevDay = new Date(clickedDate + "T12:00:00");
-              prevDay.setDate(prevDay.getDate() - 1);
+              triggerToast("Период укорочен");
+            } else if (clickedDate === cycle.end_date) {
+              // Сдвигаем конец назад на один день
+              const prevDay = new Date(clickedTime - 86400000);
               const prevDayStr = getLocalDateString(prevDay);
               await updateLocalOrDB('cycles', 'demo_cycles', cycle.id, { end_date: prevDayStr });
-              triggerToast("Выделение снято");
-            } 
-            // Если кликнули в середину интервала - дробим один длинный интервал на два раздельных
-            else {
-              const prevDay = new Date(clickedDate + "T12:00:00");
-              prevDay.setDate(prevDay.getDate() - 1);
+              triggerToast("Период укорочен");
+            } else {
+              // Разделяем цикл в середине на два отдельных диапазона
+              const prevDay = new Date(clickedTime - 86400000);
               const prevDayStr = getLocalDateString(prevDay);
 
-              const nextDay = new Date(clickedDate + "T12:00:00");
-              nextDay.setDate(nextDay.getDate() + 1);
+              const nextDay = new Date(clickedTime + 86400000);
               const nextDayStr = getLocalDateString(nextDay);
 
               const oldId = cycle.id;
-              
-              // 1. Укорачиваем текущий интервал до предыдущего дня
+              const oldEnd = cycle.end_date;
+
               await updateLocalOrDB('cycles', 'demo_cycles', oldId, { end_date: prevDayStr });
               
-              // 2. Вставляем новый интервал со следующего дня по старый конец периода
               const newRecord = {
                 id: (Date.now() + 1).toString(),
                 start_date: nextDayStr,
-                end_date: cycle.end_date
+                end_date: oldEnd
               };
               await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
-              
-              triggerToast("Выделение снято");
+              triggerToast("Период разделен на две части");
             }
           } else {
-            // Добавление нового периода
-            const start = new Date(clickedDate + "T12:00:00");
-            if (isNaN(start.getTime())) return;
-            const end = new Date(start);
-            const pLength = parseInt(periodLength.value, 10) || 5;
-            end.setDate(start.getDate() + (pLength - 1));
-            const endDateStr = getLocalDateString(end);
+            // Если кликнули по пустому дню, проверяем, примыкает ли он к существующему циклу
+            let adjacentToStart = cycles.value.find(c => {
+              const start = new Date(c.start_date + "T12:00:00");
+              const diff = start.getTime() - clickedTime;
+              return Math.abs(diff) <= 86401000 && diff > 0; // Кликнули ровно за 1 день до старта
+            });
 
-            const newRecord = { 
-              id: Date.now().toString(), 
-              start_date: clickedDate, 
-              end_date: endDateStr 
-            };
-            await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
-            triggerToast(`Добавлен цикл менструации на ${pLength} дней`);
-            
-            if (role.value === 'her') {
-              const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
-              sendTelegramNotification(
-                `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
-                targetId
-              );
+            let adjacentToEnd = cycles.value.find(c => {
+              const end = new Date(c.end_date + "T12:00:00");
+              const diff = clickedTime - end.getTime();
+              return Math.abs(diff) <= 86401000 && diff > 0; // Кликнули ровно через 1 день после конца
+            });
+
+            if (adjacentToStart && adjacentToEnd) {
+              // Клик мостом между двумя отдельными циклами -> Склеиваем их
+              const mergedStart = adjacentToEnd.start_date;
+              const mergedEnd = adjacentToStart.end_date;
+              const idToDelete = adjacentToStart.id;
+
+              await updateLocalOrDB('cycles', 'demo_cycles', adjacentToEnd.id, { end_date: mergedEnd });
+              await saveLocalOrDB('cycles', 'demo_cycles', cycles, null, true, idToDelete);
+              triggerToast("Периоды объединены!");
+            } else if (adjacentToStart) {
+              // Расширяем существующий цикл назад
+              await updateLocalOrDB('cycles', 'demo_cycles', adjacentToStart.id, { start_date: clickedDate });
+              triggerToast("Период расширен назад");
+            } else if (adjacentToEnd) {
+              // Расширяем существующий цикл вперед
+              await updateLocalOrDB('cycles', 'demo_cycles', adjacentToEnd.id, { end_date: clickedDate });
+              triggerToast("Период расширен вперед");
+            } else {
+              // Новая менструация: проверяем нет ли перекрытия с другими циклами при генерации periodLength дней
+              const start = new Date(clickedTime);
+              const end = new Date(start);
+              const pLength = parseInt(periodLength.value, 10) || 5;
+              end.setDate(start.getDate() + (pLength - 1));
+              const endDateStr = getLocalDateString(end);
+
+              let overlappingCycle = cycles.value.find(c => {
+                return c.start_date <= endDateStr && c.end_date >= clickedDate;
+              });
+
+              if (overlappingCycle) {
+                const mergedStart = clickedDate < overlappingCycle.start_date ? clickedDate : overlappingCycle.start_date;
+                const mergedEnd = endDateStr > overlappingCycle.end_date ? endDateStr : overlappingCycle.end_date;
+                await updateLocalOrDB('cycles', 'demo_cycles', overlappingCycle.id, { start_date: mergedStart, end_date: mergedEnd });
+                triggerToast("Период добавлен и объединен с существующим");
+              } else {
+                const newRecord = { 
+                  id: Date.now().toString(), 
+                  start_date: clickedDate, 
+                  end_date: endDateStr 
+                };
+                await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
+                triggerToast(`Добавлен период менструации на ${pLength} дней`);
+                
+                if (role.value === 'her') {
+                  const targetId = localStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
+                  sendTelegramNotification(
+                    `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
+                    targetId
+                  );
+                }
+              }
             }
           }
+          cleanupCycles();
         }
 
         async function deleteEntireCycle() {
@@ -1797,7 +1841,6 @@
           triggerToast("Дело добавлено в планы!");
         }
 
-        // ИСПРАВЛЕНО: Четкое соответствие галочки и уведомления (без рассинхронизации ссылок)
         async function togglePlanStatus(plan) {
           const newStatus = !plan.is_completed;
           plan.is_completed = newStatus;
@@ -1827,7 +1870,6 @@
           return `${d}.${m}.${y}`;
         }
 
-        // ==================== ИНТЕГРАЦИЯ OPENROUTER/FREE ====================
         async function analyzeAllApplicationData() {
           if (isAiLoading.value) return;
           
