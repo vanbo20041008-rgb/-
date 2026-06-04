@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS (Высокая стабильность в РФ) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue.js 3 -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Vue.js 3 (Переведено на стабильный jsdelivr) -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -165,13 +165,12 @@
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
                   isPredictedDay(dayObj.date) ? 'bg-pink-50/50 text-pink-500 border-2 border-dashed border-pink-300' : '',
-                  // Фиолетовая овуляция
                   isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
+                <!-- Иконка рабочего графика (Сдвинута в самый верхний правый угол) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -181,7 +180,6 @@
                 <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
                   <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                  <!-- Фиолетовый маркер овуляции -->
                   <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
                   <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
                   <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
@@ -820,7 +818,7 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 3500); // 3.5 секунды для информирования о статусе
+          }, 3500);
         };
 
         // Ввод настроек в интерфейсе (Реактивно связаны)
@@ -860,7 +858,7 @@
         // Инициализация соединения
         async function initConnection() {
           // Автоматическое предзаполнение полей по дефолтным константам
-          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
+          if (!localStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL && !DEFAULT_GOOGLE_SCRIPT_URL.includes("XXXXXXXX")) {
             localStorage.setItem('cfg_supabase_url', DEFAULT_GOOGLE_SCRIPT_URL);
           }
           if (!localStorage.getItem('cfg_bot_token') && DEFAULT_TELEGRAM_BOT_TOKEN) {
@@ -1042,7 +1040,7 @@
             return;
           }
 
-          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
+          if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("XXXXXXXX")) {
             cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
             partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
             wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
