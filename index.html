@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS (defer предотвращает блокировку загрузки страницы на мобильных сетях) -->
+  <!-- Tailwind CSS (defer предотвращает блокировку загрузки страницы) -->
   <script src="https://cdn.tailwindcss.com" defer></script>
   <!-- Vue.js 3 (Сверхбыстрый и стабильный jsDelivr CDN для мобильных сетей) -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js" defer></script>
   <!-- Telegram WebApp SDK (defer предотвращает зависание страницы) -->
   <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 
@@ -177,7 +177,7 @@
                   isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
                   isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
                   isPredictedDay(dayObj.date) ? 'bg-pink-50/50 text-pink-500 border-2 border-dashed border-pink-300' : '',
-                  isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
+                  isOvulationDay(dateStr) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
                 ]"
               >
                 <span>{{ dayObj.day }}</span>
@@ -750,7 +750,8 @@
 
   </div>
 
-  <script>
+  <!-- type="module" гарантирует неблокирующее выполнение кода только после полной загрузки всех deferred-скриптов -->
+  <script type="module">
     const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
@@ -981,6 +982,7 @@
           wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
           customShifts.value = safeJsonParse('demo_work_shifts', []);
           plans.value = safeJsonParse('demo_plans', []);
+          appSettingsList.value = safeJsonParse('demo_app_settings', []); // КРИТИЧЕСКИЙ ФИКС: Кэшируем настройки для предотвращения ложного перезаписывания при старте! [15]
           categories.value = safeJsonParse('demo_categories', [
             { id: '1', name: 'Смотреть' },
             { id: '2', name: 'Посетить' },
@@ -1207,9 +1209,6 @@
             return;
           }
 
-          // Устанавливаем флаг загрузки, чтобы watches временно заблокировали отправку обратно [15]
-          isSyncingFromServer = true; 
-
           try {
             isSyncPending.value = false;
 
@@ -1218,6 +1217,9 @@
             const allData = await response.json();
 
             if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
+              // Устанавливаем флаг загрузки, чтобы watches временно заблокировали отправку обратно [15]
+              isSyncingFromServer = true; 
+
               cycles.value = (allData.cycles || []).map(c => ({
                 ...c,
                 start_date: normalizeDateStr(c.start_date),
@@ -1272,6 +1274,7 @@
             safeStorage.setItem('demo_categories', JSON.stringify(categories.value));
             safeStorage.setItem('demo_plans', JSON.stringify(plans.value));
             safeStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
+            safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value)); // КРИТИЧЕСКИЙ ФИКС: Сохраняем облачные настройки в кэш! [15]
 
           } catch (e) {
             console.warn("Сеть недоступна, загружен локальный кэш.", e);
@@ -1855,6 +1858,7 @@
           return plans.value.filter(p => p && p.category_name === categoryName);
         }
 
+        // Регулярное выражение для точной проверки наличия URL
         function isLink(text) {
           if (!text) return false;
           return text.startsWith('http://') || text.startsWith('https://');
