@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS (Высокая стабильность в РФ) -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue.js 3 (Переведено на стабильный jsdelivr) -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <!-- Vue.js 3 (Переведено на Cloudflare CDN для абсолютной стабильности в РФ) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -170,7 +170,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (Сдвинута в самый верхний правый угол) -->
+                <!-- Иконка рабочего графика (СДВИГ В САМЫЙ ПРАВЫЙ ВЕРХНИЙ УГОЛ) -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -738,7 +738,7 @@
   <script>
     // ==================== НАСТРОЙКИ ПО УМОЛЧАНИЮ (ПРЕДЗАПОЛНЕННЫЕ) ====================
     // 1. Вставьте сюда URL вашего развернутого Google Скрипта (из шага 6, оканчивается на /exec):
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXX_XXXXXXXX/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
 
     // 2. Вставьте токен вашего Телеграм-бота:
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
@@ -790,6 +790,20 @@
       return val;
     }
 
+    // Безопасный JSON.parse для защиты от падения при наличии поврежденного локального кэша
+    function safeJsonParse(key, defaultVal = []) {
+      try {
+        const val = localStorage.getItem(key);
+        if (!val || val === "undefined" || val === "null" || val === "NaN") {
+          return defaultVal;
+        }
+        return JSON.parse(val);
+      } catch (e) {
+        console.warn("Предотвращен сбой чтения кэша для ключа:", key, e);
+        return defaultVal;
+      }
+    }
+
     createApp({
       setup() {
         const activeTab = ref('calendar');
@@ -799,7 +813,7 @@
         // Функция безопасного извлечения числовых настроек из localStorage во избежание багов с NaN
         const getSafeLocalStorageInt = (key, defaultVal) => {
           const val = localStorage.getItem(key);
-          if (!val) return defaultVal;
+          if (!val || val === "undefined" || val === "NaN" || val === "null") return defaultVal;
           const parsed = parseInt(val, 10);
           return isNaN(parsed) ? defaultVal : parsed;
         };
@@ -818,7 +832,7 @@
           showToast.value = true;
           setTimeout(() => {
             showToast.value = false;
-          }, 3500);
+          }, 3500); // 3.5 секунды для информирования о статусе
         };
 
         // Ввод настроек в интерфейсе (Реактивно связаны)
@@ -851,7 +865,7 @@
         const isAiChatLoading = ref(false);
 
         // --- ЛОКАЛЬНАЯ ОЧЕРЕДЬ СИНХРОНИЗАЦИИ (Sync Queue) ---
-        const syncQueue = ref(JSON.parse(localStorage.getItem('sync_queue')) || []);
+        const syncQueue = ref(safeJsonParse('sync_queue', []));
         const isSyncPending = ref(false);
         let syncTimer = null;
 
@@ -979,7 +993,7 @@
           }
         }
 
-        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ (Раз в 1 минуту после затишья) ---
+        // --- ФУНКЦИЯ ОБРАБОТКИ ОЧЕРЕДИ СИНХРОНИЗАЦИИ ---
         async function processSyncQueue() {
           if (syncQueue.value.length === 0) {
             isSyncPending.value = false;
@@ -1041,18 +1055,18 @@
           }
 
           if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("XXXXXXXX")) {
-            cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
-            partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
-            wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
-            customShifts.value = JSON.parse(localStorage.getItem('demo_work_shifts')) || [];
-            categories.value = JSON.parse(localStorage.getItem('demo_categories')) || [
+            cycles.value = safeJsonParse('demo_cycles', []);
+            partnerNotes.value = safeJsonParse('demo_notes', []);
+            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
+            customShifts.value = safeJsonParse('demo_work_shifts', []);
+            categories.value = safeJsonParse('demo_categories', [
               { id: '1', name: 'Смотреть' },
               { id: '2', name: 'Посетить' },
               { id: '3', name: 'Поездки' },
               { id: '4', name: 'Любимая Музыка' },
               { id: '5', name: 'Прочее' }
-            ];
-            plans.value = JSON.parse(localStorage.getItem('demo_plans')) || [];
+            ]);
+            plans.value = safeJsonParse('demo_plans', []);
             newPlanCategory.value = categories.value[4]?.name || 'Прочее';
             return;
           }
@@ -1136,12 +1150,12 @@
 
           } catch (e) {
             console.warn("Сеть недоступна, работаем в локальном режиме:", e);
-            cycles.value = JSON.parse(localStorage.getItem('demo_cycles')) || [];
-            partnerNotes.value = JSON.parse(localStorage.getItem('demo_notes')) || [];
-            wellbeingLogs.value = JSON.parse(localStorage.getItem('demo_wellbeing')) || [];
-            customShifts.value = JSON.parse(localStorage.getItem('demo_work_shifts')) || [];
-            categories.value = JSON.parse(localStorage.getItem('demo_categories')) || [];
-            plans.value = JSON.parse(localStorage.getItem('demo_plans')) || [];
+            cycles.value = safeJsonParse('demo_cycles', []);
+            partnerNotes.value = safeJsonParse('demo_notes', []);
+            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
+            customShifts.value = safeJsonParse('demo_work_shifts', []);
+            categories.value = safeJsonParse('demo_categories', []);
+            plans.value = safeJsonParse('demo_plans', []);
             triggerToast("⚠️ Работаем в локальном режиме. Изменения сохраняются на устройстве.");
           }
         }
@@ -1342,8 +1356,9 @@
           if (cycles.value.length === 0) return null;
           const targetDate = new Date(dateStr + "T12:00:00");
           const pastStarts = cycles.value
+            .filter(c => c && c.start_date)
             .map(c => ({ ...c, start: new Date(c.start_date + "T12:00:00") }))
-            .filter(c => c.start <= targetDate)
+            .filter(c => c.start && !isNaN(c.start.getTime()) && c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
           
           if (pastStarts.length === 0) return null;
@@ -1360,12 +1375,13 @@
           const targetDate = new Date(dateStr + "T12:00:00");
           
           const pastStarts = cycles.value
+            .filter(c => c && c.start_date)
             .map(c => ({ 
               ...c, 
               start: new Date(c.start_date + "T12:00:00"), 
               end: new Date((c.end_date || c.start_date) + "T12:00:00") 
             }))
-            .filter(c => c.start <= targetDate)
+            .filter(c => c.start && !isNaN(c.start.getTime()) && c.start <= targetDate)
             .sort((a, b) => b.start - a.start);
 
           if (pastStarts.length === 0) return null;
@@ -1442,8 +1458,10 @@
         // Проверка, является ли день днем менструации
         function isPeriodDay(dateStr) {
           return cycles.value.some(c => {
-            if (!c.end_date) return dateStr === c.start_date;
-            return dateStr >= c.start_date && dateStr <= c.end_date;
+            if (!c || !c.start_date) return false;
+            const start = c.start_date;
+            const end = c.end_date || c.start_date;
+            return dateStr >= start && dateStr <= end;
           });
         }
 
@@ -1455,8 +1473,9 @@
         });
 
         const lastCycleStart = computed(() => {
-          if (cycles.value.length === 0) return null;
-          const sorted = [...cycles.value].sort((a,b) => b.start_date.localeCompare(a.start_date));
+          const validCycles = cycles.value.filter(c => c && c.start_date && !c.start_date.includes("NaN"));
+          if (validCycles.length === 0) return null;
+          const sorted = [...validCycles].sort((a,b) => b.start_date.localeCompare(a.start_date));
           return sorted[0].start_date;
         });
 
@@ -1472,8 +1491,9 @@
         // Динамическая разметка прогнозируемых дней (розовым пунктиром)
         function isPredictedDay(dateStr) {
           if (isPeriodDay(dateStr)) return false; // Защита: не показывать прогноз, если день уже проставлен вручную
-          if (!lastCycleStart.value) return false;
+          if (!lastCycleStart.value || lastCycleStart.value.includes("NaN")) return false;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          if (isNaN(lastStart.getTime())) return false;
           const current = new Date(dateStr + "T12:00:00");
           const diffTime = current - lastStart;
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -1488,8 +1508,9 @@
         }
 
         const currentCycleDay = computed(() => {
-          if (!lastCycleStart.value) return null;
+          if (!lastCycleStart.value || lastCycleStart.value.includes("NaN")) return null;
           const lastStart = new Date(lastCycleStart.value + "T12:00:00");
+          if (isNaN(lastStart.getTime())) return null;
           const today = new Date();
           today.setHours(12, 0, 0, 0);
           const diffTime = today - lastStart;
@@ -1879,7 +1900,6 @@ ${plansData}
           }
         }
 
-        // ==================== ИНТЕРАКТИВНЫЙ ДИАЛОГ С ИИ (ЧАТ) ====================
         async function sendAiChatMessage() {
           if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
@@ -1908,7 +1928,7 @@ ${plansData}
               `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
             ).join("\n") || "Нет данных.";
 
-            const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
+            const wellbeingData = wellbeingLogs.slice(0, 10).map(w => 
               `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
 
