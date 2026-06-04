@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS (defer предотвращает блокировку загрузки страницы на мобильных сетях) -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
   <!-- Vue.js 3 (Сверхбыстрый и стабильный jsDelivr CDN для мобильных сетей) -->
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
-  <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram WebApp SDK (defer предотвращает зависание страницы) -->
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 
   <style>
     /* Анимация пульса */
@@ -988,7 +988,7 @@
             { id: '4', name: 'Любимая Музыка' },
             { id: '5', name: 'Прочее' }
           ]);
-          newPlanCategory.value = categories.value[0]?.name || 'Прочее';
+          newPlanCategory.value = (categories.value && categories.value[0]) ? categories.value[0].name : 'Прочее';
 
           const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
           if (scriptUrl && !scriptUrl.includes("YOUR_SCRIPT_ID")) {
@@ -1935,7 +1935,11 @@
 
         function formatDateDisplay(dateStr) {
           if (!dateStr) return '';
-          const [y, m, d] = dateStr.split('-');
+          const parts = dateStr.split('-');
+          if (parts.length < 3) return dateStr;
+          const y = parts[0];
+          const m = parts[1];
+          const d = parts[2];
           return `${d}.${m}.${y}`;
         }
 
@@ -1959,7 +1963,7 @@
             ).join("\n") || "Нет данных.";
 
             const wellbeingData = wellbeingLogs.value.map(w => 
-              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
+              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Comment: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
 
             const plansData = plans.value.map(p => 
@@ -2064,7 +2068,7 @@ ${plansData}
             ).join("\n") || "Нет данных.";
 
             const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
-              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
+              `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Comment: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
 
             const plansData = plans.value.map(p => 
@@ -2145,15 +2149,25 @@ ${shiftsData}
         }
 
         onMounted(() => {
-          try {
-            if (window.Telegram && window.Telegram.WebApp) {
-              window.Telegram.WebApp.ready();
-              window.Telegram.WebApp.expand();
-            }
-          } catch (e) {
-            console.warn("Telegram WebApp API error blocked:", e);
-          }
+          // Инициализируем соединение сразу
           initConnection();
+
+          // Telegram SDK ready вызываем безопасно с поддержкой асинхронной загрузки скрипта
+          const checkTelegram = setInterval(() => {
+            try {
+              if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                clearInterval(checkTelegram);
+              }
+            } catch (e) {
+              console.warn("Telegram WebApp API error blocked:", e);
+              clearInterval(checkTelegram);
+            }
+          }, 50);
+
+          // Ограничиваем опрос 3 секундами, чтобы не крутить бесконечно в обычном браузере
+          setTimeout(() => clearInterval(checkTelegram), 3000);
         });
 
         return {
