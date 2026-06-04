@@ -751,7 +751,7 @@
   </div>
 
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -873,6 +873,7 @@
         const isDemoMode = ref(false);
         
         let isInitialized = false;
+        let isSyncingFromServer = false; // Ключевой флаг для защиты настроек от перетирания [15]
 
         const currentYear = ref(new Date().getFullYear());
         const currentMonth = ref(new Date().getMonth());
@@ -1031,7 +1032,7 @@
                 await processSyncQueue();
               }
               await fetchData();
-              await loadApiKey();
+              loadApiKey(); // Чтение ИИ-ключа теперь полностью синхронно из общего пакета в памяти! [3]
               triggerToast("Облачная база обновлена 🟢");
             } catch (e) {
               console.warn("Фоновое обновление не удалось:", e);
@@ -1087,7 +1088,8 @@
           }
         }
 
-        async function loadApiKey() {
+        // ОПТИМИЗИРОВАНО ДЛЯ СКОРОСТИ: Синхронное извлечение ключа из памяти без тяжелых дублирующих сетевых запросов! [3]
+        function loadApiKey() {
           const customKey = safeStorage.getItem('cfg_openrouter_key');
           if (customKey && customKey.trim()) {
             openRouterApiKey.value = customKey.trim();
@@ -1099,17 +1101,10 @@
             return;
           }
 
-          try {
-            const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
-            const response = await fetch(`${APPS_SCRIPT_URL}?sheet=app_settings`);
-            const settings = await response.json();
-            const found = settings.find(s => s && s.id === 'openrouter_api_key');
-            if (found && found.key_value) {
-              openRouterApiKey.value = found.key_value;
-            } else {
-              openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
-            }
-          } catch (e) {
+          const found = appSettingsList.value.find(s => s && s.id === 'openrouter_api_key');
+          if (found && found.key_value) {
+            openRouterApiKey.value = found.key_value;
+          } else {
             openRouterApiKey.value = BACKUP_OPENROUTER_KEY;
           }
         }
@@ -1212,6 +1207,9 @@
             return;
           }
 
+          // Устанавливаем флаг загрузки, чтобы watches временно заблокировали отправку обратно [15]
+          isSyncingFromServer = true; 
+
           try {
             isSyncPending.value = false;
 
@@ -1244,10 +1242,11 @@
               }));
               appSettingsList.value = allData.app_settings || [];
 
+              // Синхронизация цикла и менструации с разных устройств без циклической перезаписи!
               const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
               if (cycleLenSetting && cycleLenSetting.key_value) {
                 const val = parseInt(cycleLenSetting.key_value, 10);
-                if (!isNaN(val)) {
+                if (!isNaN(val) && cycleLength.value !== val) {
                   cycleLength.value = val;
                   safeStorage.setItem('user_cycle_length', val);
                 }
@@ -1255,7 +1254,7 @@
               const periodLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'period_length');
               if (periodLenSetting && periodLenSetting.key_value) {
                 const val = parseInt(periodLenSetting.key_value, 10);
-                if (!isNaN(val)) {
+                if (!isNaN(val) && periodLength.value !== val) {
                   periodLength.value = val;
                   safeStorage.setItem('user_period_length', val);
                 }
@@ -1276,6 +1275,8 @@
 
           } catch (e) {
             console.warn("Сеть недоступна, загружен локальный кэш.", e);
+          } finally {
+            isSyncingFromServer = false; // Возвращаем в ручной режим после успешной сетевой загрузки [15]
           }
         }
 
@@ -1296,13 +1297,13 @@
 
         watch(cycleLength, (newVal) => {
           safeStorage.setItem('user_cycle_length', newVal);
-          if (isInitialized) {
+          if (isInitialized && !isSyncingFromServer) { // Блокировка сохранения, если значение пришло с сервера [15]
             saveOrUpdateSetting('cycle_length', newVal);
           }
         });
         watch(periodLength, (newVal) => {
           safeStorage.setItem('user_period_length', newVal);
-          if (isInitialized) {
+          if (isInitialized && !isSyncingFromServer) { // Блокировка сохранения, если значение пришло с сервера [15]
             saveOrUpdateSetting('period_length', newVal);
           }
         });
@@ -1391,9 +1392,9 @@
           const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
           if (targetId && !targetId.includes("ВСТАВЬТЕ")) {
             await sendTelegramNotification(signal.msg, targetId);
-            triggerToast("Сигнал отправлен другу в ТГ!");
+            triggerToast("Signal sent via Telegram!");
           } else {
-            triggerToast("Сигнал сработал!");
+            triggerToast("Signal triggered!");
           }
         }
 
