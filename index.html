@@ -70,7 +70,22 @@
         <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent">Полнолуние</h1>
       </div>
       
-      <div class="flex items-center space-x-2.5">
+      <div class="flex items-center space-x-2">
+        <!-- КНОПКА РУЧНОЙ СИНХРОНИЗАЦИИ / МГНОВЕННОГО СОХРАНЕНИЯ -->
+        <button 
+          @click="forceSync" 
+          :disabled="syncQueue.length === 0 && !isSyncPending"
+          :class="['px-2.5 py-1.5 rounded-xl text-[10px] font-extrabold transition-all border flex items-center space-x-1', 
+                   syncQueue.length > 0 
+                     ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
+                     : 'bg-stone-50 text-stone-400 border-stone-200 cursor-not-allowed']"
+        >
+          <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '☁️') }}</span>
+          <span class="hidden min-[370px]:inline">
+            {{ isSyncPending ? 'Синхронизация...' : (syncQueue.length > 0 ? `Сохранить (${syncQueue.length})` : 'Синхронизировано') }}
+          </span>
+        </button>
+
         <!-- Кнопка шестеренки настроек -->
         <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
           ⚙️
@@ -170,7 +185,7 @@
               >
                 <span>{{ dayObj.day }}</span>
                 
-                <!-- Иконка рабочего графика (В ПРАВОМ ВЕРХНЕМ УГЛУ) -->
+                <!-- Иконка рабочего графика -->
                 <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
                   <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
                   <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
@@ -270,7 +285,7 @@
             <div class="grid grid-cols-1 gap-2">
               <button 
                 @click="togglePeriodStart" 
-                :class="['w-full py-2.5 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', isPeriodDay(selectedDateStr) ? 'bg-gradient-to-r from-stone-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-200']"
+                :class="['w-full py-2.5 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', isPeriodDay(selectedDateStr) ? 'bg-gradient-to-tr from-stone-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-200']"
               >
                 {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить день менструации' : '🩸 Отметить как день менструации (на ' + periodLength + ' дней)' }}
               </button>
@@ -674,7 +689,6 @@
             <span>⚙️</span>
             <span>Настройки подключения</span>
           </h3>
-          <!-- Крупная кнопка закрытия -->
           <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
         </div>
 
@@ -697,14 +711,15 @@
             <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
-          <!-- Выбор ИИ-Бота -->
+          <!-- Выбор ИИ-Бота (ОБНОВЛЕННЫЙ СПИСОК С Gemma 4, DeepSeek V4 Flash, Llama 4) -->
           <div>
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
             <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
               <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
-              <option value="deepseek/deepseek-r1:free">⚡ DeepSeek R1 (free)</option>
-              <option value="meta-llama/llama-3.3-70b-instruct:free">🦙 Llama 3.3 70B (free)</option>
-              <option value="google/gemma-2-9b-it:free">✨ Google Gemma 2 9B (free)</option>
+              <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
+              <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
+              <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
+              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
             </select>
           </div>
 
@@ -809,7 +824,7 @@
         const role = ref(localStorage.getItem('user_role') || 'her');
         const isDemoMode = ref(false);
 
-        // Объявление недостающих реактивных переменных и списков
+        // Инициализация локальных реактивных переменных данными из кэша (0мс задержки запуска)
         const currentYear = ref(new Date().getFullYear());
         const currentMonth = ref(new Date().getMonth());
         const selectedDateStr = ref(getLocalDateString(new Date()));
@@ -818,12 +833,18 @@
           "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
         ]);
 
-        const cycles = ref([]);
-        const partnerNotes = ref([]);
-        const wellbeingLogs = ref([]);
-        const customShifts = ref([]);
-        const categories = ref([]);
-        const plans = ref([]);
+        const cycles = ref(safeJsonParse('demo_cycles', []));
+        const partnerNotes = ref(safeJsonParse('demo_notes', []));
+        const wellbeingLogs = ref(safeJsonParse('demo_wellbeing', []));
+        const customShifts = ref(safeJsonParse('demo_work_shifts', []));
+        const categories = ref(safeJsonParse('demo_categories', [
+          { id: '1', name: 'Смотреть' },
+          { id: '2', name: 'Посетить' },
+          { id: '3', name: 'Поездки' },
+          { id: '4', name: 'Любимая Музыка' },
+          { id: '5', name: 'Прочее' }
+        ]));
+        const plans = ref(safeJsonParse('demo_plans', []));
 
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
@@ -932,19 +953,22 @@
 
           if (!url) {
             isDemoMode.value = true;
-            await fetchData();
             return;
           }
 
           try {
             isDemoMode.value = false;
+            // Сначала сразу отправляем накопившуюся очередь, если она есть
+            if (syncQueue.value.length > 0) {
+              await processSyncQueue();
+            }
+            // Затем стягиваем новые данные
             await fetchData();
             await loadApiKey();
             triggerToast("Подключение активно! 🟢");
           } catch (e) {
             console.error("Ошибка инициализации:", e);
             isDemoMode.value = true;
-            await fetchData();
             triggerToast(`Локальный режим активен.`);
           }
         }
@@ -1030,6 +1054,7 @@
             return;
           }
 
+          isSyncPending.value = true;
           triggerToast("🔄 Синхронизация изменений с облаком...");
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
@@ -1043,7 +1068,7 @@
               });
               if (!response.ok) throw new Error("Server error");
             } catch (err) {
-              console.error("Сбой синхронизации:", op, err);
+              console.error("Сбой синхронизации действия:", op, err);
               failedOps.push(op);
             }
           }
@@ -1051,47 +1076,41 @@
           syncQueue.value = failedOps;
           localStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
 
+          isSyncPending.value = false;
           if (failedOps.length === 0) {
-            isSyncPending.value = false;
-            triggerToast("🟢 Данные синхронизированы!");
+            triggerToast("🟢 Все изменения зафиксированы в облаке!");
             await fetchData();
           } else {
-            triggerToast("⚠️ Часть данных не синхронизирована. Повторим позже.");
+            triggerToast("⚠️ Не удалось связаться с базой. Повторим позже.");
           }
         }
 
         function resetSyncTimer() {
           isSyncPending.value = true;
           clearTimeout(syncTimer);
-          triggerToast("💾 Сохранено локально. Синхронизация через 1 мин...");
+
+          // Таймер изменен на 15 секунд по вашему запросу
           syncTimer = setTimeout(async () => {
             await processSyncQueue();
-          }, 60000);
+          }, 15000); 
+        }
+
+        // Принудительная моментальная синхронизация по кнопке "Сохранить"
+        async function forceSync() {
+          clearTimeout(syncTimer); 
+          await processSyncQueue();
         }
 
         async function fetchData() {
           const APPS_SCRIPT_URL = localStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
+          // Блокируем перезапись локального состояния во время отправки очереди
           if (isSyncPending.value || syncQueue.value.length > 0) {
-            console.log("Загрузка отложена: есть несохраненные локальные изменения.");
             return;
           }
 
           if (isDemoMode.value || !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("YOUR_SCRIPT_ID")) {
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', [
-              { id: '1', name: 'Смотреть' },
-              { id: '2', name: 'Посетить' },
-              { id: '3', name: 'Поездки' },
-              { id: '4', name: 'Любимая Музыка' },
-              { id: '5', name: 'Прочее' }
-            ]);
-            plans.value = safeJsonParse('demo_plans', []);
-            newPlanCategory.value = categories.value[4]?.name || 'Прочее';
-            return;
+            return; // Работаем на локальном кэше
           }
 
           try {
@@ -1167,14 +1186,7 @@
             localStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
 
           } catch (e) {
-            console.warn("Сеть недоступна, оффлайн режим:", e);
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', []);
-            plans.value = safeJsonParse('demo_plans', []);
-            triggerToast("Работа в оффлайн-режиме.");
+            console.warn("Сеть временно недоступна, используем кэш устройства.", e);
           }
         }
 
@@ -1891,7 +1903,6 @@ ${plansData}
               `-[${formatDateDisplay(n.date)}]: ${n.author === 'her' ? 'Она' : 'Он'} пишет: "${n.content}"`
             ).join("\n") || "Нет данных.";
 
-            // ИСПРАВЛЕНО: wellbeingLogs.value.slice вместо wellbeingLogs.slice
             const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
               `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
             ).join("\n") || "Нет данных.";
@@ -1908,7 +1919,7 @@ ${plansData}
 Ты — умный и поддерживающий ИИ-собеседник в приложении "Полнолуние".
 Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
-ВАЖНОЕ П ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши тепло, по-дружески. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга и понимать рабочие смены.
+ВАЖНОЕ ПРАВИЛО: Между ними нет романтических отношений, они просто хорошие онлайн-друзья. Пиши тепло, по-дружески. Избегай слов "партнер", "пара", "любовь", "отношения", "парень", "девушка". Твоя цель — помочь друзьям заботиться о самочувствии друг друга и понимать рабочие смены.
 
 Вот текущие данные из общей базы данных:
 - Сегодня: ${todayStr}
@@ -2059,7 +2070,8 @@ ${shiftsData}
           syncQueue,
           isSyncPending,
           processSyncQueue,
-          appSettingsList
+          appSettingsList,
+          forceSync
         };
       }
     }).mount('#app');
