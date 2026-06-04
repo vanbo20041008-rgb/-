@@ -5,26 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS (Надежная совместимая загрузка) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS (Загрузка в фоне, не блокирующая парсер) -->
+  <script src="https://cdn.tailwindcss.com" defer></script>
   
-  <!-- Подключение Vue 3 через отказоустойчивые CDN с авторезервированием -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
-  <script>
-    if (typeof Vue === 'undefined') {
-      console.warn("CDNJS failed to load Vue. Trying unpkg...");
-      document.write('<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"><\/script>');
-    }
-  </script>
+  <!-- Подключение Vue 3 через стабильный cdnjs (Загрузка в фоне, не блокирующая парсер) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js" defer></script>
   
-  <!-- Telegram WebApp SDK (Надежная совместимая загрузка) -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram WebApp SDK (Загрузка в фоне, не блокирующая парсер) -->
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
 
   <!-- Мобильная консоль отладки Eruda. Активируется добавлением '?debug=true' в URL -->
   <script>
     if (window.location.search.includes('debug=true')) {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
-      document.write('<script>eruda.init();<\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js" defer><\/script>');
+      document.write('<script defer>window.addEventListener("DOMContentLoaded", function(){ eruda.init(); });<\/script>');
     }
   </script>
 
@@ -66,21 +60,22 @@
 </head>
 <body class="min-h-screen flex flex-col pb-28 selection:bg-rose-100">
 
+  <!-- Внешний блок #app монтируется синхронно, а внутренний лоадер исчезнет при инициализации Vue -->
   <div id="app" class="w-full max-w-md mx-auto px-4 pt-4 flex-grow flex flex-col">
     
-    <!-- ДИАГНОСТИЧЕСКИЙ ЛОАДЕР (Показывается только до инициализации Vue.js) -->
-    <div v-if="false" id="app-offline-loader" class="flex-grow flex flex-col items-center justify-center py-20 text-center space-y-4">
+    <!-- СВЕРХЛЕГКИЙ МГНОВЕННЫЙ ЛОАДЕР (Показывается мгновенно силами HTML/CSS, пока грузятся JS-файлы) -->
+    <div id="app-offline-loader" class="flex-grow flex flex-col items-center justify-center py-32 text-center space-y-4">
       <div class="text-3xl animate-bounce">⏳</div>
-      <h2 class="text-sm font-bold text-stone-700">Инициализация «Полнолуния»...</h2>
+      <h2 class="text-sm font-bold text-stone-750">Подготовка интерфейса...</h2>
       <p class="text-xs text-stone-500 max-w-[280px] leading-relaxed mx-auto">
-        Если этот экран не исчезает в течение нескольких секунд, ваш мобильный оператор или сеть могут ограничивать доступ к скриптам приложения.
+        Приложение настраивает защищенное соединение. Пожалуйста, подождите.
       </p>
-      <div class="pt-2 text-[10px] text-stone-400 font-mono">
-        Попробуйте включить VPN или переключиться на домашний Wi-Fi.
+      <div class="pt-2 text-[9px] text-stone-400 font-mono">
+        Если запуск завис, попробуйте временно включить VPN или Wi-Fi.
       </div>
     </div>
 
-    <!-- ОСНОВНОЙ КОНТЕНТ (Появится только после успешной загрузки Vue) -->
+    <!-- ОСНОВНОЙ КОНТЕНТ (Появится только после успешной инициализации Vue) -->
     <div v-cloak class="flex-grow flex flex-col">
       
       <!-- ДЕМО-БАННЕР -->
@@ -564,7 +559,7 @@
                   </span>
                   
                   <div class="flex items-center space-x-2">
-                    <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', log.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-500 border-orange-200']">
+                    <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', log.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-400 border-orange-200']">
                       {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
                     </span>
                     <span class="text-xl">{{ log.mood }}</span>
@@ -782,17 +777,14 @@
     </div>
   </div>
 
-  <!-- Стандартный скрипт без type="module" гарантирует бесперебойную работу во всех WebView Telegram -->
+  <!-- Весь код Vue обернут в DOMContentLoaded и загружается строго после фонового скачивания скриптов -->
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
-    const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
-    const DEFAULT_HIM_CHAT_ID = "1719296144";
-    const DEFAULT_HER_CHAT_ID = ""; 
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof Vue === 'undefined') {
+        console.error("Vue library failed to load. WebApp execution aborted.");
+        return;
+      }
 
-    // Защита: проверяем, загрузилась ли библиотека Vue перед инициализацией
-    if (typeof Vue === 'undefined') {
-      console.error("Vue library failed to load entirely. WebApp cannot be initialized.");
-    } else {
       const { createApp, ref, computed, onMounted, watch } = Vue;
 
       // ЗАЩИТНЫЙ СЛОЙ LOCALSTORAGE (Предотвращает зависание Vue при запуске в песочницах Webview Telegram)
@@ -910,7 +902,7 @@
           const isDemoMode = ref(false);
           
           let isInitialized = false;
-          let isSyncingFromServer = false; // Ключевой флаг для защиты настроек от перетирания [15]
+          let isSyncingFromServer = false; 
 
           const currentYear = ref(new Date().getFullYear());
           const currentMonth = ref(new Date().getMonth());
@@ -1005,38 +997,78 @@
             triggerToast(`Выбрана роль: ${newRole === 'her' ? 'Она 🙋‍♀️' : 'Он 🙋‍♂️'}`);
           }
 
-          // Автодетект ненастроенных/стандартных ссылок для предотвращения зависания сети
           function isUrlInvalid(url) {
             if (!url) return true;
             return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
           }
 
-          // ДИНАМИЧЕСКИЙ СТАРТ НАБЛЮДАТЕЛЕЙ: Запускаем строго после загрузки сетевой базы, чтобы исключить race condition
+          // ДИНАМИЧЕСКИЙ СТАРТ НАБЛЮДАТЕЛЕЙ С НЕВИДИМОЙ СИНХРОНИЗАЦИЕЙ ЗА 5 СЕКУНД
+          let settingsSyncTimer = null;
+          function queueSettingsSync(key, newVal) {
+            // 1. Обновляем в локальной памяти (localStorage) мгновенно для быстрого запуска
+            safeStorage.setItem(`user_${key}`, newVal);
+
+            // 2. Сбрасываем предыдущий таймер отправки
+            if (settingsSyncTimer) {
+              clearTimeout(settingsSyncTimer);
+            }
+
+            // 3. Выставляем новый таймер ровно на 5 секунд
+            settingsSyncTimer = setTimeout(async () => {
+              if (isDemoMode.value) return;
+
+              const currentSetting = [...appSettingsList.value].reverse().find(s => s && s.id === key);
+              if (currentSetting && currentSetting.key_value === newVal.toString()) {
+                return; // Значение уже синхронизировано, отправка не требуется
+              }
+
+              // Обновляем локальную базу настроек
+              if (currentSetting) {
+                currentSetting.key_value = newVal.toString();
+              } else {
+                appSettingsList.value.push({ id: key, key_value: newVal.toString() });
+              }
+              safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value));
+
+              // Формируем невидимый сетевой запрос обновления в Google Таблицу
+              const op = {
+                sheet: 'app_settings',
+                action: 'update',
+                id: key,
+                data: { key_value: newVal.toString() }
+              };
+
+              syncQueue.value.push(op);
+              safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
+              
+              // Мгновенно проталкиваем изменения на сервер, не ожидая основного 15-сек таймера
+              await forceSync();
+            }, 5000); // 5 секунд задержки
+          }
+
           let watchersStarted = false;
           function startSettingsWatchers() {
             if (watchersStarted) return;
             watchersStarted = true;
 
             watch(cycleLength, (newVal) => {
-              safeStorage.setItem('user_cycle_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                saveOrUpdateSetting('cycle_length', newVal);
+                queueSettingsSync('cycle_length', newVal);
               }
             });
             watch(periodLength, (newVal) => {
-              safeStorage.setItem('user_period_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                saveOrUpdateSetting('period_length', newVal);
+                queueSettingsSync('period_length', newVal);
               }
             });
           }
 
-          // КРИТИЧЕСКИ ОБНОВЛЕННЫЙ СТАРТ: Запускается мгновенно на основе кэша, запрашивает сеть на фоне
+          // КРИТИЧЕСКИ ОБНОВЛЕННЫЙ СТАРТ: Моментально запускает локальный кэш
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
 
-            // Загружаем локальные данные для мгновенного рендеринга без белого экрана
+            // Восстанавливаем данные из кэша для мгновенного отображения без зависаний
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1052,7 +1084,7 @@
             ]);
             newPlanCategory.value = (categories.value && categories.value[0]) ? categories.value[0].name : 'Прочее';
 
-            // МГНОВЕННЫЙ СТАРТ: Сначала достаем настройки из сохраненного кэша настроек (девайс B сразу получит последние synced настройки!)
+            // Синхронизируем настройки из локального кэша настроек (быстрое подтягивание на старте)
             const cachedCycle = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
             if (cachedCycle && cachedCycle.key_value) {
               cycleLength.value = parseInt(cachedCycle.key_value, 10) || 28;
@@ -1064,6 +1096,12 @@
               periodLength.value = parseInt(cachedPeriod.key_value, 10) || 5;
             } else {
               periodLength.value = getSafeLocalStorageInt('user_period_length', 5);
+            }
+
+            // Прячем статический HTML-лоадер загрузки
+            const htmlLoader = document.getElementById('app-offline-loader');
+            if (htmlLoader) {
+              htmlLoader.style.display = 'none';
             }
 
             const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
@@ -1112,13 +1150,13 @@
               
               isInitialized = true; 
               isSyncingFromServer = false;
-              startSettingsWatchers(); // Активируем watchers только после успешного накатывания данных с сервера
+              startSettingsWatchers(); 
               triggerToast("База обновлена с облаком 🟢");
             } catch (e) {
               console.error("Ошибка при стартовой синхронизации:", e);
               isInitialized = true;
               isSyncingFromServer = false;
-              startSettingsWatchers(); // Активируем watchers при сбое, чтобы локальный ввод копился в очередь
+              startSettingsWatchers(); 
               triggerToast("Автономный режим: загружен локальный кэш ⚠️");
             }
           }
@@ -1171,7 +1209,6 @@
             }
           }
 
-          // ОПТИМИЗИРОВАНО ДЛЯ СКОРОСТИ: Синхронное извлечение ключа из памяти без тяжелых дублирующих сетевых запросов! [3]
           function loadApiKey() {
             const customKey = safeStorage.getItem('cfg_openrouter_key');
             if (customKey && customKey.trim()) {
@@ -1192,7 +1229,6 @@
             }
           }
 
-          // БЕЗОПАСНАЯ ПАКЕТНАЯ СИНХРОНИЗАЦИЯ (Content-Type: text/plain защищает от CORS preflight OPTIONS)
           async function processSyncQueue() {
             if (syncQueue.value.length === 0) {
               isSyncPending.value = false;
@@ -1204,7 +1240,6 @@
             const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
             try {
-              // КРИТИЧЕСКИЙ ФИКС CORS: Использование text/plain позволяет обойти предзапрос OPTIONS от браузера
               const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' }, 
@@ -1243,7 +1278,6 @@
             await processSyncQueue();
           }
 
-          // Беопасное слияние диапазонов без риска зависания
           function cleanupCycles() {
             if (cycles.value.length === 0) return;
             
@@ -1298,7 +1332,6 @@
               const allData = await response.json();
 
               if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
-                // Устанавливаем флаг загрузки, чтобы watches временно заблокировали отправку обратно [15]
                 isSyncingFromServer = true; 
 
                 cycles.value = (allData.cycles || []).map(c => ({
@@ -1325,7 +1358,6 @@
                 }));
                 appSettingsList.value = allData.app_settings || [];
 
-                // Синхронизация цикла и менструации с разных устройств без циклической перезаписи!
                 const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
                 if (cycleLenSetting && cycleLenSetting.key_value) {
                   const val = parseInt(cycleLenSetting.key_value, 10);
@@ -1355,13 +1387,13 @@
               safeStorage.setItem('demo_categories', JSON.stringify(categories.value));
               safeStorage.setItem('demo_plans', JSON.stringify(plans.value));
               safeStorage.setItem('demo_work_shifts', JSON.stringify(customShifts.value));
-              safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value)); // КРИТИЧЕСКИЙ ФИКС: Сохраняем настройки в кэш! [15]
+              safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value)); 
 
             } catch (e) {
               console.warn("Сеть недоступна, загружен локальный кэш.", e);
-              throw e; // Пробрасываем ошибку наружу для вызова автономного режима в initConnection()!
+              throw e; 
             } finally {
-              isSyncingFromServer = false; // Возвращаем в ручной режим после успешной сетевой загрузки [15]
+              isSyncingFromServer = false; 
             }
           }
 
@@ -1378,8 +1410,6 @@
               const newRecord = { id: key, key_value: val.toString() };
               await saveLocalOrDB('app_settings', 'demo_app_settings', appSettingsList, newRecord);
             }
-            // МГНОВЕННАЯ СИНХРОНИЗАЦИЯ: Форсируем немедленную отправку изменений настроек в базу, минуя 15-секундный таймер
-            await forceSync();
           }
 
           async function saveLocalOrDB(tableName, localKey, dataArray, newRecord, isDelete = false, deleteId = null) {
@@ -1873,7 +1903,6 @@
             return partnerNotes.value.some(n => n && n.date === dateStr);
           }
 
-          // ЗАЩИТА: Безопасная сортировка без риска TypeErrors
           const sortedNotes = computed(() => {
             return [...partnerNotes.value].sort((a, b) => {
               const dateA = (a && a.date) ? String(a.date) : "";
@@ -2223,7 +2252,6 @@ ${shiftsData}
           }
 
           onMounted(() => {
-            // Telegram SDK ready вызываем безопасно
             const checkTelegram = setInterval(() => {
               try {
                 if (window.Telegram && window.Telegram.WebApp) {
@@ -2325,7 +2353,7 @@ ${shiftsData}
           };
         }
       }).mount('#app');
-    }
+    });
   </script>
 </body>
 </html>
