@@ -7,8 +7,8 @@
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue.js 3 (Cloudflare CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+  <!-- Vue.js 3 (Сверхбыстрый и стабильный jsDelivr CDN для мобильных сетей) -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -751,7 +751,7 @@
   </div>
 
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo_..._YOUR_SCRIPT_ID_.../exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -882,18 +882,12 @@
           "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
         ]);
 
-        const cycles = ref(safeJsonParse('demo_cycles', []));
-        const partnerNotes = ref(safeJsonParse('demo_notes', []));
-        const wellbeingLogs = ref(safeJsonParse('demo_wellbeing', []));
-        const customShifts = ref(safeJsonParse('demo_work_shifts', []));
-        const categories = ref(safeJsonParse('demo_categories', [
-          { id: '1', name: 'Смотреть' },
-          { id: '2', name: 'Посетить' },
-          { id: '3', name: 'Поездки' },
-          { id: '4', name: 'Любимая Музыка' },
-          { id: '5', name: 'Прочее' }
-        ]));
-        const plans = ref(safeJsonParse('demo_plans', []));
+        const cycles = ref([]);
+        const partnerNotes = ref([]);
+        const wellbeingLogs = ref([]);
+        const customShifts = ref([]);
+        const categories = ref([]);
+        const plans = ref([]);
 
         const newNoteDate = ref(getLocalDateString(new Date()));
         const newNoteTime = ref(getCurrentTime());
@@ -910,7 +904,7 @@
 
         const showAddCategory = ref(false);
         const newCategoryName = ref("");
-        const newPlanCategory = ref(categories.value[0]?.name || 'Прочее');
+        const newPlanCategory = ref('Прочее');
         const newPlanTitle = ref("");
 
         const getSafeLocalStorageInt = (key, defaultVal) => {
@@ -978,7 +972,23 @@
           return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
         }
 
+        // БЕЗОПАСНЫЙ СТАРТ: Сначала запускает интерфейс на кэше, затем обновляет из сети в фоне!
         async function initConnection() {
+          // Инициализируем локальные данные, чтобы Vue мгновенно убрал белый экран v-cloak
+          cycles.value = safeJsonParse('demo_cycles', []);
+          partnerNotes.value = safeJsonParse('demo_notes', []);
+          wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
+          customShifts.value = safeJsonParse('demo_work_shifts', []);
+          plans.value = safeJsonParse('demo_plans', []);
+          categories.value = safeJsonParse('demo_categories', [
+            { id: '1', name: 'Смотреть' },
+            { id: '2', name: 'Посетить' },
+            { id: '3', name: 'Поездки' },
+            { id: '4', name: 'Любимая Музыка' },
+            { id: '5', name: 'Прочее' }
+          ]);
+          newPlanCategory.value = categories.value[0]?.name || 'Прочее';
+
           const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
           if (scriptUrl && !scriptUrl.includes("YOUR_SCRIPT_ID")) {
             safeStorage.setItem('cfg_supabase_url', scriptUrl);
@@ -1007,31 +1017,26 @@
 
           if (isUrlInvalid(url)) {
             isDemoMode.value = true;
-            await fetchData();
             isInitialized = true;
             return;
           }
 
-          try {
-            isDemoMode.value = false;
+          isDemoMode.value = false;
+          isInitialized = true; // Сразу открываем поля ввода для ввода, не дожидаясь сети
 
-            if (syncQueue.value.length > 0) {
-              triggerToast("🔄 Загрузка локальных изменений...");
-              await processSyncQueue();
+          // Сетевая фоновая синхронизация запускается неблокирующим образом [1]
+          setTimeout(async () => {
+            try {
+              if (syncQueue.value.length > 0) {
+                await processSyncQueue();
+              }
+              await fetchData();
+              await loadApiKey();
+              triggerToast("Облачная база обновлена 🟢");
+            } catch (e) {
+              console.warn("Фоновое обновление не удалось:", e);
             }
-
-            await fetchData();
-            await loadApiKey();
-            
-            isInitialized = true;
-            triggerToast("Подключение активно! Данные обновлены 🟢");
-          } catch (e) {
-            console.error("Ошибка инициализации:", e);
-            isDemoMode.value = true;
-            await fetchData();
-            isInitialized = true;
-            triggerToast(`Локальный режим активен.`);
-          }
+          }, 50);
         }
 
         async function saveConnectionSettings() {
@@ -1121,6 +1126,7 @@
           const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
           try {
+            // КРИТИЧЕСКИЙ ФИКС CORS: Использование text/plain позволяет обойти предзапрос OPTIONS от браузера
             const response = await fetch(APPS_SCRIPT_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain' }, 
@@ -1203,12 +1209,6 @@
           const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
           if (isDemoMode.value || isUrlInvalid(APPS_SCRIPT_URL)) {
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', []);
-            plans.value = safeJsonParse('demo_plans', []);
             return;
           }
 
@@ -1276,12 +1276,6 @@
 
           } catch (e) {
             console.warn("Сеть недоступна, загружен локальный кэш.", e);
-            cycles.value = safeJsonParse('demo_cycles', []);
-            partnerNotes.value = safeJsonParse('demo_notes', []);
-            wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
-            customShifts.value = safeJsonParse('demo_work_shifts', []);
-            categories.value = safeJsonParse('demo_categories', []);
-            plans.value = safeJsonParse('demo_plans', []);
           }
         }
 
@@ -1804,7 +1798,7 @@
           return partnerNotes.value.some(n => n && n.date === dateStr);
         }
 
-        // ЗАЩИТА: Безопасная сортировка без риска TypeErrors [2]
+        // ЗАЩИТА: Безопасная сортировка без риска TypeErrors
         const sortedNotes = computed(() => {
           return [...partnerNotes.value].sort((a, b) => {
             const dateA = (a && a.date) ? String(a.date) : "";
@@ -2150,9 +2144,13 @@ ${shiftsData}
         }
 
         onMounted(() => {
-          if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
+          try {
+            if (window.Telegram && window.Telegram.WebApp) {
+              window.Telegram.WebApp.ready();
+              window.Telegram.WebApp.expand();
+            }
+          } catch (e) {
+            console.warn("Telegram WebApp API error blocked:", e);
           }
           initConnection();
         });
