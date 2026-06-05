@@ -777,7 +777,7 @@
 
   <!-- Стандартный скрипт без type="module" гарантирует бесперебойную работу во всех WebView Telegram -->
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0Zzeap9l9dKcen1xRpSSmKYxplpiG135-UW-IFIVBKb1GzzvYpiP8vGsJaKSkjTg/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrdEKMwjzOxAWi1nSBMOk5sIJG3QnRMfqprGVBvQI-fW7oNIBUkL98fbr220f6onY/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -786,7 +786,7 @@
     if (typeof Vue === 'undefined') {
       console.error("Vue library failed to load entirely. WebApp cannot be initialized.");
     } else {
-      const { createApp, ref, computed, onMounted, watch } = Vue;
+      const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
       // ЗАЩИТНЫЙ СЛОЙ LOCALSTORAGE (Предотвращает зависание Vue при запуске в песочницах Webview Telegram)
       const safeStorage = {
@@ -1003,7 +1003,7 @@
             return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
           }
 
-          // НАБЛЮДАТЕЛИ (WATCHERS): Запускаем настройки строго после initConnection()
+          // НАБЛЮДАТЕЛИ (WATCHERS): Начинают работу только после того, как завершится initConnection()
           let watchersStarted = false;
           function startSettingsWatchers() {
             if (watchersStarted) return;
@@ -1012,13 +1012,13 @@
             watch(cycleLength, (newVal) => {
               safeStorage.setItem('user_cycle_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Невидимый автоматический запуск через 5 сек
+                triggerSettingsSync(); // Запуск фонового сохранения (5 секунд)
               }
             });
             watch(periodLength, (newVal) => {
               safeStorage.setItem('user_period_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Невидимый автоматический запуск через 5 сек
+                triggerSettingsSync(); // Запуск фонового сохранения (5 секунд)
               }
             });
           }
@@ -1319,13 +1319,14 @@
 
             try {
               isSyncPending.value = false;
+              // Устанавливаем флаг перед обновлением реактивных refs
+              isSyncingFromServer = true; 
 
               const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
               if (!response.ok) throw new Error("HTTP error");
               const allData = await response.json();
 
               if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
-                isSyncingFromServer = true; 
 
                 cycles.value = (allData.cycles || []).map(c => ({
                   ...c,
@@ -1386,7 +1387,11 @@
               console.warn("Сеть недоступна, загружен локальный кэш.", e);
               throw e; 
             } finally {
-              isSyncingFromServer = false; 
+              // КРИТИЧЕСКИЙ ФИКС: Сбрасываем флаг синхронизации строго в следующем тике Vue, 
+              // чтобы вызванные реактивными refs вотчеры успели выполниться и проигнорировать этот апдейт!
+              nextTick(() => {
+                isSyncingFromServer = false;
+              });
             }
           }
 
