@@ -120,7 +120,6 @@
     <!-- СИНХРО-БАР -->
     <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
       <span class="text-stone-500">Облачная база:</span>
-      <!-- Кнопка теперь ВСЕГДА кликабельна и при отсутствии очереди работает как "Обновить базу" (PULL) -->
       <button 
         @click="forceSyncOrPull" 
         :disabled="isSyncPending"
@@ -729,28 +728,17 @@
             <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
           </div>
 
+          <!-- Telegram Bot Token -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Bot Token</label>
+            <input type="text" v-model="settingsInput.botToken" placeholder="Введите токен бота" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
           <!-- Telegram Chat ID (Его) -->
           <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ваш Telegram Chat ID (для Него)</label>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID получателя (Он)</label>
             <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-          </div>
-
-          <!-- Telegram Chat ID (Её) -->
-          <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
-            <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-          </div>
-
-          <!-- Выбор ИИ-Бота -->
-          <div>
-            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
-            <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
-              <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
-              <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
-              <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
-              <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
-              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
-            </select>
+            <p class="text-[8px] text-stone-400 mt-1">Все уведомления о сигналах и менструации будут приходить строго на этот аккаунт.</p>
           </div>
 
           <!-- Апи ключ ИИ-Бота -->
@@ -758,6 +746,12 @@
             <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
             <input type="text" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
             <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
+          </div>
+          
+          <!-- Информационная строка модели -->
+          <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200/50">
+            <p class="text-[9px] font-bold uppercase text-stone-400 mb-1">Используемая ИИ Модель</p>
+            <p class="text-xs text-stone-700 font-bold">✨ Google Gemma 4 31B (free)</p>
           </div>
         </div>
 
@@ -785,7 +779,6 @@
     const DEFAULT_GOOGLE_SCRIPT_URL = ""; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
-    const DEFAULT_HER_CHAT_ID = ""; 
 
     // Защита: проверяем, загрузилась ли библиотека Vue перед инициализацией
     if (typeof Vue === 'undefined') {
@@ -972,9 +965,7 @@
             key: safeStorage.getItem('cfg_supabase_key') || "",
             botToken: safeStorage.getItem('cfg_bot_token') || "",
             himChatId: safeStorage.getItem('cfg_him_chat_id') || "",
-            herChatId: safeStorage.getItem('cfg_her_chat_id') || "",
-            openrouterKey: safeStorage.getItem('cfg_openrouter_key') || "",
-            aiModel: safeStorage.getItem('cfg_ai_model') || "openrouter/free"
+            openrouterKey: safeStorage.getItem('cfg_openrouter_key') || ""
           });
 
           const isSettingsOpen = ref(false);
@@ -1089,16 +1080,10 @@
             if (himId && !himId.includes("ВСТАВЬТЕ")) {
               safeStorage.setItem('cfg_him_chat_id', himId);
             }
-            const herId = DEFAULT_HER_CHAT_ID;
-            if (herId && !herId.includes("ВСТАВЬТЕ")) {
-              safeStorage.setItem('cfg_her_chat_id', herId);
-            }
 
             settingsInput.value.botToken = safeStorage.getItem('cfg_bot_token') || "";
             settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || "";
-            settingsInput.value.herChatId = safeStorage.getItem('cfg_her_chat_id') || "";
             settingsInput.value.openrouterKey = safeStorage.getItem('cfg_openrouter_key') || "";
-            settingsInput.value.aiModel = safeStorage.getItem('cfg_ai_model') || "openrouter/free";
 
             isDemoMode.value = false;
 
@@ -1136,9 +1121,7 @@
             setOrRemove('cfg_supabase_key', settingsInput.value.key);
             setOrRemove('cfg_bot_token', settingsInput.value.botToken);
             setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
-            setOrRemove('cfg_her_chat_id', settingsInput.value.herChatId);
             setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
-            setOrRemove('cfg_ai_model', settingsInput.value.aiModel);
 
             triggerToast("Настройки сохранены. Перезапускаю...");
             await initConnection();
@@ -1151,18 +1134,14 @@
               safeStorage.removeItem('cfg_supabase_key');
               safeStorage.removeItem('cfg_bot_token');
               safeStorage.removeItem('cfg_him_chat_id');
-              safeStorage.removeItem('cfg_her_chat_id');
               safeStorage.removeItem('cfg_openrouter_key');
-              safeStorage.removeItem('cfg_ai_model');
 
               settingsInput.value = {
                 url: "",
                 key: "",
                 botToken: "",
                 himChatId: "",
-                herChatId: "",
-                openrouterKey: "",
-                aiModel: "openrouter/free"
+                openrouterKey: ""
               };
 
               triggerToast("Настройки сброшены.");
@@ -1375,7 +1354,7 @@
                 }));
                 appSettingsList.value = allData.app_settings || [];
 
-                // ПОЛУЧЕНИЕ НАСТРОЕК ИЗ НОВОЙ ВЫДЕЛЕННОЙ ТАБЛИЦЫ
+                // ПОЛУЧЕНИЕ НАСТРОЕК ИЗ ВЫДЕЛЕННОЙ ТАБЛИЦЫ
                 if (allData.cycle_settings && allData.cycle_settings.length > 0) {
                   const settings = allData.cycle_settings[0];
                   const cl = parseInt(settings.cycle_length, 10);
@@ -1513,13 +1492,14 @@
             ];
           });
 
+          // СИГНАЛЫ: Уведомления уходят только Вам (He/Him)
           async function triggerQuickSignal(signal) {
             const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
             if (targetId && !targetId.includes("ВСТАВЬТЕ")) {
               await sendTelegramNotification(signal.msg, targetId);
               triggerToast("Сигнал отправлен другу в ТГ!");
             } else {
-              triggerToast("Сигнал сработал!");
+              triggerToast("Сигнал сработал локально!");
             }
           }
 
@@ -1782,6 +1762,7 @@
             }
           });
 
+          // УВЕДОМЛЕНИЯ О НАЧАЛЕ ЦИКЛА: Уведомления уходят только Вам (He/Him)
           async function togglePeriodStart() {
             const clickedDate = selectedDateStr.value;
             if (!clickedDate) return;
@@ -1879,9 +1860,10 @@
                   await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
                   triggerToast(`Добавлен период менструации на ${pLength} дней`);
                   
+                  // Оповещение уходит строго "Ему"
                   if (role.value === 'her') {
                     const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
-                    sendTelegramNotification(
+                    await sendTelegramNotification(
                       `🌸 <b>Внимание!</b> Ваша подруга отметила начало менструации в календаре (период: ${formatDateDisplay(clickedDate)} — ${formatDateDisplay(endDateStr)}). Проявите дружескую поддержку!`, 
                       targetId
                     );
@@ -2128,7 +2110,7 @@ ${plansData}
               `;
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = settingsInput.value.aiModel || "openrouter/free";
+              const activeModel = "google/gemma-4-31b-it:free"; // Жестко зафиксировано: Google Gemma 4 31B
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2234,7 +2216,7 @@ ${shiftsData}
               ];
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = settingsInput.value.aiModel || "openrouter/free";
+              const activeModel = "google/gemma-4-31b-it:free"; // Жестко зафиксировано: Google Gemma 4 31B
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2368,7 +2350,7 @@ ${shiftsData}
             syncQueue,
             isSyncPending,
             processSyncQueue,
-            forceSyncOrPull, // Измененный метод, обрабатывающий и PUSH, и PULL
+            forceSyncOrPull,
             appSettingsList,
             clearCalendarData
           };
