@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS (Высокодоступная загрузка) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Использование стабильного CDN-сервера для Tailwind CSS (решает проблему долгой загрузки без VPN на мобильном интернете) -->
+  <script src="https://unpkg.com/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
   
   <!-- Подключение Vue 3 через стабильный CDNJS с авторезервированием на UNPKG (Быстрый синхронный запуск) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
@@ -66,7 +66,7 @@
 </head>
 <body class="min-h-screen flex flex-col pb-28 selection:bg-rose-100">
 
-  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Исчезает сразу после инициализации скрипта Vue) -->
+  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Скрывается сразу после инициализации скрипта Vue) -->
   <div id="fallback-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; color: #555; padding: 20px;">
     <div style="font-size: 32px; margin-bottom: 12px; animation: bounce 1.2s infinite;">⏳</div>
     <h2 style="font-size: 14px; font-weight: bold;">Инициализация...</h2>
@@ -777,7 +777,7 @@
 
   <!-- Стандартный скрипт без type="module" гарантирует бесперебойную работу во всех WebView Telegram -->
   <script>
-    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0Zzeap9l9dKcen1xRpSSmKYxplpiG135-UW-IFIVBKb1GzzvYpiP8vGsJaKSkjTg/exec"; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
     const DEFAULT_HER_CHAT_ID = ""; 
@@ -945,7 +945,7 @@
             return isNaN(parsed) ? defaultVal : parsed;
           };
 
-          // Переменные настроек цикла
+          // МГНОВЕННЫЙ ЗАПУСК ИЗ КЭША
           const cycleLength = ref(28);
           const periodLength = ref(5);
 
@@ -1003,7 +1003,7 @@
             return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
           }
 
-          // НАБЛЮДАТЕЛИ (WATCHERS): Начинают работу только после того, как завершится initConnection()
+          // НАБЛЮДАТЕЛИ (WATCHERS): Запускаем настройки строго после initConnection()
           let watchersStarted = false;
           function startSettingsWatchers() {
             if (watchersStarted) return;
@@ -1012,13 +1012,13 @@
             watch(cycleLength, (newVal) => {
               safeStorage.setItem('user_cycle_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Невидимо запускаем 5-секундный таймер
+                triggerSettingsSync(); // Невидимый автоматический запуск через 5 сек
               }
             });
             watch(periodLength, (newVal) => {
               safeStorage.setItem('user_period_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Невидимо запускаем 5-секундный таймер
+                triggerSettingsSync(); // Невидимый автоматический запуск через 5 сек
               }
             });
           }
@@ -1048,17 +1048,13 @@
             ]);
             newPlanCategory.value = (categories.value && categories.value[0]) ? categories.value[0].name : 'Прочее';
 
-            // МГНОВЕННЫЙ СТАРТ НАСТРОЕК: Достаем настройки из сохраненного кэша настроек
-            const cachedCycle = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
-            if (cachedCycle && cachedCycle.key_value) {
-              cycleLength.value = parseInt(cachedCycle.key_value, 10) || 28;
+            // МГНОВЕННЫЙ СТАРТ НАСТРОЕК ИЗ ВЫДЕЛЕННОГО КЭША
+            const cachedSettings = safeJsonParse('demo_cycle_settings', []);
+            if (cachedSettings && cachedSettings.length > 0) {
+              cycleLength.value = parseInt(cachedSettings[0].cycle_length, 10) || 28;
+              periodLength.value = parseInt(cachedSettings[0].period_length, 10) || 5;
             } else {
               cycleLength.value = getSafeLocalStorageInt('user_cycle_length', 28);
-            }
-            const cachedPeriod = [...appSettingsList.value].reverse().find(s => s && s.id === 'period_length');
-            if (cachedPeriod && cachedPeriod.key_value) {
-              periodLength.value = parseInt(cachedPeriod.key_value, 10) || 5;
-            } else {
               periodLength.value = getSafeLocalStorageInt('user_period_length', 5);
             }
 
@@ -1236,7 +1232,7 @@
             await processSyncQueue();
           }
 
-          // ДЕТАЛЬНАЯ НЕВИДИМАЯ СИНХРОНИЗАЦИЯ НАСТРОЕК (5 СЕКУНД)
+          // ДЕТАЛЬНАЯ НЕВИДИМАЯ СИНХРОНИЗАЦИЯ НАСТРОЕК (5 СЕКУНД) С ВЫДЕЛЕННОЙ ТАБЛИЦЕЙ
           let settingsSyncTimer = null;
           function triggerSettingsSync() {
             clearTimeout(settingsSyncTimer);
@@ -1244,10 +1240,17 @@
               const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
               if (isDemoMode.value || isUrlInvalid(APPS_SCRIPT_URL)) return;
 
-              // Формируем пакет только из настроек
+              // Формируем пакет под новую выделенную таблицу cycle_settings
               const payload = [
-                { sheet: 'app_settings', action: 'update', id: 'cycle_length', data: { key_value: cycleLength.value.toString() } },
-                { sheet: 'app_settings', action: 'update', id: 'period_length', data: { key_value: periodLength.value.toString() } }
+                { 
+                  sheet: 'cycle_settings', 
+                  action: 'update', 
+                  id: 'default', 
+                  data: { 
+                    cycle_length: cycleLength.value.toString(), 
+                    period_length: periodLength.value.toString() 
+                  } 
+                }
               ];
 
               try {
@@ -1258,13 +1261,9 @@
                 });
                 if (response.ok) {
                   // Обновляем локальный кэш
-                  const idxCL = appSettingsList.value.findIndex(s => s && s.id === 'cycle_length');
-                  if (idxCL !== -1) appSettingsList.value[idxCL].key_value = cycleLength.value.toString();
-                  const idxPL = appSettingsList.value.findIndex(s => s && s.id === 'period_length');
-                  if (idxPL !== -1) appSettingsList.value[idxPL].key_value = periodLength.value.toString();
-                  safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value));
-                  
-                  console.log("Настройки цикла успешно сохранены в облачную таблицу");
+                  const cachedObj = { id: 'default', cycle_length: cycleLength.value.toString(), period_length: periodLength.value.toString() };
+                  safeStorage.setItem('demo_cycle_settings', JSON.stringify([cachedObj]));
+                  console.log("Параметры цикла автоматически сохранены в таблицу cycle_settings");
                 }
               } catch (e) {
                 console.error("Сбой невидимой синхронизации настроек:", e);
@@ -1352,22 +1351,21 @@
                 }));
                 appSettingsList.value = allData.app_settings || [];
 
-                // Синхронизация цикла и менструации с разных устройств
-                const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
-                if (cycleLenSetting && cycleLenSetting.key_value) {
-                  const val = parseInt(cycleLenSetting.key_value, 10);
-                  if (!isNaN(val) && cycleLength.value !== val) {
-                    cycleLength.value = val;
-                    safeStorage.setItem('user_cycle_length', val);
+                // ПОЛУЧЕНИЕ НАСТРОЕК ИЗ НОВОЙ ВЫДЕЛЕННОЙ ТАБЛИЦЫ
+                if (allData.cycle_settings && allData.cycle_settings.length > 0) {
+                  const settings = allData.cycle_settings[0];
+                  const cl = parseInt(settings.cycle_length, 10);
+                  const pl = parseInt(settings.period_length, 10);
+                  
+                  if (!isNaN(cl) && cycleLength.value !== cl) {
+                    cycleLength.value = cl;
+                    safeStorage.setItem('user_cycle_length', cl);
                   }
-                }
-                const periodLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'period_length');
-                if (periodLenSetting && periodLenSetting.key_value) {
-                  const val = parseInt(periodLenSetting.key_value, 10);
-                  if (!isNaN(val) && periodLength.value !== val) {
-                    periodLength.value = val;
-                    safeStorage.setItem('user_period_length', val);
+                  if (!isNaN(pl) && periodLength.value !== pl) {
+                    periodLength.value = pl;
+                    safeStorage.setItem('user_period_length', pl);
                   }
+                  safeStorage.setItem('demo_cycle_settings', JSON.stringify(allData.cycle_settings));
                 }
               }
 
