@@ -5,20 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Tailwind CSS (Загрузка в фоне, не блокирующая парсер) -->
-  <script src="https://cdn.tailwindcss.com" defer></script>
+  <!-- Tailwind CSS (Высокодоступная загрузка) -->
+  <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Подключение Vue 3 через стабильный cdnjs (Загрузка в фоне, не блокирующая парсер) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js" defer></script>
+  <!-- Подключение Vue 3 через стабильный CDNJS с авторезервированием на UNPKG (Быстрый синхронный запуск) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <script>
+    if (typeof Vue === 'undefined') {
+      console.warn("CDNJS failed to load Vue. Trying unpkg...");
+      document.write('<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"><\/script>');
+    }
+  </script>
   
-  <!-- Telegram WebApp SDK (Загрузка в фоне, не блокирующая парсер) -->
-  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Мобильная консоль отладки Eruda. Активируется добавлением '?debug=true' в URL -->
   <script>
     if (window.location.search.includes('debug=true')) {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js" defer><\/script>');
-      document.write('<script defer>window.addEventListener("DOMContentLoaded", function(){ eruda.init(); });<\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
+      document.write('<script>eruda.init();<\/script>');
     }
   </script>
 
@@ -60,731 +66,726 @@
 </head>
 <body class="min-h-screen flex flex-col pb-28 selection:bg-rose-100">
 
-  <!-- Внешний блок #app монтируется синхронно, а внутренний лоадер исчезнет при инициализации Vue -->
-  <div id="app" class="w-full max-w-md mx-auto px-4 pt-4 flex-grow flex flex-col">
-    
-    <!-- СВЕРХЛЕГКИЙ МГНОВЕННЫЙ ЛОАДЕР (Показывается мгновенно силами HTML/CSS, пока грузятся JS-файлы) -->
-    <div id="app-offline-loader" class="flex-grow flex flex-col items-center justify-center py-32 text-center space-y-4">
-      <div class="text-3xl animate-bounce">⏳</div>
-      <h2 class="text-sm font-bold text-stone-750">Подготовка интерфейса...</h2>
-      <p class="text-xs text-stone-500 max-w-[280px] leading-relaxed mx-auto">
-        Приложение настраивает защищенное соединение. Пожалуйста, подождите.
-      </p>
-      <div class="pt-2 text-[9px] text-stone-400 font-mono">
-        Если запуск завис, попробуйте временно включить VPN или Wi-Fi.
-      </div>
-    </div>
-
-    <!-- ОСНОВНОЙ КОНТЕНТ (Появится только после успешной инициализации Vue) -->
-    <div v-cloak class="flex-grow flex flex-col">
-      
-      <!-- ДЕМО-БАННЕР -->
-      <div v-if="isDemoMode" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 flex items-center justify-center space-x-1.5 shadow-sm">
-        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-        <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
-      </div>
-
-      <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
-      <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
-        <span>⚡</span>
-        <span>{{ toastMessage }}</span>
-      </div>
-
-      <!-- ХЕДЕР -->
-      <header class="flex justify-between items-center mb-2 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm">
-        <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
-        
-        <div class="flex items-center space-x-2 shrink-0">
-          <!-- Кнопка настроек -->
-          <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
-            ⚙️
-          </button>
-
-          <!-- Селектор Роли -->
-          <div class="flex bg-stone-100 p-0.5 rounded-xl text-[9px] font-black border border-stone-200/50 w-[100px] shrink-0">
-            <button 
-              @click="setRole('her')" 
-              :class="['flex-1 py-1 rounded-lg transition-all text-center', role === 'her' ? 'bg-red-500 text-white shadow-sm' : 'text-stone-500']"
-            >
-              Она
-            </button>
-            <button 
-              @click="setRole('him')" 
-              :class="['flex-1 py-1 rounded-lg transition-all text-center', role === 'him' ? 'bg-orange-400 text-white shadow-sm' : 'text-stone-500']"
-            >
-              Он
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- СИНХРО-БАР -->
-      <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
-        <span class="text-stone-500">Облачная база:</span>
-        <button 
-          @click="forceSync" 
-          :disabled="syncQueue.length === 0 && !isSyncPending"
-          :class="['px-3 py-1.5 rounded-xl text-[9px] font-black transition-all border flex items-center space-x-1 whitespace-nowrap', 
-                   syncQueue.length > 0 || isSyncPending
-                     ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
-                     : 'bg-white text-stone-500 border-stone-200/60 cursor-not-allowed']"
-        >
-          <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '🟢') }}</span>
-          <span>{{ isSyncPending ? 'Запись...' : (syncQueue.length > 0 ? `Сохранить (${syncQueue.length})` : 'Синхронизировано') }}</span>
-        </button>
-      </div>
-
-      <!-- БЫСТРЫЕ СИГНАЛЫ (ТОЛЬКО ДЛЯ НЕЁ) -->
-      <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
-        <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
-        <div class="flex space-x-2 overflow-x-auto pb-1">
-          <button 
-            @click="triggerQuickSignal(signal)"
-            v-for="signal in quickSignals" 
-            :key="signal.text"
-            class="flex-shrink-0 flex items-center space-x-1.5 bg-white border border-stone-200/60 px-3 py-2 rounded-2xl text-xs font-bold text-stone-700 hover:border-orange-200 active:scale-95 transition-all shadow-sm"
-          >
-            <span>{{ signal.icon }}</span>
-            <span>{{ signal.text }}</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- ВКЛАДКИ -->
-      <transition name="fade" mode="out-in">
-        <div :key="activeTab" class="flex-grow flex flex-col space-y-5">
-
-          <!-- ВКЛАДКА 1: КАЛЕНДАРЬ -->
-          <div v-if="activeTab === 'calendar'" class="space-y-5">
-            
-            <!-- Состояние подруги -->
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-white/90 to-stone-50/50 border border-stone-150 shadow-sm">
-              <div class="flex items-center justify-between mb-2.5">
-                <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full">Состояние подруги</span>
-                <span class="text-[10px] text-stone-500 font-mono font-bold" v-if="currentCycleDay">День цикла: {{ currentCycleDay }}</span>
-              </div>
-              
-              <h2 class="text-base font-black text-stone-800 mb-0.5 flex items-center space-x-1.5">
-                <span>{{ currentPhaseInfo.name }}</span>
-              </h2>
-              
-              <p v-if="currentPhaseInfo.duration" class="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mb-3">
-                ⏳ Приблизительные сроки: {{ currentPhaseInfo.duration }}
-              </p>
-
-              <div class="space-y-3 text-xs text-stone-600 leading-relaxed font-medium">
-                <div>
-                  <p class="text-[9px] font-extrabold uppercase text-stone-400 tracking-wider mb-1">🧠 Физиологические и эмоциональные изменения:</p>
-                  <p class="pl-2 border-l-2 border-orange-200 text-stone-700 font-semibold text-justify">{{ currentPhaseInfo.desc }}</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Навигатор месяцев -->
-            <div class="flex items-center justify-between bg-white px-4 py-2 rounded-2xl border border-stone-100 shadow-sm">
-              <button @click="changeMonth(-1)" class="p-2 text-stone-400 hover:text-rose-500 transition-colors font-bold text-lg">&larr;</button>
-              <span class="font-extrabold text-xs tracking-wider text-stone-700 uppercase">{{ monthNames[currentMonth] }} {{ currentYear }}</span>
-              <button @click="changeMonth(1)" class="p-2 text-stone-400 hover:text-rose-500 transition-colors font-bold text-lg">&rarr;</button>
-            </div>
-
-            <!-- Календарь -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm">
-              <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">
-                <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
-              </div>
-              <div class="grid grid-cols-7 gap-1.5">
-                <div 
-                  v-for="(dayObj, idx) in calendarDays" 
-                  :key="idx"
-                  @click="selectDate(dayObj.date)"
-                  :class="[
-                    'aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-bold cursor-pointer transition-all relative',
-                    !dayObj.isCurrentMonth ? 'text-stone-300 opacity-40' : 'text-stone-700',
-                    isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
-                    isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
-                    isPredictedDay(dayObj.date) ? 'bg-pink-50/50 text-pink-500 border-2 border-dashed border-pink-300' : '',
-                    isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
-                  ]"
-                >
-                  <span>{{ dayObj.day }}</span>
-                  
-                  <!-- Иконка рабочего графика -->
-                  <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
-                    <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
-                    <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
-                  </span>
-                  
-                  <!-- Маркеры фаз -->
-                  <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
-                    <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
-                    <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
-                    <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
-                    <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
-                    <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Легенда -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3.5">
-              <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Пояснения к фазам и цветам:</h4>
-              <div class="grid grid-cols-2 gap-3 text-[10px] font-bold text-stone-600">
-                <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
-                  <span>Менструальная (1-{{ periodLength }} д)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
-                  <span>Фолликулярная ({{ periodLength + 1 }}-{{ cycleLength - 15 }} д)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
-                  <span>Овуляция ({{ cycleLength - 14 }} д, Фиолетовый)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                  <span>Лютеиновая ({{ cycleLength - 13 }}-{{ cycleLength }} д)</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 border border-dashed border-pink-400 bg-pink-50 rounded-sm"></span>
-                  <span>Прогноз менструации</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <span class="w-2 h-2 rounded-full bg-violet-500 ring-2 ring-violet-200"></span>
-                  <span>Есть записи / заметка</span>
-                </div>
-                <div class="flex items-center space-x-2 border-t border-stone-50 pt-2 col-span-2">
-                  <span>💼 Работа (2/2)</span>
-                  <span class="text-stone-400">|</span>
-                  <span>🏡 Выходной (2/2)</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Параметры расчета -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-              <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
-              
-              <div class="grid grid-cols-2 gap-3.5">
-                <div>
-                  <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина цикла (дней)</label>
-                  <select v-model.number="cycleLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
-                    <option v-for="d in Array.from({length: 15}, (_, i) => i + 21)" :key="d" :value="d">{{ d }} дней</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина менструации</label>
-                  <select v-model.number="periodLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
-                    <option v-for="d in Array.from({length: 8}, (_, i) => i + 3)" :key="d" :value="d">{{ d }} дней</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="border-t border-stone-50 pt-3 space-y-2 text-xs font-bold text-stone-600">
-                <div class="flex justify-between">
-                  <span>Параметры:</span>
-                  <span class="text-stone-800">цикл: {{ cycleLength }} дн. / менстр.: {{ periodLength }} дн.</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>Следующая менструация (прогноз):</span>
-                  <span class="text-rose-500 font-extrabold">{{ nextPeriodPredictionDate || 'Не рассчитан' }}</span>
-                </div>
-              </div>
-
-              <!-- КНОПКА ОЧИСТКИ КАЛЕНДАРЯ -->
-              <div class="border-t border-stone-100 pt-3.5 mt-2">
-                <button 
-                  @click="clearCalendarData"
-                  class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/60 font-extrabold rounded-2xl text-[10px] uppercase tracking-wider transition active:scale-[0.98] shadow-sm flex items-center justify-center space-x-1.5"
-                >
-                  <span>🗑️</span>
-                  <span>Очистить календарь менструаций</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Действия с днем -->
-            <div v-if="selectedDateStr" class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-              <div class="flex justify-between items-center border-b border-stone-50 pb-2.5">
-                <h3 class="text-xs font-bold text-stone-600 uppercase">Выбран день: {{ formatDateDisplay(selectedDateStr) }}</h3>
-                <span class="text-[9px] font-bold uppercase text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
-                  График: {{ getWorkStatus(selectedDateStr) === 'work' ? '💼 Работа' : '🏡 Выходной' }}
-                  <span v-if="isCustomShift(selectedDateStr)" class="text-[8px] text-red-500 font-black ml-1">(изменен)</span>
-                </span>
-              </div>
-              
-              <p class="text-[10px] text-stone-400 italic text-center">💡 Нажмите на выделенный день в календаре повторно, чтобы гибко сдвинуть, расширить или убрать его</p>
-
-              <div class="grid grid-cols-1 gap-2">
-                <button 
-                  @click="togglePeriodStart" 
-                  :class="['w-full py-2.5 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', isPeriodDay(selectedDateStr) ? 'bg-gradient-to-tr from-stone-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-200']"
-                >
-                  {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить день менструации' : '🩸 Отметить как день менструации (на ' + periodLength + ' дней)' }}
-                </button>
-
-                <button 
-                  v-if="selectedCycle"
-                  @click="deleteEntireCycle"
-                  class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-extrabold rounded-2xl text-xs tracking-wider transition shadow-sm"
-                >
-                  🗑️ Удалить весь этот период менструации
-                </button>
-
-                <button 
-                  @click="cycleWorkStatus(selectedDateStr)"
-                  class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 active:scale-[0.98] text-stone-700 font-bold rounded-2xl text-xs transition border border-stone-200"
-                >
-                  🔄 Изменить рабочий график на этот день
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ЧАТ ИИ) -->
-          <div v-if="activeTab === 'notes'" class="space-y-5">
-            
-            <!-- ЧАТ С ИИ -->
-            <div class="p-5 rounded-3xl bg-gradient-to-tr from-violet-50 to-indigo-50 border border-violet-100 shadow-sm space-y-4 flex flex-col h-[400px]">
-              <div class="flex items-center justify-between border-b border-violet-100/50 pb-2 flex-shrink-0">
-                <div class="flex items-center space-x-2">
-                  <span class="text-lg">🔮</span>
-                  <span class="text-xs font-black uppercase text-indigo-900 tracking-wider">Чат с ИИ Полнолуние</span>
-                </div>
-                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
-              </div>
-
-              <!-- Лента чата -->
-              <div class="flex-grow overflow-y-auto space-y-2.5 pr-1.5 flex flex-col" ref="chatContainer">
-                <div 
-                  v-for="(msg, index) in aiChatMessages" 
-                  :key="index"
-                  :class="['max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed font-semibold shadow-sm', 
-                           msg.role === 'user' 
-                             ? 'bg-indigo-600 text-white rounded-br-none self-end' 
-                             : 'bg-white text-stone-700 border border-violet-100/60 rounded-bl-none self-start']"
-                >
-                  <div class="whitespace-pre-wrap">{{ msg.content }}</div>
-                </div>
-              </div>
-
-              <!-- Ввод сообщения чата -->
-              <div class="flex gap-2 flex-shrink-0 pt-2 border-t border-violet-100/40">
-                <input 
-                  type="text" 
-                  v-model="aiUserMessage" 
-                  @keyup.enter="sendAiChatMessage"
-                  placeholder="Спроси ИИ о календаре, самочувствии подруги..." 
-                  class="flex-grow bg-white border border-stone-200 rounded-2xl px-3.5 py-2.5 text-xs text-stone-700 placeholder-stone-400 focus:outline-none"
-                  :disabled="isAiChatLoading"
-                >
-                <button 
-                  @click="sendAiChatMessage"
-                  :disabled="isAiChatLoading || !aiUserMessage.trim()"
-                  class="px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs transition active:scale-95 disabled:opacity-40"
-                >
-                  <span>Отправить</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- ИИ-АНАЛИЗ БАЗЫ -->
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-indigo-150/40 shadow-sm space-y-4">
-              <h3 class="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center space-x-1.5">
-                <span>🔮</span>
-                <span>Быстрый разбор всех данных базы</span>
-              </h3>
-              <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
-                ИИ составит структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
-              </p>
-
-              <transition name="fade">
-                <div v-if="aiAnalysisResult" class="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-indigo-100 text-xs text-stone-700 leading-relaxed whitespace-pre-wrap font-medium shadow-inner max-h-60 overflow-y-auto">
-                  {{ aiAnalysisResult }}
-                </div>
-              </transition>
-
-              <button 
-                @click="analyzeAllApplicationData" 
-                :disabled="isAiLoading"
-                class="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
-              >
-                <span v-if="isAiLoading">⏳ Анализирую...</span>
-                <span v-else>✨ Запустить ИИ-анализ базы</span>
-              </button>
-            </div>
-
-            <!-- Дневник -->
-            <div class="p-5 rounded-3xl bg-gradient-to-tr from-amber-50/60 to-orange-50/50 border border-amber-100 shadow-sm">
-              <h2 class="text-sm font-extrabold text-stone-800 mb-1">Дневник поддержки</h2>
-              <p class="text-[11px] text-stone-600 leading-relaxed">Здесь вы можете обмениваться заметками, фиксировать важные наблюдения и поддерживать друг друга.</p>
-            </div>
-
-            <!-- Создать заметку -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-              <div class="space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                  <div>
-                    <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Дата</label>
-                    <input type="date" v-model="newNoteDate" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
-                  </div>
-                  <div>
-                    <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время</label>
-                    <input type="time" v-model="newNoteTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
-                  </div>
-                </div>
-                <div>
-                  <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Текст заметки</label>
-                  <textarea v-model="newNoteContent" placeholder="Опишите самочувствие или важную информацию здесь..." rows="3" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none leading-relaxed"></textarea>
-                </div>
-              </div>
-              <button @click="savePartnerNote" class="w-full py-3.5 bg-gradient-to-r from-orange-400 to-amber-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-orange-100">
-                Оставить запись
-              </button>
-            </div>
-
-            <!-- Список заметок -->
-            <div class="space-y-3">
-              <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 pl-2">Все записи</h3>
-              <div v-if="partnerNotes.length === 0" class="text-center py-10 text-xs text-stone-400">Записей пока нет</div>
-              
-              <div v-for="note in sortedNotes" :key="note.id" class="p-5 bg-white rounded-3xl border border-stone-100 shadow-sm space-y-3 relative">
-                <div class="flex justify-between items-center border-b border-stone-50 pb-2">
-                  <span class="text-xs text-rose-500 font-extrabold tracking-wider">
-                    {{ formatDateDisplay(note.date) }} <span v-if="note.time" class="text-stone-400 font-normal">в {{ note.time }}</span>
-                  </span>
-                  
-                  <div class="flex items-center space-x-2">
-                    <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', note.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-500 border-orange-200']">
-                      {{ note.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
-                    </span>
-                    <button @click="deleteNote(note.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors">Удалить</button>
-                  </div>
-                </div>
-                <p class="text-xs text-stone-600 leading-relaxed font-semibold">{{ note.content }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- ВКЛАДКА 3: САМОЧУВСТВИЕ -->
-          <div v-if="activeTab === 'wellbeing'" class="space-y-5">
-            
-            <!-- ПУЛЬС -->
-            <div class="relative w-full h-24 bg-rose-50/50 rounded-3xl overflow-hidden border border-rose-100 flex items-center justify-center shadow-inner">
-              <div class="absolute inset-0 bg-gradient-to-r from-rose-200/10 via-pink-100/10 to-transparent animate-pulse"></div>
-              <svg class="w-full h-full stroke-rose-500" viewBox="0 0 400 100" fill="none" preserveAspectRatio="none">
-                <path d="M 0 50 L 120 50 L 130 35 L 140 65 L 150 50 L 190 50 L 195 18 L 205 82 L 215 50 L 255 50 L 260 42 L 265 58 L 270 50 L 400 50" 
-                      stroke-width="3.5" 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round" 
-                      class="pulse-line" />
-              </svg>
-              <div class="absolute top-2.5 right-4 flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-full border border-rose-100/60 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                <span class="text-[8px] text-rose-500 font-black tracking-widest uppercase">Pulse Live</span>
-              </div>
-            </div>
-
-            <!-- Запись состояния -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-              <h3 class="text-sm font-bold text-stone-700">Зафиксировать текущие показатели</h3>
-              
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время записи</label>
-                <input type="time" v-model="newWellbeingTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
-              </div>
-
-              <!-- Эмодзи -->
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-2">Настроение</label>
-                <div class="grid grid-cols-5 gap-2">
-                  <button 
-                    v-for="emoji in ['🥰', '😊', '😐', '😔', '😡']" 
-                    :key="emoji"
-                    @click="newWellbeing.mood = emoji"
-                    :class="['p-3 rounded-2xl border text-xl transition-all', newWellbeing.mood === emoji ? 'bg-rose-500 border-rose-500 scale-105 text-white shadow-md' : 'bg-stone-50 border-stone-100']"
-                  >
-                    {{ emoji }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Ползунки -->
-              <div class="space-y-3.5">
-                <div>
-                  <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
-                    <span>Уровень энергии</span>
-                    <span class="text-rose-500 font-bold">{{ newWellbeing.energy }} / 5</span>
-                  </div>
-                  <input type="range" min="1" max="5" v-model.number="newWellbeing.energy" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
-                </div>
-
-                <div>
-                  <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
-                    <span>Уровень стресса</span>
-                    <span class="text-rose-500 font-bold">{{ newWellbeing.stress }} / 5</span>
-                  </div>
-                  <input type="range" min="1" max="5" v-model.number="newWellbeing.stress" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
-                </div>
-
-                <div>
-                  <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
-                    <span>Физический дискомфорт / боль</span>
-                    <span class="text-rose-500 font-bold">{{ newWellbeing.physical }} / 5</span>
-                  </div>
-                  <input type="range" min="1" max="5" v-model.number="newWellbeing.physical" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
-                <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
-              </div>
-
-              <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
-                Сохранить показатели
-              </button>
-            </div>
-
-            <!-- История -->
-            <div class="space-y-3">
-              <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 pl-2">История состояния</h3>
-              <div v-if="wellbeingLogs.length === 0" class="text-center py-10 text-xs text-stone-400">Записей нет</div>
-              
-              <div v-for="log in wellbeingLogs" :key="log.id" class="p-5 bg-white rounded-3xl border border-stone-100/10 shadow-sm space-y-3">
-                <div class="flex justify-between items-center border-b border-stone-50 pb-2">
-                  <span class="text-xs text-rose-500 font-extrabold tracking-wider">
-                    {{ formatDateDisplay(log.date) }} <span v-if="log.time" class="text-stone-400 font-normal">в {{ log.time }}</span>
-                  </span>
-                  
-                  <div class="flex items-center space-x-2">
-                    <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', log.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-400 border-orange-200']">
-                      {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
-                    </span>
-                    <span class="text-xl">{{ log.mood }}</span>
-                    <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
-                  </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-bold text-stone-500">
-                  <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Энергия: {{ log.energy }}/5</div>
-                  <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Стресс: {{ log.stress }}/5</div>
-                  <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Боль: {{ log.physical }}/5</div>
-                </div>
-                <p v-if="log.notes" class="text-xs text-stone-600 font-medium italic pl-1 leading-relaxed">« {{ log.notes }} »</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- ВКЛАДКА 4: СОВМЕСТНЫЕ ПЛАНЫ И МУЗЫКА -->
-          <div v-if="activeTab === 'plans'" class="space-y-5">
-            <div class="flex justify-between items-center px-1">
-              <h2 class="text-sm font-extrabold text-stone-700">Наши дела и музыка</h2>
-              <button @click="showAddCategory = !showAddCategory" class="text-xs text-rose-500 font-extrabold hover:text-rose-400 transition-colors">
-                {{ showAddCategory ? 'Закрыть' : '+ Создать группу' }}
-              </button>
-            </div>
-
-            <!-- Создание категории -->
-            <div v-if="showAddCategory" class="bg-white p-5 rounded-3xl border border-rose-100 shadow-sm space-y-3">
-              <h3 class="text-xs font-bold text-stone-700 uppercase tracking-wide">Добавить группу планов</h3>
-              <div class="flex gap-2">
-                <input type="text" v-model="newCategoryName" placeholder="Например: Любимая Музыка, Концерты..." class="flex-grow bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 focus:outline-none">
-                <button @click="createCategory" class="px-5 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-bold rounded-2xl transition shadow-md shadow-rose-100">Создать</button>
-              </div>
-            </div>
-
-            <!-- Добавление плана / трека -->
-            <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Группа планов</label>
-                  <select v-model="newPlanCategory" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-semibold focus:outline-none">
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Название / Ссылка на музыку</label>
-                  <input type="text" v-model="newPlanTitle" placeholder="Пойти в кино или ссылка на трек..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
-                </div>
-              </div>
-              <button @click="addPlan" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
-                Добавить в список
-              </button>
-            </div>
-
-            <!-- Списки планов по группам -->
-            <div class="space-y-5">
-              <div v-for="cat in categories" :key="cat.id" class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3">
-                <div class="flex items-center justify-between border-b border-stone-50 pb-2">
-                  <h3 class="text-xs font-bold text-rose-500 tracking-wider uppercase flex items-center space-x-1.5">
-                    <span>{{ cat.name }}</span>
-                    <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
-                  </h3>
-                  
-                  <button 
-                    @click="deleteCategory(cat)" 
-                    class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
-                  >
-                    <span>🗑️</span>
-                    <span>Удалить группу</span>
-                  </button>
-                </div>
-                
-                <div v-if="getPlansByCategory(cat.name).length === 0" class="text-xs text-stone-400 italic py-2 pl-1">Список пуст.</div>
-                
-                <div class="space-y-2.5">
-                  <div 
-                    v-for="plan in getPlansByCategory(cat.name)" 
-                    :key="plan.id"
-                    class="flex items-center justify-between p-3 bg-stone-50 rounded-2xl border border-stone-100/30"
-                  >
-                    <div class="flex items-center space-x-3 overflow-hidden mr-2">
-                      <input 
-                        type="checkbox" 
-                        :checked="plan.is_completed" 
-                        @change="togglePlanStatus(plan)"
-                        class="w-4 h-4 rounded-md text-rose-500 bg-white border-stone-300 accent-rose-500 focus:ring-0 cursor-pointer flex-shrink-0"
-                      >
-                      
-                      <span v-if="isLink(plan.title)" class="truncate text-xs">
-                        <a :href="plan.title" target="_blank" :class="['hover:underline font-bold flex items-center space-x-1', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-blue-500']">
-                          <span>🔊 Открыть трек / сообщение</span>
-                        </a>
-                      </span>
-                      <span v-else :class="['text-xs font-semibold truncate', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-stone-700']">
-                        {{ plan.title }}
-                      </span>
-                    </div>
-                    
-                    <div class="flex items-center space-x-2 flex-shrink-0">
-                      <span :class="['text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border', plan.author === 'her' ? 'bg-rose-50 text-rose-400 border-rose-200' : 'bg-orange-50 text-orange-400 border-orange-200']">
-                        {{ plan.author === 'her' ? 'Она' : 'Он' }}
-                      </span>
-                      <button @click="deletePlan(plan.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors">Удалить</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </transition>
-
-      <!-- НИЖНЯЯ НАВИГАЦИЯ -->
-      <nav class="fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-rose-100 py-3.5 px-6 rounded-3xl z-50 shadow-lg shadow-rose-100/35">
-        <div class="max-w-md mx-auto flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-stone-400">
-          
-          <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <span>Календарь</span>
-          </button>
-
-          <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-750']">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002-2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            <span>Наблюдения</span>
-          </button>
-
-          <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
-            <span>Самочувствие</span>
-          </button>
-
-          <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-            </svg>
-            <span>Планы</span>
-          </button>
-
-        </div>
-      </nav>
-
-      <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ -->
-      <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
-          
-          <div class="flex justify-between items-center border-b border-stone-100 pb-3">
-            <h3 class="text-xs font-black uppercase text-stone-700 tracking-wider flex items-center space-x-2">
-              <span>⚙️</span>
-              <span>Настройки подключения</span>
-            </h3>
-            <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
-          </div>
-
-          <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-            <!-- URL скрипта -->
-            <div>
-              <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL (url)</label>
-              <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            </div>
-
-            <!-- Telegram Chat ID (Его) -->
-            <div>
-              <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ваш Telegram Chat ID (для Него)</label>
-              <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            </div>
-
-            <!-- Telegram Chat ID (Её) -->
-            <div>
-              <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
-              <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-            </div>
-
-            <!-- Выбор ИИ-Бота -->
-            <div>
-              <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
-              <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
-                <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
-                <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
-                <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
-                <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
-                <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
-              </select>
-            </div>
-
-            <!-- Апи ключ ИИ-Бота -->
-            <div>
-              <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
-              <input type="text" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
-              <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100">
-            <button @click="resetToDefaultSettings" class="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition">
-              Сбросить настройки
-            </button>
-            <button @click="saveConnectionSettings" class="py-2.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold rounded-xl text-xs transition shadow-md">
-              Сохранить и связать
-            </button>
-          </div>
-
-          <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
-            ✕ Закрыть настройки
-          </button>
-        </div>
-      </div>
-
-    </div>
+  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Исчезает сразу после инициализации скрипта Vue) -->
+  <div id="fallback-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; color: #555; padding: 20px;">
+    <div style="font-size: 32px; margin-bottom: 12px; animation: bounce 1.2s infinite;">⏳</div>
+    <h2 style="font-size: 14px; font-weight: bold;">Инициализация...</h2>
+    <p style="font-size: 11px; color: #888; max-width: 280px; line-height: 1.5; margin: 8px auto 0;">
+      Загрузка приложения «Полнолуние». Если этот экран завис, возможно, ваш провайдер ограничивает доступ к CDN-серверам. Попробуйте использовать Wi-Fi или VPN.
+    </p>
   </div>
 
-  <!-- Весь код Vue обернут в DOMContentLoaded и загружается строго после фонового скачивания скриптов -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      if (typeof Vue === 'undefined') {
-        console.error("Vue library failed to load. WebApp execution aborted.");
-        return;
-      }
+  <div id="app" v-cloak class="w-full max-w-md mx-auto px-4 pt-4 flex-grow flex flex-col">
+    
+    <!-- ДЕМО-БАННЕР -->
+    <div v-if="isDemoMode" class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 flex items-center justify-center space-x-1.5 shadow-sm">
+      <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+      <span><strong>Режим симуляции:</strong> Нажмите на ⚙️ вверху справа и введите URL скрипта.</span>
+    </div>
 
+    <!-- ТОСТ-УВЕДОМЛЕНИЕ -->
+    <div v-if="showToast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-50 bg-stone-900 text-white text-xs font-bold py-2.5 px-5 rounded-full shadow-lg flex items-center space-x-2 border border-stone-800 whitespace-nowrap">
+      <span>⚡</span>
+      <span>{{ toastMessage }}</span>
+    </div>
+
+    <!-- ХЕДЕР -->
+    <header class="flex justify-between items-center mb-2 bg-white/80 backdrop-blur-md p-4 rounded-3xl border border-orange-100/30 shadow-sm">
+      <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-orange-500 to-rose-500 bg-clip-text text-transparent shrink-0">Полнолуние</h1>
+      
+      <div class="flex items-center space-x-2 shrink-0">
+        <!-- Кнопка настроек -->
+        <button @click="isSettingsOpen = !isSettingsOpen" class="p-2 bg-stone-100 hover:bg-stone-200 rounded-xl transition text-xs">
+          ⚙️
+        </button>
+
+        <!-- Селектор Роли -->
+        <div class="flex bg-stone-100 p-0.5 rounded-xl text-[9px] font-black border border-stone-200/50 w-[100px] shrink-0">
+          <button 
+            @click="setRole('her')" 
+            :class="['flex-1 py-1 rounded-lg transition-all text-center', role === 'her' ? 'bg-red-500 text-white shadow-sm' : 'text-stone-500']"
+          >
+            Она
+          </button>
+          <button 
+            @click="setRole('him')" 
+            :class="['flex-1 py-1 rounded-lg transition-all text-center', role === 'him' ? 'bg-orange-400 text-white shadow-sm' : 'text-stone-500']"
+          >
+            Он
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- СИНХРО-БАР -->
+    <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
+      <span class="text-stone-500">Облачная база:</span>
+      <button 
+        @click="forceSync" 
+        :disabled="syncQueue.length === 0 && !isSyncPending"
+        :class="['px-3 py-1.5 rounded-xl text-[9px] font-black transition-all border flex items-center space-x-1 whitespace-nowrap', 
+                 syncQueue.length > 0 || isSyncPending
+                   ? 'bg-amber-500 text-white border-amber-600 animate-pulse cursor-pointer shadow-sm' 
+                   : 'bg-white text-stone-500 border-stone-200/60 cursor-not-allowed']"
+      >
+        <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '🟢') }}</span>
+        <span>{{ isSyncPending ? 'Запись...' : (syncQueue.length > 0 ? `Сохранить (${syncQueue.length})` : 'Синхронизировано') }}</span>
+      </button>
+    </div>
+
+    <!-- БЫСТРЫЕ СИГНАЛЫ (ТОЛЬКО ДЛЯ НЕЁ) -->
+    <section v-if="role === 'her'" class="mb-5 bg-white/50 border border-orange-100/40 p-3.5 rounded-3xl shadow-sm space-y-2">
+      <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-stone-400 pl-1.5">Отправить быстрый сигнал другу:</h3>
+      <div class="flex space-x-2 overflow-x-auto pb-1">
+        <button 
+          @click="triggerQuickSignal(signal)"
+          v-for="signal in quickSignals" 
+          :key="signal.text"
+          class="flex-shrink-0 flex items-center space-x-1.5 bg-white border border-stone-200/60 px-3 py-2 rounded-2xl text-xs font-bold text-stone-700 hover:border-orange-200 active:scale-95 transition-all shadow-sm"
+        >
+          <span>{{ signal.icon }}</span>
+          <span>{{ signal.text }}</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ВКЛАДКИ -->
+    <transition name="fade" mode="out-in">
+      <div :key="activeTab" class="flex-grow flex flex-col space-y-5">
+
+        <!-- ВКЛАДКА 1: КАЛЕНДАРЬ -->
+        <div v-if="activeTab === 'calendar'" class="space-y-5">
+          
+          <!-- Состояние подруги -->
+          <div class="p-5 rounded-3xl bg-gradient-to-br from-white/90 to-stone-50/50 border border-stone-150 shadow-sm">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-widest text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full">Состояние подруги</span>
+              <span class="text-[10px] text-stone-500 font-mono font-bold" v-if="currentCycleDay">День цикла: {{ currentCycleDay }}</span>
+            </div>
+            
+            <h2 class="text-base font-black text-stone-800 mb-0.5 flex items-center space-x-1.5">
+              <span>{{ currentPhaseInfo.name }}</span>
+            </h2>
+            
+            <p v-if="currentPhaseInfo.duration" class="text-[10px] text-rose-400 font-extrabold uppercase tracking-wider mb-3">
+              ⏳ Приблизительные сроки: {{ currentPhaseInfo.duration }}
+            </p>
+
+            <div class="space-y-3 text-xs text-stone-600 leading-relaxed font-medium">
+              <div>
+                <p class="text-[9px] font-extrabold uppercase text-stone-400 tracking-wider mb-1">🧠 Физиологические и эмоциональные изменения:</p>
+                <p class="pl-2 border-l-2 border-orange-200 text-stone-700 font-semibold text-justify">{{ currentPhaseInfo.desc }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Навигатор месяцев -->
+          <div class="flex items-center justify-between bg-white px-4 py-2 rounded-2xl border border-stone-100 shadow-sm">
+            <button @click="changeMonth(-1)" class="p-2 text-stone-400 hover:text-rose-500 transition-colors font-bold text-lg">&larr;</button>
+            <span class="font-extrabold text-xs tracking-wider text-stone-700 uppercase">{{ monthNames[currentMonth] }} {{ currentYear }}</span>
+            <button @click="changeMonth(1)" class="p-2 text-stone-400 hover:text-rose-500 transition-colors font-bold text-lg">&rarr;</button>
+          </div>
+
+          <!-- Календарь -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm">
+            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">
+              <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1.5">
+              <div 
+                v-for="(dayObj, idx) in calendarDays" 
+                :key="idx"
+                @click="selectDate(dayObj.date)"
+                :class="[
+                  'aspect-square flex flex-col items-center justify-center rounded-xl text-xs font-bold cursor-pointer transition-all relative',
+                  !dayObj.isCurrentMonth ? 'text-stone-300 opacity-40' : 'text-stone-700',
+                  isSelected(dayObj.date) ? 'ring-2 ring-rose-400 bg-rose-50/40 scale-105 z-10' : '',
+                  isPeriodDay(dayObj.date) ? 'bg-gradient-to-tr from-rose-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : '',
+                  isPredictedDay(dayObj.date) ? 'bg-pink-50/50 text-pink-500 border-2 border-dashed border-pink-300' : '',
+                  isOvulationDay(dayObj.date) && !isPeriodDay(dayObj.date) ? 'bg-purple-100 text-purple-800 border border-purple-200 shadow-sm shadow-purple-100' : ''
+                ]"
+              >
+                <span>{{ dayObj.day }}</span>
+                
+                <!-- Иконка рабочего графика -->
+                <span v-if="dayObj.isCurrentMonth" class="absolute top-0 right-0 p-0.5 text-[8px] flex items-center">
+                  <span>{{ getWorkStatus(dayObj.date) === 'work' ? '💼' : '🏡' }}</span>
+                  <span v-if="isCustomShift(dayObj.date)" class="w-1 h-1 bg-red-400 rounded-full ml-0.5"></span>
+                </span>
+                
+                <!-- Маркеры фаз -->
+                <div class="flex space-x-1 absolute bottom-1.5 justify-center items-center w-full">
+                  <span v-if="getDayPhase(dayObj.date) === 'menstrual' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-rose-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'follicular' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-teal-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'ovulatory' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-purple-400 rounded-full shadow-sm"></span>
+                  <span v-if="getDayPhase(dayObj.date) === 'luteal' && !isPeriodDay(dayObj.date)" class="w-3.5 h-1 bg-amber-400 rounded-full shadow-sm"></span>
+                  <span v-if="hasNote(dayObj.date)" class="w-2 h-2 bg-violet-500 rounded-full ring-1 ring-white shadow-sm"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Легенда -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3.5">
+            <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Пояснения к фазам и цветам:</h4>
+            <div class="grid grid-cols-2 gap-3 text-[10px] font-bold text-stone-600">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+                <span>Менструальная (1-{{ periodLength }} д)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+                <span>Фолликулярная ({{ periodLength + 1 }}-{{ cycleLength - 15 }} д)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                <span>Овуляция ({{ cycleLength - 14 }} д, Фиолетовый)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span>Лютеиновая ({{ cycleLength - 13 }}-{{ cycleLength }} д)</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 border border-dashed border-pink-400 bg-pink-50 rounded-sm"></span>
+                <span>Прогноз менструации</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2 h-2 rounded-full bg-violet-500 ring-2 ring-violet-200"></span>
+                <span>Есть записи / заметка</span>
+              </div>
+              <div class="flex items-center space-x-2 border-t border-stone-50 pt-2 col-span-2">
+                <span>💼 Работа (2/2)</span>
+                <span class="text-stone-400">|</span>
+                <span>🏡 Выходной (2/2)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Параметры расчета -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
+            <h4 class="text-[10px] font-black uppercase tracking-wider text-stone-400 border-b border-stone-50 pb-2">Настройки и расчеты параметров:</h4>
+            
+            <div class="grid grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина цикла (дней)</label>
+                <select v-model.number="cycleLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+                  <option v-for="d in Array.from({length: 15}, (_, i) => i + 21)" :key="d" :value="d">{{ d }} дней</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[9px] font-extrabold uppercase text-stone-400 mb-1 tracking-wider">Длина менструации</label>
+                <select v-model.number="periodLength" class="w-full bg-stone-50 border border-stone-150 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+                  <option v-for="d in Array.from({length: 8}, (_, i) => i + 3)" :key="d" :value="d">{{ d }} дней</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="border-t border-stone-50 pt-3 space-y-2 text-xs font-bold text-stone-600">
+              <div class="flex justify-between">
+                <span>Параметры:</span>
+                <span class="text-stone-800">цикл: {{ cycleLength }} дн. / менстр.: {{ periodLength }} дн.</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Следующая менструация (прогноз):</span>
+                <span class="text-rose-500 font-extrabold">{{ nextPeriodPredictionDate || 'Не рассчитан' }}</span>
+              </div>
+            </div>
+
+            <!-- КНОПКА ОЧИСТКИ КАЛЕНДАРЯ -->
+            <div class="border-t border-stone-100 pt-3.5 mt-2">
+              <button 
+                @click="clearCalendarData"
+                class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/60 font-extrabold rounded-2xl text-[10px] uppercase tracking-wider transition active:scale-[0.98] shadow-sm flex items-center justify-center space-x-1.5"
+              >
+                <span>🗑️</span>
+                <span>Очистить календарь менструаций</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Действия с днем -->
+          <div v-if="selectedDateStr" class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b border-stone-50 pb-2.5">
+              <h3 class="text-xs font-bold text-stone-600 uppercase">Выбран день: {{ formatDateDisplay(selectedDateStr) }}</h3>
+              <span class="text-[9px] font-bold uppercase text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                График: {{ getWorkStatus(selectedDateStr) === 'work' ? '💼 Работа' : '🏡 Выходной' }}
+                <span v-if="isCustomShift(selectedDateStr)" class="text-[8px] text-red-500 font-black ml-1">(изменен)</span>
+              </span>
+            </div>
+            
+            <p class="text-[10px] text-stone-400 italic text-center">💡 Нажмите на выделенный день в календаре повторно, чтобы гибко сдвинуть, расширить или убрать его</p>
+
+            <div class="grid grid-cols-1 gap-2">
+              <button 
+                @click="togglePeriodStart" 
+                :class="['w-full py-2.5 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md', isPeriodDay(selectedDateStr) ? 'bg-gradient-to-tr from-stone-500 to-rose-400 text-white font-black shadow-md shadow-rose-200' : 'bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 shadow-rose-200']"
+              >
+                {{ isPeriodDay(selectedDateStr) ? '❌ Удалить/сократить день менструации' : '🩸 Отметить как день менструации (на ' + periodLength + ' дней)' }}
+              </button>
+
+              <button 
+                v-if="selectedCycle"
+                @click="deleteEntireCycle"
+                class="w-full py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-extrabold rounded-2xl text-xs tracking-wider transition shadow-sm"
+              >
+                🗑️ Удалить весь этот период менструации
+              </button>
+
+              <button 
+                @click="cycleWorkStatus(selectedDateStr)"
+                class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 active:scale-[0.98] text-stone-700 font-bold rounded-2xl text-xs transition border border-stone-200"
+              >
+                🔄 Изменить рабочий график на этот день
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: НАБЛЮДЕНИЯ (ЗАМЕТКИ И ЧАТ ИИ) -->
+        <div v-if="activeTab === 'notes'" class="space-y-5">
+          
+          <!-- ЧАТ С ИИ -->
+          <div class="p-5 rounded-3xl bg-gradient-to-tr from-violet-50 to-indigo-50 border border-violet-100 shadow-sm space-y-4 flex flex-col h-[400px]">
+            <div class="flex items-center justify-between border-b border-violet-100/50 pb-2 flex-shrink-0">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">🔮</span>
+                <span class="text-xs font-black uppercase text-indigo-900 tracking-wider">Чат с ИИ Полнолуние</span>
+              </div>
+              <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+            </div>
+
+            <!-- Лента чата -->
+            <div class="flex-grow overflow-y-auto space-y-2.5 pr-1.5 flex flex-col" ref="chatContainer">
+              <div 
+                v-for="(msg, index) in aiChatMessages" 
+                :key="index"
+                :class="['max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed font-semibold shadow-sm', 
+                         msg.role === 'user' 
+                           ? 'bg-indigo-600 text-white rounded-br-none self-end' 
+                           : 'bg-white text-stone-700 border border-violet-100/60 rounded-bl-none self-start']"
+              >
+                <div class="whitespace-pre-wrap">{{ msg.content }}</div>
+              </div>
+            </div>
+
+            <!-- Ввод сообщения чата -->
+            <div class="flex gap-2 flex-shrink-0 pt-2 border-t border-violet-100/40">
+              <input 
+                type="text" 
+                v-model="aiUserMessage" 
+                @keyup.enter="sendAiChatMessage"
+                placeholder="Спроси ИИ о календаре, самочувствии подруги..." 
+                class="flex-grow bg-white border border-stone-200 rounded-2xl px-3.5 py-2.5 text-xs text-stone-700 placeholder-stone-400 focus:outline-none"
+                :disabled="isAiChatLoading"
+              >
+              <button 
+                @click="sendAiChatMessage"
+                :disabled="isAiChatLoading || !aiUserMessage.trim()"
+                class="px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-xs transition active:scale-95 disabled:opacity-40"
+              >
+                <span>Отправить</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ИИ-АНАЛИЗ БАЗЫ -->
+          <div class="p-5 rounded-3xl bg-gradient-to-br from-violet-500/10 via-indigo-500/5 to-transparent border border-indigo-150/40 shadow-sm space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center space-x-1.5">
+              <span>🔮</span>
+              <span>Быстрый разбор всех данных базы</span>
+            </h3>
+            <p class="text-[11px] text-stone-600 leading-relaxed font-semibold">
+              ИИ составит структурированный дружеский совет на основе всей текущей истории ваших циклов, планов и заметок.
+            </p>
+
+            <transition name="fade">
+              <div v-if="aiAnalysisResult" class="p-4 bg-white/90 backdrop-blur-md rounded-2xl border border-indigo-100 text-xs text-stone-700 leading-relaxed whitespace-pre-wrap font-medium shadow-inner max-h-60 overflow-y-auto">
+                {{ aiAnalysisResult }}
+              </div>
+            </transition>
+
+            <button 
+              @click="analyzeAllApplicationData" 
+              :disabled="isAiLoading"
+              class="w-full py-3 bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-md disabled:opacity-50"
+            >
+              <span v-if="isAiLoading">⏳ Анализирую...</span>
+              <span v-else>✨ Запустить ИИ-анализ базы</span>
+            </button>
+          </div>
+
+          <!-- Дневник -->
+          <div class="p-5 rounded-3xl bg-gradient-to-tr from-amber-50/60 to-orange-50/50 border border-amber-100 shadow-sm">
+            <h2 class="text-sm font-extrabold text-stone-800 mb-1">Дневник поддержки</h2>
+            <p class="text-[11px] text-stone-600 leading-relaxed">Здесь вы можете обмениваться заметками, фиксировать важные наблюдения и поддерживать друг друга.</p>
+          </div>
+
+          <!-- Создать заметку -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
+            <div class="space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Дата</label>
+                  <input type="date" v-model="newNoteDate" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время</label>
+                  <input type="time" v-model="newNoteTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Текст заметки</label>
+                <textarea v-model="newNoteContent" placeholder="Опишите самочувствие или важную информацию здесь..." rows="3" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none leading-relaxed"></textarea>
+              </div>
+            </div>
+            <button @click="savePartnerNote" class="w-full py-3.5 bg-gradient-to-r from-orange-400 to-amber-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-orange-100">
+              Оставить запись
+            </button>
+          </div>
+
+          <!-- Список заметок -->
+          <div class="space-y-3">
+            <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 pl-2">Все записи</h3>
+            <div v-if="partnerNotes.length === 0" class="text-center py-10 text-xs text-stone-400">Записей пока нет</div>
+            
+            <div v-for="note in sortedNotes" :key="note.id" class="p-5 bg-white rounded-3xl border border-stone-100 shadow-sm space-y-3 relative">
+              <div class="flex justify-between items-center border-b border-stone-50 pb-2">
+                <span class="text-xs text-rose-500 font-extrabold tracking-wider">
+                  {{ formatDateDisplay(note.date) }} <span v-if="note.time" class="text-stone-400 font-normal">в {{ note.time }}</span>
+                </span>
+                
+                <div class="flex items-center space-x-2">
+                  <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', note.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-500 border-orange-200']">
+                    {{ note.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
+                  </span>
+                  <button @click="deleteNote(note.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors">Удалить</button>
+                </div>
+              </div>
+              <p class="text-xs text-stone-600 leading-relaxed font-semibold">{{ note.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 3: САМОЧУВСТВИЕ -->
+        <div v-if="activeTab === 'wellbeing'" class="space-y-5">
+          
+          <!-- ПУЛЬС -->
+          <div class="relative w-full h-24 bg-rose-50/50 rounded-3xl overflow-hidden border border-rose-100 flex items-center justify-center shadow-inner">
+            <div class="absolute inset-0 bg-gradient-to-r from-rose-200/10 via-pink-100/10 to-transparent animate-pulse"></div>
+            <svg class="w-full h-full stroke-rose-500" viewBox="0 0 400 100" fill="none" preserveAspectRatio="none">
+              <path d="M 0 50 L 120 50 L 130 35 L 140 65 L 150 50 L 190 50 L 195 18 L 205 82 L 215 50 L 255 50 L 260 42 L 265 58 L 270 50 L 400 50" 
+                    stroke-width="3.5" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    class="pulse-line" />
+            </svg>
+            <div class="absolute top-2.5 right-4 flex items-center space-x-1.5 bg-white px-2.5 py-1 rounded-full border border-rose-100/60 shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+              <span class="text-[8px] text-rose-500 font-black tracking-widest uppercase">Pulse Live</span>
+            </div>
+          </div>
+
+          <!-- Запись состояния -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
+            <h3 class="text-sm font-bold text-stone-700">Зафиксировать текущие показатели</h3>
+            
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Время записи</label>
+              <input type="time" v-model="newWellbeingTime" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-bold focus:outline-none">
+            </div>
+
+            <!-- Эмодзи -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-stone-400 mb-2">Настроение</label>
+              <div class="grid grid-cols-5 gap-2">
+                <button 
+                  v-for="emoji in ['🥰', '😊', '😐', '😔', '😡']" 
+                  :key="emoji"
+                  @click="newWellbeing.mood = emoji"
+                  :class="['p-3 rounded-2xl border text-xl transition-all', newWellbeing.mood === emoji ? 'bg-rose-500 border-rose-500 scale-105 text-white shadow-md' : 'bg-stone-50 border-stone-100']"
+                >
+                  {{ emoji }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Ползунки -->
+            <div class="space-y-3.5">
+              <div>
+                <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
+                  <span>Уровень энергии</span>
+                  <span class="text-rose-500 font-bold">{{ newWellbeing.energy }} / 5</span>
+                </div>
+                <input type="range" min="1" max="5" v-model.number="newWellbeing.energy" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
+                  <span>Уровень стресса</span>
+                  <span class="text-rose-500 font-bold">{{ newWellbeing.stress }} / 5</span>
+                </div>
+                <input type="range" min="1" max="5" v-model.number="newWellbeing.stress" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-[10px] font-bold uppercase text-stone-400 mb-1">
+                  <span>Физический дискомфорт / боль</span>
+                  <span class="text-rose-500 font-bold">{{ newWellbeing.physical }} / 5</span>
+                </div>
+                <input type="range" min="1" max="5" v-model.number="newWellbeing.physical" class="w-full accent-rose-500 bg-stone-100 h-1.5 rounded-lg appearance-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Комментарий</label>
+              <input type="text" v-model="newWellbeing.notes" placeholder="Усталость, plans на отдых..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+            </div>
+
+            <button @click="saveWellbeing" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
+              Сохранить показатели
+            </button>
+          </div>
+
+          <!-- История -->
+          <div class="space-y-3">
+            <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 pl-2">История состояния</h3>
+            <div v-if="wellbeingLogs.length === 0" class="text-center py-10 text-xs text-stone-400">Записей нет</div>
+            
+            <div v-for="log in wellbeingLogs" :key="log.id" class="p-5 bg-white rounded-3xl border border-stone-100/10 shadow-sm space-y-3">
+              <div class="flex justify-between items-center border-b border-stone-50 pb-2">
+                <span class="text-xs text-rose-500 font-extrabold tracking-wider">
+                  {{ formatDateDisplay(log.date) }} <span v-if="log.time" class="text-stone-400 font-normal">в {{ log.time }}</span>
+                </span>
+                
+                <div class="flex items-center space-x-2">
+                  <span :class="['text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', log.author === 'her' ? 'bg-rose-50 text-rose-500 border-rose-200' : 'bg-orange-50 text-orange-500 border-orange-200']">
+                    {{ log.author === 'her' ? '🙋‍♀️ Она' : '🙋‍♂️ Он' }}
+                  </span>
+                  <span class="text-xl">{{ log.mood }}</span>
+                  <button @click="deleteWellbeing(log.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors ml-1">Удалить</button>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-[9px] font-bold text-stone-500">
+                <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Энергия: {{ log.energy }}/5</div>
+                <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Стресс: {{ log.stress }}/5</div>
+                <div class="bg-stone-50 py-1.5 rounded-xl border border-stone-100/50">Боль: {{ log.physical }}/5</div>
+              </div>
+              <p v-if="log.notes" class="text-xs text-stone-600 font-medium italic pl-1 leading-relaxed">« {{ log.notes }} »</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ВКЛАДКА 4: СОВМЕСТНЫЕ ПЛАНЫ И МУЗЫКА -->
+        <div v-if="activeTab === 'plans'" class="space-y-5">
+          <div class="flex justify-between items-center px-1">
+            <h2 class="text-sm font-extrabold text-stone-700">Наши дела и музыка</h2>
+            <button @click="showAddCategory = !showAddCategory" class="text-xs text-rose-500 font-extrabold hover:text-rose-400 transition-colors">
+              {{ showAddCategory ? 'Закрыть' : '+ Создать группу' }}
+            </button>
+          </div>
+
+          <!-- Создание категории -->
+          <div v-if="showAddCategory" class="bg-white p-5 rounded-3xl border border-rose-100 shadow-sm space-y-3">
+            <h3 class="text-xs font-bold text-stone-700 uppercase tracking-wide">Добавить группу планов</h3>
+            <div class="flex gap-2">
+              <input type="text" v-model="newCategoryName" placeholder="Например: Любимая Музыка, Концерты..." class="flex-grow bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 focus:outline-none">
+              <button @click="createCategory" class="px-5 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-xs font-bold rounded-2xl transition shadow-md shadow-rose-100">Создать</button>
+            </div>
+          </div>
+
+          <!-- Добавление плана / трека -->
+          <div class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Группа планов</label>
+                <select v-model="newPlanCategory" class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 font-semibold focus:outline-none">
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Название / Ссылка на музыку</label>
+                <input type="text" v-model="newPlanTitle" placeholder="Пойти в кино или ссылка на трек..." class="w-full bg-stone-50 border border-stone-100 rounded-2xl p-3 text-xs text-stone-700 placeholder-stone-400 focus:outline-none">
+              </div>
+            </div>
+            <button @click="addPlan" class="w-full py-3.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold rounded-2xl text-xs tracking-wider transition shadow-lg shadow-rose-100">
+              Добавить в список
+            </button>
+          </div>
+
+          <!-- Списки планов по группам -->
+          <div class="space-y-5">
+            <div v-for="cat in categories" :key="cat.id" class="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-3">
+              <div class="flex items-center justify-between border-b border-stone-50 pb-2">
+                <h3 class="text-xs font-bold text-rose-500 tracking-wider uppercase flex items-center space-x-1.5">
+                  <span>{{ cat.name }}</span>
+                  <span v-if="cat.name.toLowerCase().includes('музык') || cat.name.toLowerCase().includes('трек') || cat.name.toLowerCase().includes('плей')" class="text-xs">💿</span>
+                </h3>
+                
+                <button 
+                  @click="deleteCategory(cat)" 
+                  class="text-[9px] text-stone-400 hover:text-red-500 font-extrabold transition-colors flex items-center space-x-0.5"
+                >
+                  <span>🗑️</span>
+                  <span>Удалить группу</span>
+                </button>
+              </div>
+              
+              <div v-if="getPlansByCategory(cat.name).length === 0" class="text-xs text-stone-400 italic py-2 pl-1">Список пуст.</div>
+              
+              <div class="space-y-2.5">
+                <div 
+                  v-for="plan in getPlansByCategory(cat.name)" 
+                  :key="plan.id"
+                  class="flex items-center justify-between p-3 bg-stone-50 rounded-2xl border border-stone-100/30"
+                >
+                  <div class="flex items-center space-x-3 overflow-hidden mr-2">
+                    <input 
+                      type="checkbox" 
+                      :checked="plan.is_completed" 
+                      @change="togglePlanStatus(plan)"
+                      class="w-4 h-4 rounded-md text-rose-500 bg-white border-stone-300 accent-rose-500 focus:ring-0 cursor-pointer flex-shrink-0"
+                    >
+                    
+                    <span v-if="isLink(plan.title)" class="truncate text-xs">
+                      <a :href="plan.title" target="_blank" :class="['hover:underline font-bold flex items-center space-x-1', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-blue-500']">
+                        <span>🔊 Открыть трек / сообщение</span>
+                      </a>
+                    </span>
+                    <span v-else :class="['text-xs font-semibold truncate', plan.is_completed ? 'line-through text-stone-400 font-medium' : 'text-stone-700']">
+                      {{ plan.title }}
+                    </span>
+                  </div>
+                  
+                  <div class="flex items-center space-x-2 flex-shrink-0">
+                    <span :class="['text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full border', plan.author === 'her' ? 'bg-rose-50 text-rose-400 border-rose-200' : 'bg-orange-50 text-orange-400 border-orange-200']">
+                      {{ plan.author === 'her' ? 'Она' : 'Он' }}
+                    </span>
+                    <button @click="deletePlan(plan.id)" class="text-[10px] text-stone-300 hover:text-rose-500 font-bold transition-colors">Удалить</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </transition>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+    <nav class="fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-rose-100 py-3.5 px-6 rounded-3xl z-50 shadow-lg shadow-rose-100/35">
+      <div class="max-w-md mx-auto flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-stone-400">
+        
+        <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span>Календарь</span>
+        </button>
+
+        <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-750']">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002-2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          <span>Наблюдения</span>
+        </button>
+
+        <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+          <span>Самочувствие</span>
+        </button>
+
+        <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+          <span>Планы</span>
+        </button>
+
+      </div>
+    </nav>
+
+    <!-- МОДАЛЬНОЕ ОКНО НАСТРОЕК ПОДКЛЮЧЕНИЯ -->
+    <div v-if="isSettingsOpen" @click.self="isSettingsOpen = false" class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-md rounded-3xl p-6 border border-stone-100 shadow-xl space-y-4 relative">
+        
+        <div class="flex justify-between items-center border-b border-stone-100 pb-3">
+          <h3 class="text-xs font-black uppercase text-stone-700 tracking-wider flex items-center space-x-2">
+            <span>⚙️</span>
+            <span>Настройки подключения</span>
+          </h3>
+          <button @click="isSettingsOpen = false" class="text-stone-400 hover:text-stone-700 font-black text-xl p-2 leading-none absolute top-3 right-3 transition">✕</button>
+        </div>
+
+        <div class="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+          <!-- URL скрипта -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Google Script Web App URL (url)</label>
+            <input type="text" v-model="settingsInput.url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
+          <!-- Telegram Chat ID (Его) -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Ваш Telegram Chat ID (для Него)</label>
+            <input type="text" v-model="settingsInput.himChatId" placeholder="1719296144" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
+          <!-- Telegram Chat ID (Её) -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Telegram Chat ID подруги (для Неё)</label>
+            <input type="text" v-model="settingsInput.herChatId" placeholder="Введите ID подруги" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+          </div>
+
+          <!-- Выбор ИИ-Бота -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Выбор ИИ Модели</label>
+            <select v-model="settingsInput.aiModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+              <option value="openrouter/free">🤖 Авто-выбор (Рекомендуется для стабильности)</option>
+              <option value="deepseek/deepseek-v4-flash:free">⚡ DeepSeek V4 Flash (free)</option>
+              <option value="meta-llama/llama-4-maverick:free">🦙 Meta Llama 4 Maverick (free)</option>
+              <option value="meta-llama/llama-4-scout:free">📡 Meta Llama 4 Scout (free)</option>
+              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
+            </select>
+          </div>
+
+          <!-- Апи ключ ИИ-Бота -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">API Ключ ИИ-Бота (OpenRouter API Key)</label>
+            <input type="text" v-model="settingsInput.openrouterKey" placeholder="sk-or-v1-xxx" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 focus:outline-none">
+            <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-100">
+          <button @click="resetToDefaultSettings" class="py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-xl text-xs transition">
+            Сбросить настройки
+          </button>
+          <button @click="saveConnectionSettings" class="py-2.5 bg-gradient-to-r from-orange-500 to-rose-500 text-white font-extrabold rounded-xl text-xs transition shadow-md">
+            Сохранить и связать
+          </button>
+        </div>
+
+        <button @click="isSettingsOpen = false" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold rounded-xl text-xs transition border border-stone-200/50 mt-1">
+          ✕ Закрыть настройки
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Стандартный скрипт без type="module" гарантирует бесперебойную работу во всех WebView Telegram -->
+  <script>
+    const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUl6NNlrjGI6EQasAFqw8JUC5FfYW6qx2RbcSEOZQ1vpVLKzOsNHsXmlshLRCsVns/exec"; 
+    const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
+    const DEFAULT_HIM_CHAT_ID = "1719296144";
+    const DEFAULT_HER_CHAT_ID = ""; 
+
+    // Защита: проверяем, загрузилась ли библиотека Vue перед инициализацией
+    if (typeof Vue === 'undefined') {
+      console.error("Vue library failed to load entirely. WebApp cannot be initialized.");
+    } else {
       const { createApp, ref, computed, onMounted, watch } = Vue;
 
       // ЗАЩИТНЫЙ СЛОЙ LOCALSTORAGE (Предотвращает зависание Vue при запуске в песочницах Webview Telegram)
@@ -944,7 +945,7 @@
             return isNaN(parsed) ? defaultVal : parsed;
           };
 
-          // МГНОВЕННЫЙ ЗАПУСК: Инициализируем реактивные переменные
+          // Переменные настроек цикла
           const cycleLength = ref(28);
           const periodLength = ref(5);
 
@@ -1002,73 +1003,36 @@
             return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
           }
 
-          // ДИНАМИЧЕСКИЙ СТАРТ НАБЛЮДАТЕЛЕЙ С НЕВИДИМОЙ СИНХРОНИЗАЦИЕЙ ЗА 5 СЕКУНД
-          let settingsSyncTimer = null;
-          function queueSettingsSync(key, newVal) {
-            // 1. Обновляем в локальной памяти (localStorage) мгновенно для быстрого запуска
-            safeStorage.setItem(`user_${key}`, newVal);
-
-            // 2. Сбрасываем предыдущий таймер отправки
-            if (settingsSyncTimer) {
-              clearTimeout(settingsSyncTimer);
-            }
-
-            // 3. Выставляем новый таймер ровно на 5 секунд
-            settingsSyncTimer = setTimeout(async () => {
-              if (isDemoMode.value) return;
-
-              const currentSetting = [...appSettingsList.value].reverse().find(s => s && s.id === key);
-              if (currentSetting && currentSetting.key_value === newVal.toString()) {
-                return; // Значение уже синхронизировано, отправка не требуется
-              }
-
-              // Обновляем локальную базу настроек
-              if (currentSetting) {
-                currentSetting.key_value = newVal.toString();
-              } else {
-                appSettingsList.value.push({ id: key, key_value: newVal.toString() });
-              }
-              safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value));
-
-              // Формируем невидимый сетевой запрос обновления в Google Таблицу
-              const op = {
-                sheet: 'app_settings',
-                action: 'update',
-                id: key,
-                data: { key_value: newVal.toString() }
-              };
-
-              syncQueue.value.push(op);
-              safeStorage.setItem('sync_queue', JSON.stringify(syncQueue.value));
-              
-              // Мгновенно проталкиваем изменения на сервер, не ожидая основного 15-сек таймера
-              await forceSync();
-            }, 5000); // 5 секунд задержки
-          }
-
+          // НАБЛЮДАТЕЛИ (WATCHERS): Начинают работу только после того, как завершится initConnection()
           let watchersStarted = false;
           function startSettingsWatchers() {
             if (watchersStarted) return;
             watchersStarted = true;
 
             watch(cycleLength, (newVal) => {
+              safeStorage.setItem('user_cycle_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                queueSettingsSync('cycle_length', newVal);
+                triggerSettingsSync(); // Невидимо запускаем 5-секундный таймер
               }
             });
             watch(periodLength, (newVal) => {
+              safeStorage.setItem('user_period_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                queueSettingsSync('period_length', newVal);
+                triggerSettingsSync(); // Невидимо запускаем 5-секундный таймер
               }
             });
           }
 
-          // КРИТИЧЕСКИ ОБНОВЛЕННЫЙ СТАРТ: Моментально запускает локальный кэш
+          // ДЕТАЛЬНЫЙ ЗАПУСК С ТЕЛЕФОНА И ПК: Инициализирует локальный кэш мгновенно
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
 
-            // Восстанавливаем данные из кэша для мгновенного отображения без зависаний
+            // Скрываем локальный загрузчик, как только Vue готов к работе
+            const ldr = document.getElementById('fallback-loader');
+            if (ldr) ldr.style.display = 'none';
+
+            // МГНОВЕННЫЙ ЗАПУСК: Читаем сохраненные ранее таблицы из кэша
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1084,7 +1048,7 @@
             ]);
             newPlanCategory.value = (categories.value && categories.value[0]) ? categories.value[0].name : 'Прочее';
 
-            // Синхронизируем настройки из локального кэша настроек (быстрое подтягивание на старте)
+            // МГНОВЕННЫЙ СТАРТ НАСТРОЕК: Достаем настройки из сохраненного кэша настроек
             const cachedCycle = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
             if (cachedCycle && cachedCycle.key_value) {
               cycleLength.value = parseInt(cachedCycle.key_value, 10) || 28;
@@ -1096,12 +1060,6 @@
               periodLength.value = parseInt(cachedPeriod.key_value, 10) || 5;
             } else {
               periodLength.value = getSafeLocalStorageInt('user_period_length', 5);
-            }
-
-            // Прячем статический HTML-лоадер загрузки
-            const htmlLoader = document.getElementById('app-offline-loader');
-            if (htmlLoader) {
-              htmlLoader.style.display = 'none';
             }
 
             const scriptUrl = DEFAULT_GOOGLE_SCRIPT_URL;
@@ -1140,7 +1098,7 @@
 
             isDemoMode.value = false;
 
-            // СЕТЕВОЙ ЗАПРОС НА ФОНЕ
+            // ФОНОВАЯ ПОДГРУЗКА ИЗ ОБЛАКА
             try {
               if (syncQueue.value.length > 0) {
                 await processSyncQueue();
@@ -1278,6 +1236,42 @@
             await processSyncQueue();
           }
 
+          // ДЕТАЛЬНАЯ НЕВИДИМАЯ СИНХРОНИЗАЦИЯ НАСТРОЕК (5 СЕКУНД)
+          let settingsSyncTimer = null;
+          function triggerSettingsSync() {
+            clearTimeout(settingsSyncTimer);
+            settingsSyncTimer = setTimeout(async () => {
+              const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+              if (isDemoMode.value || isUrlInvalid(APPS_SCRIPT_URL)) return;
+
+              // Формируем пакет только из настроек
+              const payload = [
+                { sheet: 'app_settings', action: 'update', id: 'cycle_length', data: { key_value: cycleLength.value.toString() } },
+                { sheet: 'app_settings', action: 'update', id: 'period_length', data: { key_value: periodLength.value.toString() } }
+              ];
+
+              try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain' },
+                  body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                  // Обновляем локальный кэш
+                  const idxCL = appSettingsList.value.findIndex(s => s && s.id === 'cycle_length');
+                  if (idxCL !== -1) appSettingsList.value[idxCL].key_value = cycleLength.value.toString();
+                  const idxPL = appSettingsList.value.findIndex(s => s && s.id === 'period_length');
+                  if (idxPL !== -1) appSettingsList.value[idxPL].key_value = periodLength.value.toString();
+                  safeStorage.setItem('demo_app_settings', JSON.stringify(appSettingsList.value));
+                  
+                  console.log("Настройки цикла успешно сохранены в облачную таблицу");
+                }
+              } catch (e) {
+                console.error("Сбой невидимой синхронизации настроек:", e);
+              }
+            }, 5000); // Строго 5 секунд задержки перед невидимой отправкой
+          }
+
           function cleanupCycles() {
             if (cycles.value.length === 0) return;
             
@@ -1358,6 +1352,7 @@
                 }));
                 appSettingsList.value = allData.app_settings || [];
 
+                // Синхронизация цикла и менструации с разных устройств
                 const cycleLenSetting = [...appSettingsList.value].reverse().find(s => s && s.id === 'cycle_length');
                 if (cycleLenSetting && cycleLenSetting.key_value) {
                   const val = parseInt(cycleLenSetting.key_value, 10);
@@ -2353,7 +2348,7 @@ ${shiftsData}
           };
         }
       }).mount('#app');
-    });
+    }
   </script>
 </body>
 </html>
