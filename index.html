@@ -220,7 +220,6 @@
             </div>
             <div class="grid grid-cols-7 gap-1.5">
               <div 
-                for="(dayObj, idx) in calendarDays" 
                 v-for="(dayObj, idx) in calendarDays" 
                 :key="idx"
                 @click="selectDate(dayObj.date)"
@@ -711,11 +710,10 @@
           <span>Календарь</span>
         </button>
 
-        <!-- Иконка наблюдения (глаз фокуса) -->
+        <!-- Иконка наблюдения (глаз фокуса) — ПОЛНОСТЬЮ ОТКАЛИБРОВАННАЯ ЧЕТКАЯ РИСОВКА -->
         <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-700']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.2 font-black border border-stone-200/50">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
           <span>Наблюдения</span>
@@ -777,10 +775,13 @@
             <p class="text-[8px] text-stone-400 mt-1">Оставьте пустым, если ключ сохранен в таблицу app_settings.</p>
           </div>
           
-          <!-- Информационная строка модели -->
-          <div class="p-2.5 bg-stone-50 rounded-xl border border-stone-200/50">
-            <p class="text-[9px] font-bold uppercase text-stone-400 mb-1">Используемая ИИ Модель</p>
-            <p class="text-xs text-stone-700 font-bold">✨ Google Gemma 4 31B (free)</p>
+          <!-- Интерактивный селектор выбора модели ИИ (Джемма 3 / Джемма 4) -->
+          <div>
+            <label class="block text-[9px] font-bold uppercase text-stone-400 mb-1">Используемая ИИ Модель</label>
+            <select v-model="settingsInput.selectedModel" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-2.5 text-xs text-stone-700 font-bold focus:outline-none cursor-pointer">
+              <option value="google/gemma-4-31b-it:free">✨ Google Gemma 4 31B (free)</option>
+              <option value="google/gemma-3-27b-it:free">✨ Google Gemma 3 27B (free)</option>
+            </select>
           </div>
         </div>
 
@@ -993,8 +994,11 @@
             url: safeStorage.getItem('cfg_supabase_url') || "",
             botToken: safeStorage.getItem('cfg_bot_token') || "",
             himChatId: safeStorage.getItem('cfg_him_chat_id') || "",
-            openrouterKey: safeStorage.getItem('cfg_openrouter_key') || ""
+            openrouterKey: safeStorage.getItem('cfg_openrouter_key') || "",
+            selectedModel: safeStorage.getItem('cfg_ai_model') || "google/gemma-4-31b-it:free"
           });
+
+          const selectedModel = ref(safeStorage.getItem('cfg_ai_model') || "google/gemma-4-31b-it:free");
 
           const isSettingsOpen = ref(false);
 
@@ -1006,9 +1010,7 @@
           const aiAnalysisResult = ref("");
           const isAiLoading = ref(false);
 
-          const aiChatMessages = ref([
-            { role: 'assistant', content: 'Привет! Я твоя бережная дружеская ИИ-поддержка. Готова выслушать, проанализировать календарь или помочь сориентироваться в планах. Что у тебя на уме? ✨' }
-          ]);
+          const aiChatMessages = ref([]);
           const aiUserMessage = ref("");
           const isAiChatLoading = ref(false);
 
@@ -1016,14 +1018,12 @@
           const isSyncPending = ref(false);
           let syncTimer = null;
 
-          // Динамический переключатель роли пользователя: бот сразу перестраивает контекст диалога
           function setRole(newRole) {
             role.value = newRole;
             safeStorage.setItem('user_role', newRole);
             triggerToast(`Выбрана роль: ${newRole === 'her' ? 'Она 🙋‍♀️' : 'Он 🙋‍♂️'}`);
           }
 
-          // Наблюдатель за сменой роли: мгновенно обновляет контекст и приветствие в чате без перезагрузки
           watch(role, (newRole) => {
             const isHim = newRole === 'him';
             aiChatMessages.value = [
@@ -1034,7 +1034,7 @@
                   : 'Привет! Режим изменен. Я твоя бережная дружеская ИИ-поддержка. Готова выслушать, проанализировать календарь или помочь сориентироваться в планах. Что у тебя на уме? ✨' 
               }
             ];
-          });
+          }, { immediate: true });
 
           function isUrlInvalid(url) {
             if (!url) return true;
@@ -1101,22 +1101,16 @@
             if (!safeStorage.getItem('cfg_him_chat_id') && DEFAULT_HIM_CHAT_ID) {
               safeStorage.setItem('cfg_him_chat_id', DEFAULT_HIM_CHAT_ID);
             }
+            if (!safeStorage.getItem('cfg_ai_model')) {
+              safeStorage.setItem('cfg_ai_model', 'google/gemma-4-31b-it:free');
+            }
 
             settingsInput.value.url = safeStorage.getItem('cfg_supabase_url') || "";
             settingsInput.value.botToken = safeStorage.getItem('cfg_bot_token') || "";
             settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || "";
             settingsInput.value.openrouterKey = safeStorage.getItem('cfg_openrouter_key') || "";
-
-            // Инициализация приветственного сообщения чата в зависимости от роли при первом входе
-            const isHim = role.value === 'him';
-            aiChatMessages.value = [
-              { 
-                role: 'assistant', 
-                content: isHim 
-                  ? 'Привет! Я твой аналитический семейный психолог. С этого момента я буду анализировать состояние твоей подруги и давать тебе прагматичные, клинически обоснованные и деликатные рекомендации по экологичному общению. Какая ситуация беспокоит прямо сейчас? 🧠' 
-                  : 'Привет! Я твоя бережная дружеская ИИ-поддержка. Готова выслушать, проанализировать календарь или помочь сориентироваться в планах. Что у тебя на уме? ✨' 
-              }
-            ];
+            settingsInput.value.selectedModel = safeStorage.getItem('cfg_ai_model') || "google/gemma-4-31b-it:free";
+            selectedModel.value = settingsInput.value.selectedModel;
 
             if (isUrlInvalid(settingsInput.value.url)) {
               isDemoMode.value = true;
@@ -1161,6 +1155,8 @@
             setOrRemove('cfg_bot_token', settingsInput.value.botToken);
             setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
             setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
+            setOrRemove('cfg_ai_model', settingsInput.value.selectedModel);
+            selectedModel.value = settingsInput.value.selectedModel;
 
             const webappUrl = window.location.href.split('?')[0];
             safeStorage.setItem('cfg_webapp_url', webappUrl);
@@ -1199,13 +1195,16 @@
               safeStorage.removeItem('cfg_him_chat_id');
               safeStorage.removeItem('cfg_openrouter_key');
               safeStorage.removeItem('cfg_webapp_url');
+              safeStorage.removeItem('cfg_ai_model');
 
               settingsInput.value = {
                 url: "",
                 botToken: "",
                 himChatId: "",
-                openrouterKey: ""
+                openrouterKey: "",
+                selectedModel: "google/gemma-4-31b-it:free"
               };
+              selectedModel.value = "google/gemma-4-31b-it:free";
 
               triggerToast("Настройки сброшены.");
               await initConnection();
@@ -2140,7 +2139,6 @@
 
               const shiftsData = generateWorkScheduleForAi();
 
-              // ОПТИМИЗИРОВАННЫЙ ПРОМТ-РОЛЬ: Профессиональный семейный психолог
               const prompt = `
 Ты — опытный, прагматичный семейный психолог и аналитик в дружеском пространстве "Полнолуние". 
 Пользователи — Он и Она (исключительно товарищеские, платонические онлайн-друзья без романтики). Твоя задача — провести глубокий психологический и физиологический разбор её показателей и составить для Него прикладное руководство по экологичному взаимодействию, полностью исключив "розовые сопли", слащавость или домыслы.
@@ -2164,7 +2162,7 @@ ${plansData}
 Напиши клинически точный, но изложенный простым языком дружеский психологический разбор (до 250 слов) по следующей структуре:
 
 1. 🔍 ПСИХОЭМОЦИОНАЛЬНЫЙ СТАТУС ПОДРУГИ:
-Дай профессиональную оценку её когнитивного и физического состояния на основе логов её самочувствия и фазы цикла. Опиши уровень скрытого стресса или утомления.
+Дай профессиональную оценку её когнического и физического состояния на основе логов её самочувствия и фазы цикла. Опиши уровень скрытого стресса или утомления.
 
 2. 💼 ФАКТОР НАГРУЗКИ (РАБОТА И ЦИКЛ):
 Сделай разбор пересечения её рабочих смен с уязвимыми фазами цикла. Укажи на потенциально кризисные дни, когда когнитивная нагрузка на работе накладывается на спад энергии.
@@ -2178,7 +2176,8 @@ ${plansData}
               `;
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; 
+              // Запуск динамически выбранной модели (Джемма 3 / Джемма 4) из настроек
+              const activeModel = selectedModel.value || "google/gemma-4-31b-it:free";
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2251,7 +2250,6 @@ ${plansData}
 
               const shiftsData = generateWorkScheduleForAi();
 
-              // ОПТИМИЗИРОВАННЫЙ СИСТЕМНЫЙ ПРОМТ ЧАТА С ГИБКОЙ СМЕНОЙ ПЕРСОНЫ (Психолог для Него / Поддержка для Неё)
               const systemPrompt = `
 Ты — ИИ-консультант в приложении "Полнолуние". 
 
@@ -2292,7 +2290,7 @@ ${shiftsData}
               ];
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; 
+              const activeModel = selectedModel.value || "google/gemma-4-31b-it:free";
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2429,7 +2427,8 @@ ${shiftsData}
             forceSyncOrPull,
             forceManualSave,
             appSettingsList,
-            clearCalendarData
+            clearCalendarData,
+            selectedModel
           };
         }
       }).mount('#app');
