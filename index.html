@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,31 +6,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Использование стабильного CDN-сервера для Tailwind CSS (решает проблему долгой загрузки без VPN на мобильном интернете) -->
-  <script src="https://unpkg.com/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
+  <!-- Использование высокоскоростного CDN jsDelivr для компилятора Tailwind CSS (ускоряет холодный старт в РФ) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script>
+    if (typeof tailwind === 'undefined') {
+      console.warn("jsDelivr failed to load Tailwind. Trying fallback...");
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet"><\/script>');
+    }
+  </script>
   
-  <!-- Подключение Vue 3 через стабильный CDNJS с авторезервированием на UNPKG (Быстрый синхронный запуск) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <!-- Подключение Vue 3 через стабильный CDN jsDelivr с резервом на CDNJS -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script>
     if (typeof Vue === 'undefined') {
-      console.warn("CDNJS failed to load Vue. Trying unpkg...");
-      document.write('<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"><\/script>');
+      console.warn("jsDelivr failed to load Vue. Trying CDNJS fallback...");
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"><\/script>');
     }
   </script>
   
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Мобильная консоль отладки Eruda. Активируется добавлением '?debug=true' в URL -->
+  <!-- Мобильная консоль отладки Eruda -->
   <script>
     if (window.location.search.includes('debug=true')) {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
+      document.write('<script src="https://cdn.jsdelivr.net/npm/eruda"><\/script>');
       document.write('<script>eruda.init();<\/script>');
     }
   </script>
 
   <style>
-    /* Анимация пульса */
     @keyframes pulse-anim {
       0% { stroke-dashoffset: 1000; }
       100% { stroke-dashoffset: 0; }
@@ -66,12 +72,12 @@
 </head>
 <body class="min-h-screen flex flex-col pb-28 selection:bg-rose-100">
 
-  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Скрывается сразу после инициализации скрипта Vue) -->
-  <div id="fallback-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; color: #555; padding: 20px;">
-    <div style="font-size: 32px; margin-bottom: 12px; animation: bounce 1.2s infinite;">⏳</div>
-    <h2 style="font-size: 14px; font-weight: bold;">Инициализация...</h2>
-    <p style="font-size: 11px; color: #888; max-width: 280px; line-height: 1.5; margin: 8px auto 0;">
-      Загрузка приложения «Полнолуние». Если этот экран завис, возможно, ваш провайдер ограничивает доступ к CDN-серверам. Попробуйте использовать Wi-Fi или VPN.
+  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Оформлен в стиле приложения) -->
+  <div id="fallback-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; background: linear-gradient(135deg, #fdfbf7 0%, #f4eae1 100%); color: #332222; padding: 20px;">
+    <div style="font-size: 42px; margin-bottom: 16px; animation: bounce 1.2s infinite;">🌸</div>
+    <h2 style="font-size: 16px; font-weight: 800; letter-spacing: -0.025em; color: #f97316;">Полнолуние</h2>
+    <p style="font-size: 12px; color: #78716c; max-width: 280px; line-height: 1.5; margin: 8px auto 0; font-weight: 500;">
+      Инициализация приложения...<br>Быстродействующий сервер.
     </p>
   </div>
 
@@ -117,20 +123,42 @@
       </div>
     </header>
 
-    <!-- СИНХРО-БАР -->
-    <div class="mb-4 flex items-center justify-between bg-stone-50/50 px-4 py-2 rounded-2xl border border-stone-150 shadow-sm text-[10px] font-bold">
-      <span class="text-stone-500">Облачная база:</span>
-      <button 
-        @click="forceSyncOrPull" 
-        :disabled="isSyncPending"
-        :class="['px-3 py-1.5 rounded-xl text-[9px] font-black transition-all border flex items-center space-x-1 whitespace-nowrap cursor-pointer', 
-                 syncQueue.length > 0 || isSyncPending
-                   ? 'bg-amber-500 text-white border-amber-600 animate-pulse shadow-sm' 
-                   : 'bg-white hover:bg-stone-50 text-stone-500 border-stone-200/60']"
-      >
-        <span>{{ isSyncPending ? '⏳' : (syncQueue.length > 0 ? '💾' : '🔄') }}</span>
-        <span>{{ isSyncPending ? 'Запись...' : (syncQueue.length > 0 ? `Сохранить (${syncQueue.length})` : 'Обновить данные') }}</span>
-      </button>
+    <!-- ИНТЕРАКТИВНЫЙ СИНХРО-БАР (Пулл и принудительное сохранение) -->
+    <div class="mb-4 bg-stone-50/50 p-3 rounded-2xl border border-stone-150 shadow-sm space-y-2">
+      <div class="flex items-center justify-between text-[10px] font-bold">
+        <span class="text-stone-500 flex items-center space-x-1">
+          <span>☁️ Облачная база:</span>
+          <span :class="[syncQueue.length > 0 ? 'text-amber-500' : 'text-emerald-600']">
+            {{ syncQueue.length > 0 ? `Есть несохраненные изменения (${syncQueue.length})` : 'Синхронизировано' }}
+          </span>
+        </span>
+        <span class="text-stone-400 font-mono text-[9px]" v-if="isSyncPending">Запись...</span>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <!-- Кнопка немедленного ручного сохранения изменений -->
+        <button 
+          @click="forceManualSave"
+          :disabled="syncQueue.length === 0 || isSyncPending"
+          :class="['py-2 rounded-xl text-[9px] font-black transition-all border flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-40 disabled:pointer-events-none',
+                   syncQueue.length > 0 
+                     ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-600 shadow-sm animate-pulse' 
+                     : 'bg-stone-100 text-stone-400 border-stone-200']"
+        >
+          <span>💾</span>
+          <span>Сохранить сейчас ({{ syncQueue.length }})</span>
+        </button>
+        
+        <!-- Кнопка обновления из облака (Pull) -->
+        <button 
+          @click="forceSyncOrPull" 
+          :disabled="isSyncPending"
+          class="py-2 rounded-xl text-[9px] font-black transition-all border bg-white hover:bg-stone-100 text-stone-600 border-stone-200 flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+        >
+          <span>🔄</span>
+          <span>Обновить данные</span>
+        </button>
+      </div>
     </div>
 
     <!-- БЫСТРЫЕ СИГНАЛЫ (ТОЛЬКО ДЛЯ НЕЁ) -->
@@ -676,15 +704,15 @@
     <nav class="fixed bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl border border-rose-100 py-3.5 px-6 rounded-3xl z-50 shadow-lg shadow-rose-100/35">
       <div class="max-w-md mx-auto flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-stone-400">
         
-        <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+        <button @click="activeTab = 'calendar'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'calendar' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>
           <span>Календарь</span>
         </button>
 
-        <!-- Высококачественная векторная иконка наблюдения (глаз фокуса) -->
-        <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-750']">
+        <!-- Иконка наблюдения (глаз фокуса) -->
+        <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-700']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -692,14 +720,14 @@
           <span>Наблюдения</span>
         </button>
 
-        <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+        <button @click="activeTab = 'wellbeing'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'wellbeing' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
           </svg>
           <span>Самочувствие</span>
         </button>
 
-        <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-750']">
+        <button @click="activeTab = 'plans'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'plans' ? 'text-rose-500 scale-105' : 'hover:text-stone-700']">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
           </svg>
@@ -772,21 +800,16 @@
 
   </div>
 
-  <!-- Стандартный скрипт без type="module" гарантирует бесперебойную работу во всех WebView Telegram -->
   <script>
-    // БЕЗОПАСНОСТЬ: Исходная ссылка стерта. Теперь приложение на 100% приватно и защищено. 
-    // Настройте её один раз через шестеренку ⚙️ внутри приложения, и ссылка сохранится строго на вашем телефоне.
     const DEFAULT_GOOGLE_SCRIPT_URL = ""; 
     const DEFAULT_TELEGRAM_BOT_TOKEN = "8825615830:AAGFVYCGhtTCWvHwFsUauq3xLgmHQ9Z0a3Q";
     const DEFAULT_HIM_CHAT_ID = "1719296144";
 
-    // Защита: проверяем, загрузилась ли библиотека Vue перед инициализацией
     if (typeof Vue === 'undefined') {
       console.error("Vue library failed to load entirely. WebApp cannot be initialized.");
     } else {
       const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
-      // ЗАЩИТНЫЙ СЛОЙ LOCALSTORAGE (Предотвращает зависание Vue при запуске в песочницах Webview Telegram)
       const safeStorage = {
         getItem(key) {
           try {
@@ -827,7 +850,6 @@
         return `${y}-${m}-${d}`;
       }
 
-      // Сверхнадежная нормализация дат с защитой от пустых строк и нативных сбоев
       function normalizeDateStr(val) {
         if (!val) return "";
         if (val instanceof Date) {
@@ -943,7 +965,6 @@
             return isNaN(parsed) ? defaultVal : parsed;
           };
 
-          // МГНОВЕННЫЙ ЗАПУСК ИЗ КЭША
           const cycleLength = ref(28);
           const periodLength = ref(5);
 
@@ -999,7 +1020,6 @@
             return url.includes("YOUR_SCRIPT_ID") || url.includes("YOUR_") || url.trim() === "";
           }
 
-          // НАБЛЮДАТЕЛИ (WATCHERS): Начинают работу только после того, как завершится initConnection()
           let watchersStarted = false;
           function startSettingsWatchers() {
             if (watchersStarted) return;
@@ -1008,27 +1028,24 @@
             watch(cycleLength, (newVal) => {
               safeStorage.setItem('user_cycle_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Запуск фонового сохранения (5 секунд)
+                triggerSettingsSync(); 
               }
             });
             watch(periodLength, (newVal) => {
               safeStorage.setItem('user_period_length', newVal);
               if (isInitialized && !isSyncingFromServer) { 
-                triggerSettingsSync(); // Запуск фонового сохранения (5 секунд)
+                triggerSettingsSync(); 
               }
             });
           }
 
-          // ДЕТАЛЬНЫЙ ЗАПУСК С ТЕЛЕФОНА И ПК: Инициализирует локальный кэш мгновенно
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
 
-            // Скрываем локальный загрузчик, как только Vue готов к работе
             const ldr = document.getElementById('fallback-loader');
             if (ldr) ldr.style.display = 'none';
 
-            // МГНОВЕННЫЙ ЗАПУСК: Читаем сохраненные ранее таблицы из кэша
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1044,7 +1061,6 @@
             ]);
             newPlanCategory.value = (categories.value && categories.value[0]) ? categories.value[0].name : 'Прочее';
 
-            // МГНОВЕННЫЙ СТАРТ НАСТРОЕК ИЗ ВЫДЕЛЕННОГО КЭША
             const cachedSettings = safeJsonParse('demo_cycle_settings', []);
             if (cachedSettings && cachedSettings.length > 0) {
               cycleLength.value = parseInt(cachedSettings[0].cycle_length, 10) || 28;
@@ -1054,13 +1070,10 @@
               periodLength.value = getSafeLocalStorageInt('user_period_length', 5);
             }
 
-            // Пытаемся взять URL скрипта из памяти (если он там был сохранен через шестеренку)
             const savedUrl = safeStorage.getItem('cfg_supabase_url');
             if (savedUrl && !isUrlInvalid(savedUrl)) {
               settingsInput.value.url = savedUrl;
             } else {
-              // Если в памяти пусто, а DEFAULT_GOOGLE_SCRIPT_URL тоже пуст (мы её удалили), 
-              // приложение безопасно входит в демонстрационный режим, пока вы не введете ссылку
               if (!DEFAULT_GOOGLE_SCRIPT_URL) {
                 isDemoMode.value = true;
                 isInitialized = true;
@@ -1087,7 +1100,6 @@
 
             isDemoMode.value = false;
 
-            // ФОНОВАЯ ПОДГРУЗКА ИЗ ОБЛАКА
             try {
               if (syncQueue.value.length > 0) {
                 await processSyncQueue();
@@ -1118,23 +1130,50 @@
             };
 
             setOrRemove('cfg_supabase_url', settingsInput.value.url);
-            setOrRemove('cfg_supabase_key', settingsInput.value.key);
             setOrRemove('cfg_bot_token', settingsInput.value.botToken);
             setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
             setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
 
-            triggerToast("Настройки сохранены. Перезапускаю...");
+            // Сохраняем текущую ссылку на приложение, чтобы бот знал её адрес для инлайн-режима
+            const webappUrl = window.location.href.split('?')[0];
+            safeStorage.setItem('cfg_webapp_url', webappUrl);
+
+            triggerToast("Сохранение локально и отправка в облачную базу...");
+
+            // Принудительно выгружаем настройки интеграции напрямую в app_settings для активации инлайна и вебхука
+            if (settingsInput.value.url && !isUrlInvalid(settingsInput.value.url)) {
+              const payload = [
+                { sheet: 'app_settings', action: 'insert', data: { id: 'telegram_bot_token', key_value: settingsInput.value.botToken } },
+                { sheet: 'app_settings', action: 'insert', data: { id: 'him_chat_id', key_value: settingsInput.value.himChatId } },
+                { sheet: 'app_settings', action: 'insert', data: { id: 'openrouter_api_key', key_value: settingsInput.value.openrouterKey } },
+                { sheet: 'app_settings', action: 'insert', data: { id: 'webapp_url', key_value: webappUrl } }
+              ];
+              try {
+                const response = await fetch(settingsInput.value.url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'text/plain' },
+                  body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                  triggerToast("Связь установлена! Бот привязан 🟢");
+                }
+              } catch (e) {
+                console.error("Сбой синхронизации настроек в Google Таблицу:", e);
+              }
+            }
+
             await initConnection();
             isSettingsOpen.value = false;
           }
 
           async function resetToDefaultSettings() {
-            if (confirm("Вы действительно хотите сбросить настройки на дефолтные?")) {
+            if (confirm("Вы действительно хотите сбросить настройки?")) {
               safeStorage.removeItem('cfg_supabase_url');
               safeStorage.removeItem('cfg_supabase_key');
               safeStorage.removeItem('cfg_bot_token');
               safeStorage.removeItem('cfg_him_chat_id');
               safeStorage.removeItem('cfg_openrouter_key');
+              safeStorage.removeItem('cfg_webapp_url');
 
               settingsInput.value = {
                 url: "",
@@ -1177,7 +1216,6 @@
             }
 
             isSyncPending.value = true;
-            triggerToast("🔄 Синхронизация изменений с облаком...");
             const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url');
             if (!APPS_SCRIPT_URL || isUrlInvalid(APPS_SCRIPT_URL)) {
               isSyncPending.value = false;
@@ -1191,7 +1229,7 @@
                 body: JSON.stringify(syncQueue.value)
               });
 
-              if (!response.ok) throw new Error("Сервер вернул ошибку при синхронизации");
+              if (!response.ok) throw new Error("Сервер вернул ошибку");
               const resData = await response.json();
 
               if (resData && resData.batch) {
@@ -1200,42 +1238,54 @@
                 isSyncPending.value = false;
                 triggerToast("🟢 Все изменения зафиксированы в облаке!");
               } else {
-                throw new Error("Неверный формат ответа от сервера");
+                throw new Error("Неверный формат ответа");
               }
             } catch (err) {
-              console.error("Сбой пакетной синхронизации:", err);
+              console.error("Сбой синхронизации:", err);
               isSyncPending.value = false;
-              triggerToast("⚠️ Не удалось связаться с базой. Повторим позже.");
+              triggerToast("⚠️ Нет подключения. Изменения сохранены локально.");
             }
           }
 
+          // Автосохранение изменений через точно настроенные 5 секунд после модификации
           function resetSyncTimer() {
             isSyncPending.value = true;
             clearTimeout(syncTimer);
 
             syncTimer = setTimeout(async () => {
               await processSyncQueue();
-            }, 15000); 
+            }, 5000); // 5 секунд
           }
 
-          // УМНАЯ СИНХРОНИЗАЦИЯ: Если локальная очередь пуста, кнопка работает как принудительное обновление из облака (PULL)
-          async function forceSyncOrPull() {
+          // Функция принудительного ручного сохранения данных в любой момент
+          async function forceManualSave() {
             if (syncQueue.value.length > 0) {
-              clearTimeout(syncTimer); 
+              clearTimeout(syncTimer);
+              triggerToast("💾 Сохраняю изменения в облако...");
               await processSyncQueue();
             } else {
-              triggerToast("🔄 Загрузка актуальных данных из облака...");
-              try {
-                await fetchData();
-                triggerToast("🟢 Данные успешно обновлены!");
-              } catch (e) {
-                console.error("Ошибка при ручном обновлении:", e);
-                triggerToast("⚠️ Не удалось подключиться к облачной таблице");
-              }
+              triggerToast("Все изменения уже сохранены!");
             }
           }
 
-          // ДЕТАЛЬНАЯ НЕВИДИМАЯ СИНХРОНИЗАЦИЯ НАСТРОЕК (5 СЕКУНД) С ВЫДЕЛЕННОЙ ТАБЛИЦЕЙ
+          // Ручное принудительное обновление из облака (Pull)
+          async function forceSyncOrPull() {
+            if (syncQueue.value.length > 0) {
+              // Если есть несохраненные данные, сначала запишем их
+              clearTimeout(syncTimer);
+              await processSyncQueue();
+            }
+            
+            triggerToast("🔄 Загрузка актуальных данных из облака...");
+            try {
+              await fetchData();
+              triggerToast("🟢 Данные успешно обновлены!");
+            } catch (e) {
+              console.error("Ошибка при ручном обновлении:", e);
+              triggerToast("⚠️ Не удалось обновить данные.");
+            }
+          }
+
           let settingsSyncTimer = null;
           function triggerSettingsSync() {
             clearTimeout(settingsSyncTimer);
@@ -1243,7 +1293,6 @@
               const APPS_SCRIPT_URL = safeStorage.getItem('cfg_supabase_url');
               if (isDemoMode.value || !APPS_SCRIPT_URL || isUrlInvalid(APPS_SCRIPT_URL)) return;
 
-              // Формируем пакет под выделенную таблицу cycle_settings
               const payload = [
                 { 
                   sheet: 'cycle_settings', 
@@ -1263,15 +1312,14 @@
                   body: JSON.stringify(payload)
                 });
                 if (response.ok) {
-                  // Обновляем локальный кэш
                   const cachedObj = { id: 'default', cycle_length: cycleLength.value.toString(), period_length: periodLength.value.toString() };
                   safeStorage.setItem('demo_cycle_settings', JSON.stringify([cachedObj]));
-                  console.log("Параметры цикла автоматически сохранены в таблицу cycle_settings");
+                  console.log("Параметры цикла сохранены в базу.");
                 }
               } catch (e) {
-                console.error("Сбой невидимой синхронизации настроек:", e);
+                console.error("Сбой синхронизации настроек:", e);
               }
-            }, 5000); // Строго 5 секунд задержки перед невидимой отправкой
+            }, 5000); // 5 секунд ожидания
           }
 
           function cleanupCycles() {
@@ -1321,7 +1369,6 @@
 
             try {
               isSyncPending.value = false;
-              // Устанавливаем флаг перед обновлением реактивных refs
               isSyncingFromServer = true; 
 
               const response = await fetch(`${APPS_SCRIPT_URL}?sheet=all`);
@@ -1329,7 +1376,6 @@
               const allData = await response.json();
 
               if (allData && typeof allData === 'object' && !Array.isArray(allData)) {
-
                 cycles.value = (allData.cycles || []).map(c => ({
                   ...c,
                   start_date: normalizeDateStr(c.start_date),
@@ -1354,7 +1400,6 @@
                 }));
                 appSettingsList.value = allData.app_settings || [];
 
-                // ПОЛУЧЕНИЕ НАСТРОЕК ИЗ ВЫДЕЛЕННОЙ ТАБЛИЦЫ
                 if (allData.cycle_settings && allData.cycle_settings.length > 0) {
                   const settings = allData.cycle_settings[0];
                   const cl = parseInt(settings.cycle_length, 10);
@@ -1389,26 +1434,9 @@
               console.warn("Сеть недоступна, загружен локальный кэш.", e);
               throw e; 
             } finally {
-              // КРИТИЧЕСКИЙ ФИКС: Сбрасываем флаг синхронизации строго в следующем тике Vue, 
-              // чтобы вызванные реактивными refs вотчеры успели выполниться и проигнорировать этот апдейт!
               nextTick(() => {
                 isSyncingFromServer = false;
               });
-            }
-          }
-
-          async function saveOrUpdateSetting(key, val) {
-            if (isDemoMode.value) return;
-            const currentSetting = [...appSettingsList.value].reverse().find(s => s && s.id === key);
-            
-            if (currentSetting && currentSetting.key_value === val.toString()) {
-              return;
-            }
-            if (currentSetting) {
-              await updateLocalOrDB('app_settings', 'demo_app_settings', key, { key_value: val.toString() });
-            } else {
-              const newRecord = { id: key, key_value: val.toString() };
-              await saveLocalOrDB('app_settings', 'demo_app_settings', appSettingsList, newRecord);
             }
           }
 
@@ -1492,7 +1520,6 @@
             ];
           });
 
-          // СИГНАЛЫ: Уведомления уходят только Вам (He/Him)
           async function triggerQuickSignal(signal) {
             const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
             if (targetId && !targetId.includes("ВСТАВЬТЕ")) {
@@ -1518,6 +1545,7 @@
             return getDefaultWorkStatus(dateStr);
           }
 
+          // Позволяет проверить, переопределен ли рабочий день вручную
           function isCustomShift(dateStr) {
             return customShifts.value.some(s => s && s.date === dateStr);
           }
@@ -1762,7 +1790,6 @@
             }
           });
 
-          // УВЕДОМЛЕНИЯ О НАЧАЛЕ ЦИКЛА: Уведомления уходят только Вам (He/Him)
           async function togglePeriodStart() {
             const clickedDate = selectedDateStr.value;
             if (!clickedDate) return;
@@ -1860,7 +1887,6 @@
                   await saveLocalOrDB('cycles', 'demo_cycles', cycles, newRecord);
                   triggerToast(`Добавлен период менструации на ${pLength} дней`);
                   
-                  // Оповещение уходит строго "Ему"
                   if (role.value === 'her') {
                     const targetId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
                     await sendTelegramNotification(
@@ -1875,7 +1901,7 @@
           }
 
           async function clearCalendarData() {
-            if (!confirm("Вы действительно хотите стереть ВСЕ периоды менструации в календаре? График работы, заметки, показатели самочувствия и планы останутся нетронутыми.")) {
+            if (!confirm("Вы действительно хотите стереть ВСЕ периоды менструации в календаре?")) {
               return;
             }
             if (!confirm("Вы уверены? Это действие необратимо.")) {
@@ -2110,7 +2136,7 @@ ${plansData}
               `;
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; // Жестко зафиксировано: Google Gemma 4 31B
+              const activeModel = "google/gemma-4-31b-it:free"; 
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2126,7 +2152,7 @@ ${plansData}
                 })
               });
 
-              if (!response.ok) throw new Error(`Ошибка сервера: ${response.status} (${response.statusText})`);
+              if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
               const data = await response.json();
               
               if (data.choices && data.choices[0]?.message?.content) {
@@ -2216,7 +2242,7 @@ ${shiftsData}
               ];
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; // Жестко зафиксировано: Google Gemma 4 31B
+              const activeModel = "google/gemma-4-31b-it:free"; 
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2232,7 +2258,7 @@ ${shiftsData}
                 })
               });
 
-              if (!response.ok) throw new Error(`Ошибка сервера: ${response.status} (${response.statusText})`);
+              if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
               const data = await response.json();
               
               if (data.choices && data.choices[0]?.message?.content) {
@@ -2243,7 +2269,7 @@ ${shiftsData}
 
             } catch (err) {
               console.error("Ошибка чата ИИ:", err);
-              aiChatMessages.value.push({ role: 'assistant', content: `Ошибка связи с ИИ: ${err.message}. Проверьте правильность OpenRouter API-ключа в настройках.` });
+              aiChatMessages.value.push({ role: 'assistant', content: `Ошибка связи с ИИ: ${err.message}` });
             } finally {
               isAiChatLoading.value = false;
               setTimeout(() => {
@@ -2351,6 +2377,7 @@ ${shiftsData}
             isSyncPending,
             processSyncQueue,
             forceSyncOrPull,
+            forceManualSave,
             appSettingsList,
             clearCalendarData
           };
