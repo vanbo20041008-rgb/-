@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Использование высокоскоростного CDN jsDelivr для компилятора Tailwind CSS (ускоряет холодный старт в РФ) -->
+  <!-- Использование высокоскоростного CDN jsDelivr для компилятора Tailwind CSS -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script>
     if (typeof tailwind === 'undefined') {
@@ -15,7 +14,7 @@
     }
   </script>
   
-  <!-- Подключение Vue 3 через стабильный CDN jsDelivr с резервом на CDNJS -->
+  <!-- Подключение Vue 3 через стабильный CDN jsDelivr -->
   <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script>
     if (typeof Vue === 'undefined') {
@@ -72,12 +71,12 @@
 </head>
 <body class="min-h-screen flex flex-col pb-28 selection:bg-rose-100">
 
-  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР (Оформлен в стиле приложения) -->
+  <!-- МГНОВЕННЫЙ ЛОКАЛЬНЫЙ СПИННЕР -->
   <div id="fallback-loader" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; text-align: center; font-family: sans-serif; background: linear-gradient(135deg, #fdfbf7 0%, #f4eae1 100%); color: #332222; padding: 20px;">
     <div style="font-size: 42px; margin-bottom: 16px; animation: bounce 1.2s infinite;">🌸</div>
     <h2 style="font-size: 16px; font-weight: 800; letter-spacing: -0.025em; color: #f97316;">Полнолуние</h2>
     <p style="font-size: 12px; color: #78716c; max-width: 280px; line-height: 1.5; margin: 8px auto 0; font-weight: 500;">
-      Инициализация приложения...<br>Быстродействующий сервер.
+      Инициализация приложения...<br>Загрузка из облака.
     </p>
   </div>
 
@@ -136,7 +135,6 @@
       </div>
       
       <div class="grid grid-cols-2 gap-2">
-        <!-- Кнопка немедленного ручного сохранения изменений -->
         <button 
           @click="forceManualSave"
           :disabled="syncQueue.length === 0 || isSyncPending"
@@ -149,7 +147,6 @@
           <span>Сохранить сейчас ({{ syncQueue.length }})</span>
         </button>
         
-        <!-- Кнопка обновления из облака (Pull) -->
         <button 
           @click="forceSyncOrPull" 
           :disabled="isSyncPending"
@@ -850,6 +847,13 @@
         return `${y}-${m}-${d}`;
       }
 
+      // Текстовое преобразование текущей даты для лучшего понимания ИИ (включает день недели)
+      function getFriendlyDateForAi(dateObj) {
+        if (!dateObj || isNaN(dateObj.getTime())) return "";
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return dateObj.toLocaleDateString('ru-RU', options);
+      }
+
       function normalizeDateStr(val) {
         if (!val) return "";
         if (val instanceof Date) {
@@ -1046,6 +1050,7 @@
             const ldr = document.getElementById('fallback-loader');
             if (ldr) ldr.style.display = 'none';
 
+            // Первоначальное чтение из локального хранилища устройства
             cycles.value = safeJsonParse('demo_cycles', []);
             partnerNotes.value = safeJsonParse('demo_notes', []);
             wellbeingLogs.value = safeJsonParse('demo_wellbeing', []);
@@ -1085,17 +1090,16 @@
               settingsInput.value.url = DEFAULT_GOOGLE_SCRIPT_URL;
             }
 
-            const botToken = DEFAULT_TELEGRAM_BOT_TOKEN;
-            if (botToken && !botToken.includes("ВСТАВЬТЕ")) {
-              safeStorage.setItem('cfg_bot_token', botToken);
-            }
-            const himId = DEFAULT_HIM_CHAT_ID;
-            if (himId && !himId.includes("ВСТАВЬТЕ")) {
-              safeStorage.setItem('cfg_him_chat_id', himId);
+            // Пулл ключа Telegram Bot: приоритет локального кэша, с фоллбеком на дефолтный хардкод
+            const cachedBotToken = safeStorage.getItem('cfg_bot_token');
+            if (cachedBotToken) {
+              settingsInput.value.botToken = cachedBotToken;
+            } else {
+              settingsInput.value.botToken = DEFAULT_TELEGRAM_BOT_TOKEN;
+              safeStorage.setItem('cfg_bot_token', DEFAULT_TELEGRAM_BOT_TOKEN);
             }
 
-            settingsInput.value.botToken = safeStorage.getItem('cfg_bot_token') || "";
-            settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || "";
+            settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || DEFAULT_HIM_CHAT_ID;
             settingsInput.value.openrouterKey = safeStorage.getItem('cfg_openrouter_key') || "";
 
             isDemoMode.value = false;
@@ -1134,13 +1138,12 @@
             setOrRemove('cfg_him_chat_id', settingsInput.value.himChatId);
             setOrRemove('cfg_openrouter_key', settingsInput.value.openrouterKey);
 
-            // Сохраняем текущую ссылку на приложение, чтобы бот знал её адрес для инлайн-режима
             const webappUrl = window.location.href.split('?')[0];
             safeStorage.setItem('cfg_webapp_url', webappUrl);
 
             triggerToast("Сохранение локально и отправка в облачную базу...");
 
-            // Принудительно выгружаем настройки интеграции напрямую в app_settings для активации инлайна и вебхука
+            // Принудительно выгружаем настройки интеграции напрямую в app_settings
             if (settingsInput.value.url && !isUrlInvalid(settingsInput.value.url)) {
               const payload = [
                 { sheet: 'app_settings', action: 'insert', data: { id: 'telegram_bot_token', key_value: settingsInput.value.botToken } },
@@ -1247,17 +1250,17 @@
             }
           }
 
-          // Автосохранение изменений через точно настроенные 5 секунд после модификации
+          // Автоматическая синхронизация через 5 секунд
           function resetSyncTimer() {
             isSyncPending.value = true;
             clearTimeout(syncTimer);
 
             syncTimer = setTimeout(async () => {
               await processSyncQueue();
-            }, 5000); // 5 секунд
+            }, 5000); 
           }
 
-          // Функция принудительного ручного сохранения данных в любой момент
+          // Ручной режим сохранения в любой момент времени
           async function forceManualSave() {
             if (syncQueue.value.length > 0) {
               clearTimeout(syncTimer);
@@ -1268,10 +1271,9 @@
             }
           }
 
-          // Ручное принудительное обновление из облака (Pull)
+          // Ручное обновление данных из облака
           async function forceSyncOrPull() {
             if (syncQueue.value.length > 0) {
-              // Если есть несохраненные данные, сначала запишем их
               clearTimeout(syncTimer);
               await processSyncQueue();
             }
@@ -1319,7 +1321,7 @@
               } catch (e) {
                 console.error("Сбой синхронизации настроек:", e);
               }
-            }, 5000); // 5 секунд ожидания
+            }, 5000); 
           }
 
           function cleanupCycles() {
@@ -1399,6 +1401,25 @@
                   date: normalizeDateStr(s.date)
                 }));
                 appSettingsList.value = allData.app_settings || [];
+
+                // ОБРАТНАЯ СИНХРОНИЗАЦИЯ НАСТРОЕК В LOCALSTORAGE
+                // Если в таблице app_settings на сервере есть сохраненные ключи, восстанавливаем их в локальную память устройства!
+                if (allData.app_settings && allData.app_settings.length > 0) {
+                  allData.app_settings.forEach(s => {
+                    if (s && s.id === 'telegram_bot_token' && s.key_value && s.key_value.trim() !== "") {
+                      safeStorage.setItem('cfg_bot_token', s.key_value.trim());
+                      settingsInput.value.botToken = s.key_value.trim();
+                    }
+                    if (s && s.id === 'him_chat_id' && s.key_value && s.key_value.trim() !== "") {
+                      safeStorage.setItem('cfg_him_chat_id', s.key_value.trim());
+                      settingsInput.value.himChatId = s.key_value.trim();
+                    }
+                    if (s && s.id === 'openrouter_api_key' && s.key_value && s.key_value.trim() !== "") {
+                      safeStorage.setItem('cfg_openrouter_key', s.key_value.trim());
+                      settingsInput.value.openrouterKey = s.key_value.trim();
+                    }
+                  });
+                }
 
                 if (allData.cycle_settings && allData.cycle_settings.length > 0) {
                   const settings = allData.cycle_settings[0];
@@ -1545,7 +1566,6 @@
             return getDefaultWorkStatus(dateStr);
           }
 
-          // Позволяет проверить, переопределен ли рабочий день вручную
           function isCustomShift(dateStr) {
             return customShifts.value.some(s => s && s.date === dateStr);
           }
@@ -2075,14 +2095,15 @@
             return `${d}.${m}.${y}`;
           }
 
+          // Принудительный и глубокий ИИ-анализ базы (СТРОГО ДЛЯ НЕГО, без романтических соплей)
           async function analyzeAllApplicationData() {
             if (isAiLoading.value) return;
             
             isAiLoading.value = true;
-            aiAnalysisResult.value = "ИИ изучает базу данных и ищет закономерности...";
+            aiAnalysisResult.value = "ИИ проводит комплексный разбор данных и сопоставление с датами...";
 
             try {
-              const todayStr = getLocalDateString(new Date());
+              const todayStr = getFriendlyDateForAi(new Date()); // Передача точной даты с днем недели
               const phase = currentPhaseInfo.value;
               const cycleDay = currentCycleDay.value;
 
@@ -2095,7 +2116,7 @@
               ).join("\n") || "Нет данных.";
 
               const wellbeingData = wellbeingLogs.value.map(w => 
-                `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Comment: "${w.notes || 'нет'}"`
+                `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт/Боль: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
               ).join("\n") || "Нет данных.";
 
               const plansData = plans.value.map(p => 
@@ -2107,39 +2128,42 @@
               ).join("\n") || "Нет данных.";
 
               const prompt = `
-Ты — ИИ-аналитик и тактический консультант в приложении "Полнолуние".
-Твоя задача — провести глубокий дебаггинг текущего состояния подруги на основе предоставленной базы данных. 
+Ты — рациональный, деликатный и опытный ИИ-аналитик приложения "Полнолуние".
+Твоя задача — проанализировать предоставленные данные о состоянии здоровья, графике и планах подруги и составить четкий, структурированный отчет для её близкого друга.
 
 КРИТИЧЕСКИЕ ПРАВИЛА:
-1. Никаких романтических соплей, ванильных шаблонов и слов вроде "партнер", "пара", "отношения", "любовь". Они просто отличные друзья.
-2. Пиши в живом, ироничном, но надежном и дружеском тоне. Твой стиль — умный, проницательный бро с отличным чувством юмора.
-3. Полностью исключи советы для Нее. Ей не нужны непрошеные поучения. Если захочет — спросит в чате лично. Все советы пиши строго ДЛЯ НЕГО.
+1. Исключи любую романтику, "розовые сопли", уменьшительно-ласкательные выражения и намеки на отношения ("парень", "девушка", "любовь", "пара", "твоя половинка"). Они — просто хорошие платонические друзья. Тон должен быть прагматичным, поддерживающим и дружеским.
+2. Сосредоточься на подробном анализе её физиологии, уровня энергии и стресса на основе дневника и графиков.
+3. Советы по поведению пиши СТРОГО для НЕГО (как ему правильно поддержать подругу, когда проявить инициативу в планах, когда не перегружать разговорами).
+4. Для НЕЕ в этом отчете советы писать НЕ НУЖНО вообще. Только факты о её текущем состоянии и руководство к действию для Него.
 
-Системные параметры:
-- Текущая дата: ${todayStr}
-- Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
+Системные параметры времени и состояния:
+- Текущая дата и день недели: ${todayStr} (Используй это как абсолютную точку отсчета!)
+- Текущая фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
 
-=== ПОЛНАЯ БАЗА ДАННЫХ ПРИЛОЖЕНИЯ ===
-1. Все исторические циклы подруги:
+=== ВХОДНЫЕ ДАННЫЕ ИЗ БАЗЫ ===
+1. Все зафиксированные периоды менструации подруги:
 ${cyclesData}
-2. Корректировки её рабочего графика (2/2):
+2. Отклонения рабочего графика подруги (2/2):
 ${shiftsData}
-3. Дневник дружеской поддержки (все записи):
+3. Общие записи из дневника поддержки:
 ${notesData}
-4. История показателей её самочувствия:
+4. Динамика показателей самочувствия подруги:
 ${wellbeingData}
-5. Текущие общие планы и музыка:
+5. Совместные списки дел, планы и музыкальные треки:
 ${plansData}
 
-На основе этих данных составь краткий, емкий отчет на русском языке (до 250-300 слов):
-
-1. 📊 АНАЛИТИЧЕСКИЙ СРЕЗ: Трезво оцени реальный уровень стресса, энергии и физической боли подруги за последнее время. Сопоставь это с текущей фазой цикла. Есть ли аномалии или критические просадки?
-2. 💼 ПЕРЕСЕЧЕНИЕ С РАБОТОЙ: Как её рабочие смены накладываются на фазу цикла? Выпадают ли физиологически тяжелые дни на работу? Напиши, в какие даты её лучше вообще не дергать лишний раз.
-3. 🎯 ТАКТИЧЕСКИЙ ИНСТРУКТАЖ ДЛЯ НЕГО (Как себя вести): Четкое руководство к действию для друга. Без банальщины вроде "подари шоколадку". Напиши конкретно, исходя из её состояния: когда промолчать, когда подкинуть в чат мем или трек из ваших совместных планов, когда напомнить выпить таблетку, а когда просто оставить в покое и не душнить.
+СТРУКТУРА ОТЧЕТА (до 250 слов, пиши емко и по делу, используй списки):
+1. 📊 АНАЛИЗ СОСТОЯНИЯ: Рассчитай текущий уровень энергии, стресса и болевых ощущений подруги на основе последних записей. Как фаза цикла влияет на её тонус прямо сейчас.
+2. 💼 РАБОЧИЙ ГРАФИК И ЦИКЛ: Сопоставь её рабочие смены с текущей фазой. Будет ли она сильно уставшей в ближайшие дни.
+3. 🙋‍♂️ РУКОВОДСТВО ДЛЯ НЕГО (СОВЕТЫ): Четкие практические рекомендации для друга на эту фазу цикла:
+   - Как общаться (активно слушать, проявить спокойствие или дать личное пространство).
+   - Что предложить из планов/музыкальных треков на основе её текущего состояния (например, спокойный фильм, если мало энергии, или разгрузка задач).
+   - На что обратить внимание в её поведении.
               `;
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; 
+              const activeModel = "google/gemma-2-9b-it:free"; 
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -2174,6 +2198,7 @@ ${plansData}
             }
           }
 
+          // Интерактивный Чат с ИИ
           async function sendAiChatMessage() {
             if (!aiUserMessage.value.trim() || isAiChatLoading.value) return;
 
@@ -2190,7 +2215,7 @@ ${plansData}
             }
 
             try {
-              const todayStr = getLocalDateString(new Date());
+              const todayStr = getFriendlyDateForAi(new Date()); // Передача точной даты с днем недели
               const phase = currentPhaseInfo.value;
               const cycleDay = currentCycleDay.value;
 
@@ -2203,7 +2228,7 @@ ${plansData}
               ).join("\n") || "Нет данных.";
 
               const wellbeingData = wellbeingLogs.value.slice(0, 10).map(w => 
-                `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Comment: "${w.notes || 'нет'}"`
+                `-[${formatDateDisplay(w.date)}]: Настроение: ${w.mood}, Энергия: ${w.energy}/5, Стресс: ${w.stress}/5, Дискомфорт: ${w.physical}/5. Комментарий: "${w.notes || 'нет'}"`
               ).join("\n") || "Нет данных.";
 
               const plansData = plans.value.map(p => 
@@ -2215,28 +2240,33 @@ ${plansData}
               ).join("\n") || "График не изменен.";
 
               const systemPrompt = `
-Ты — умный и ироничный ИИ-собеседник в приложении "Полнолуние".
-Твой собеседник сейчас — ${role.value === 'her' ? 'Она' : 'Он'}. Второй пользователь приложения — её/его близкий друг (${role.value === 'her' ? 'Он' : 'Она'}).
+Ты — умный, тактичный и прагматичный ИИ-собеседник в приложении "Полнолуние".
+Ты общаешься с пользователем (${role.value === 'her' ? 'Она' : 'Он'}). Второй пользователь — это её/его близкий онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
-ВАЖНО: Между ними нет романтики, они просто близкие друзья. Пиши в классном, живом, ироничном, но поддерживающем тоне (как понимающий бро). Никаких "розовых соплей" и банальностей. 
+ПРАВИЛА ОБЩЕНИЯ:
+1. СТРОГО ПЛАТОНИЧЕСКИЙ, ДРУЖЕСКИЙ ТОН. Полностью исключи романтический контекст, намеки на любовь, свидания или отношения. Никаких уменьшительно-ласкательных "соплей". Тон теплый, но рациональный, как у надежного друга.
+2. Анализируй актуальную дату и день недели: ${todayStr}. Используй её для сопоставления с рабочими сменами (2/2) и периодами менструации.
+3. Если пишет ОН: давай ему практические советы по поддержке подруги, основываясь на её текущем дне цикла (${cycleDay || 'Не определен'}) и фазе (${phase.name}).
+4. Если пишет ОНА: отвечай на её вопросы деликатно, помогай структурировать планы, не давай навязчивых советов, если она сама не спросила.
 
-Ты видишь всю картину через базу данных:
-- Сегодня: ${todayStr}
-- Фаза цикла подруги: ${phase.name} (День цикла: ${cycleDay || 'Не определен'})
-- Заметки из дневника:
+Актуальные данные из базы приложения:
+- Сегодняшняя дата и день недели: ${todayStr}
+- Текущий день цикла подруги: ${cycleDay || 'Не определен'}
+- Текущая фаза цикла: ${phase.name}
+
+История дневника поддержки:
 ${notesData}
-- Показатели самочувствия:
+
+История самочувствия:
 ${wellbeingData}
-- Совместные планы:
+
+Общие планы и списки:
 ${plansData}
-- Смены работы:
+
+Рабочий график подруги:
 ${shiftsData}
 
-ПРАВИЛА ДИАЛОГА:
-1. Если общаешься с НЕЙ: Не давай непрошеных советов, пока она сама не спросит. Если спросит — дай работающие лайфхаки по сохранению энергии. Шути, поддерживай её иронией, помогай разгрузить мозг.
-2. Если общаешься с НИМ: Твоя цель — переводить её поведение и фазы цикла на понятный мужской язык. Давай ему четкие тактические фишки: как поддержать делом, когда не лезть с расспросами, какие треки или планы из списка предложить, чтобы разрядить обстановку, учитывая её график работы и самочувствие.
-
-Отвечай коротко, емко, без длинных вступлений и канцелярита.
+Отвечай емко, без лишней "воды", структурировано.
               `;
 
               const apiMessages = [
@@ -2245,7 +2275,7 @@ ${shiftsData}
               ];
 
               const activeKey = openRouterApiKey.value || BACKUP_OPENROUTER_KEY;
-              const activeModel = "google/gemma-4-31b-it:free"; 
+              const activeModel = "google/gemma-2-9b-it:free"; 
 
               const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
