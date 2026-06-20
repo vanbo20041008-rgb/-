@@ -849,7 +849,7 @@
         return `${y}-${m}-${d}`;
       }
 
-      // Текстовое представление текущей даты для облегчения понимания ИИ (включая день недели)
+      // Текстовое представление даты для ИИ с точным днем недели
       function getFriendlyDateForAi(dateObj) {
         if (!dateObj || isNaN(dateObj.getTime())) return "";
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -1044,7 +1044,6 @@
             });
           }
 
-          // ДЕТАЛЬНЫЙ ЗАПУСК С ТЕЛЕФОНА И ПК
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
@@ -1077,7 +1076,6 @@
             }
 
             // --- КРИТИЧЕСКИЙ ФИКС: ЗАЩИТА ТОКЕНОВ ОТ ПЕРЕЗАПИСИ (Исправляет 401/404 ошибки) ---
-            // Сохраняем во внутренний кэш дефолтные токены ТОЛЬКО если пользователь еще ничего не вводил сам!
             if (!safeStorage.getItem('cfg_supabase_url') && DEFAULT_GOOGLE_SCRIPT_URL) {
               safeStorage.setItem('cfg_supabase_url', DEFAULT_GOOGLE_SCRIPT_URL);
             }
@@ -1088,7 +1086,6 @@
               safeStorage.setItem('cfg_him_chat_id', DEFAULT_HIM_CHAT_ID);
             }
 
-            // Выводим в форму настроек строго те данные, которые лежат в постоянном кэше
             settingsInput.value.url = safeStorage.getItem('cfg_supabase_url') || "";
             settingsInput.value.botToken = safeStorage.getItem('cfg_bot_token') || "";
             settingsInput.value.himChatId = safeStorage.getItem('cfg_him_chat_id') || "";
@@ -1247,17 +1244,15 @@
             }
           }
 
-          // Автоматическая фоновая синхронизация ровно через 5 секунд после изменений
           function resetSyncTimer() {
             isSyncPending.value = true;
             clearTimeout(syncTimer);
 
             syncTimer = setTimeout(async () => {
               await processSyncQueue();
-            }, 5000); // 5 секунд
+            }, 5000); 
           }
 
-          // Функция принудительного ручного сохранения данных в любой момент
           async function forceManualSave() {
             if (syncQueue.value.length > 0) {
               clearTimeout(syncTimer);
@@ -1268,7 +1263,6 @@
             }
           }
 
-          // Ручное принудительное обновление из облака (Pull)
           async function forceSyncOrPull() {
             if (syncQueue.value.length > 0) {
               clearTimeout(syncTimer);
@@ -2073,6 +2067,24 @@
             return `${d}.${m}.${y}`;
           }
 
+          // ГЕНЕРАТОР КАЛЕНДАРНОГО ГРАФИКА ДЛЯ ИИ
+          // Строит полную хронологию смен на 30 дней (10 дней назад, 20 дней вперед), сопоставляя 2/2 и ручные изменения
+          function generateWorkScheduleForAi() {
+            const schedule = [];
+            const today = new Date();
+            for (let i = -10; i <= 20; i++) {
+              const targetDate = new Date(today);
+              targetDate.setDate(today.getDate() + i);
+              const dateStr = getLocalDateString(targetDate);
+              const status = getWorkStatus(dateStr); 
+              const isModified = isCustomShift(dateStr);
+              const statusText = status === 'work' ? '💼 Работа' : '🏡 Выходной';
+              const modifiedText = isModified ? ' (изменен вручную)' : '';
+              schedule.push(`- ${getFriendlyDateForAi(targetDate)}: ${statusText}${modifiedText}`);
+            }
+            return schedule.join("\n");
+          }
+
           async function analyzeAllApplicationData() {
             if (isAiLoading.value) return;
             
@@ -2080,7 +2092,6 @@
             aiAnalysisResult.value = "ИИ изучает базу данных и ищет закономерности...";
 
             try {
-              // Передача форматированной текстовой даты с днем недели для ИИ
               const friendlyToday = getFriendlyDateForAi(new Date());
               const phase = currentPhaseInfo.value;
               const cycleDay = currentCycleDay.value;
@@ -2101,11 +2112,9 @@
                 `- Категория [${p.category_name}]: "${p.title}" (${p.is_completed ? 'Выполнено' : 'Не выполнено'})`
               ).join("\n") || "Нет данных.";
 
-              const shiftsData = customShifts.value.map(s => 
-                `- ${formatDateDisplay(s.date)}: ${s.status === 'work' ? 'Работа' : 'Выходной'}`
-              ).join("\n") || "Нет данных.";
+              // Подключение динамически генерируемого 30-дневного графика
+              const shiftsData = generateWorkScheduleForAi();
 
-              // ОПТИМИЗИРОВАННЫЙ СТРОГИЙ ПРОМТ ДЛЯ АНАЛИЗА (Без романтики и "розовых соплей", только конкретные факты и указания для Него)
               const prompt = `
 Ты — аналитический ИИ-помощник в приложении "Полнолуние". 
 Пользователи приложения — друзья (Он и Она), между ними нет романтических отношений. Твой стиль общения должен быть строго платоническим, дружеским, прагматичным, структурированным и полностью лишенным "розовых соплей", слащавости, уменьшительно-ласкательных слов и любых намеков на любовь или отношения.
@@ -2119,7 +2128,7 @@
 === БАЗА ДАННЫХ ===
 1. Исторические периоды менструаций подруги:
 ${cyclesData}
-2. Переопределенные рабочие смены (график по умолчанию 2/2):
+2. Календарный график рабочих и выходных смен подруги (занятость 2/2 и ручные изменения):
 ${shiftsData}
 3. Дневник поддержки (обмен текстовыми сообщениями):
 ${notesData}
@@ -2187,7 +2196,6 @@ ${plansData}
             }
 
             try {
-              // Передача форматированной текстовой даты с днем недели для ИИ
               const friendlyToday = getFriendlyDateForAi(new Date());
               const phase = currentPhaseInfo.value;
               const cycleDay = currentCycleDay.value;
@@ -2208,11 +2216,9 @@ ${plansData}
                 `- [${p.category_name}]: "${p.title}" (${p.is_completed ? 'Выполнено' : 'В планах'}, Автор: ${p.author === 'her' ? 'Она' : 'Он'})`
               ).join("\n") || "Планы пусты.";
 
-              const shiftsData = customShifts.value.map(s => 
-                `- ${formatDateDisplay(s.date)}: ${s.status === 'work' ? 'Работа' : 'Выходной'}`
-              ).join("\n") || "График не изменен.";
+              // Подключение динамически генерируемого 30-дневного графика в чат
+              const shiftsData = generateWorkScheduleForAi();
 
-              // ОПТИМИЗИРОВАННЫЙ ПРОМТ ДЛЯ ЧАТА С ИИ (Строго платонический, прагматичный диалог)
               const systemPrompt = `
 Ты — умный ИИ-собеседник в приложении "Полнолуние". Ты общаешься с пользователем по имени ${role.value === 'her' ? 'Она' : 'Он'}. Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
@@ -2231,7 +2237,7 @@ ${wellbeingData}
 Планы и треки:
 ${plansData}
 
-Рабочие смены:
+Календарный график рабочих и выходных смен подруги (занятость 2/2 и ручные изменения):
 ${shiftsData}
 
 Отвечай ёмко, не пиши огромные тексты. Помогай анализировать эти данные, если тебя спрашивают, или просто веди конструктивную, дружескую беседу без "розовых соплей". Если спрашивает Он — давай практичные советы по дружеской поддержке. Если спрашивает Она — отвечай прямо на её вопросы по самочувствию или планам.
