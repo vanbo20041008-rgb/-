@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Высокоскоростной CDN jsDelivr для компилятора Tailwind CSS (ускоряет холодный старт в РФ) -->
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Использование Play CDN Tailwind, работающего напрямую через Cloudflare (быстрый отклик в РФ) -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
     if (typeof tailwind === 'undefined') {
-      console.warn("jsDelivr failed to load Tailwind. Trying fallback...");
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet"><\/script>');
+      console.warn("Primary Tailwind CDN failed. Trying CSS fallback...");
+      document.write('<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">');
     }
   </script>
   
-  <!-- Подключение Vue 3 через стабильный CDN jsDelivr с резервом на CDNJS -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
+  <!-- Быстрый CDNJS для загрузки Vue 3 (не блокируется в РФ) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
   <script>
     if (typeof Vue === 'undefined') {
-      console.warn("jsDelivr failed to load Vue. Trying CDNJS fallback...");
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"><\/script>');
+      console.warn("CDNJS failed to load Vue. Trying unpkg...");
+      document.write('<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"><\/script>');
     }
   </script>
   
@@ -29,7 +29,7 @@
   <!-- Мобильная консоль отладки Eruda -->
   <script>
     if (window.location.search.includes('debug=true')) {
-      document.write('<script src="https://cdn.jsdelivr.net/npm/eruda"><\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
       document.write('<script>eruda.init();<\/script>');
     }
   </script>
@@ -710,11 +710,11 @@
           <span>Календарь</span>
         </button>
 
-        <!-- Иконка наблюдения (глаз фокуса) -->
+        <!-- Векторная иконка наблюдения (глаз фокуса) — Четко прорисованная -->
         <button @click="activeTab = 'notes'" :class="['flex flex-col items-center space-y-1.5 transition-all', activeTab === 'notes' ? 'text-orange-400 scale-105' : 'hover:text-stone-700']">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
           </svg>
           <span>Наблюдения</span>
         </button>
@@ -1044,6 +1044,7 @@
             });
           }
 
+          // ДЕТАЛЬНЫЙ ЗАПУСК С ТЕЛЕФОНА И ПК
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
@@ -2119,7 +2120,7 @@
 Ты — аналитический ИИ-помощник в приложении "Полнолуние". 
 Пользователи приложения — друзья (Он и Она), между ними нет романтических отношений. Твой стиль общения должен быть строго платоническим, дружеским, прагматичным, структурированным и полностью лишенным "розовых соплей", слащавости, уменьшительно-ласкательных слов и любых намеков на любовь или отношения.
 
-Твоя задача — проанализировать массив данных и предоставить четкий, структурированный разбор.
+Твоя задача — проанализировать массив данных и предоставить чёткий, структурированный разбор.
 
 Системный контекст:
 - Текущая дата на устройстве пользователя: ${friendlyToday}
@@ -2220,7 +2221,8 @@ ${plansData}
               const shiftsData = generateWorkScheduleForAi();
 
               const systemPrompt = `
-Ты — умный ИИ-собеседник в приложении "Полнолуние". Ты общаешься с пользователем по имени ${role.value === 'her' ? 'Она' : 'Он'}. Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
+Ты — умный ИИ-собеседник в приложении "Полнолуние". 
+ВНИМАНИЕ: СЕЙЧАС ТЫ ОБЩАЕШЬСЯ С ПОЛЬЗОВАТЕЛЕМ: "${role.value === 'her' ? 'ОНА' : 'ОН'}". Обращайся к собеседнику в чате в строгом соответствии с этой ролью! Второй пользователь — это её/его онлайн-друг (${role.value === 'her' ? 'Он' : 'Она'}).
 
 ВАЖНОЕ ПРАВИЛО: Между ними исключительно платонические, дружеские отношения. Никакого флирта, романтики, приторности, уменьшительно-ласкательных обращений. Избегай слов "любимый", "парочка", "половинка", "отношения", "чувства". Пиши конструктивно, по-дружески тепло, но твердо и по делу.
 
