@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Полнолуние</title>
   
-  <!-- Использование Play CDN Tailwind, работающего напрямую через Cloudflare (быстрый отклик в РФ) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind CSS v4 Browser Compiler через российский узел G-Core (мгновенная загрузка без блокировок) -->
+  <script src="https://gcore.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <script>
     if (typeof tailwind === 'undefined') {
-      console.warn("Primary Tailwind CDN failed. Trying CSS fallback...");
-      document.write('<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">');
+      console.warn("G-Core Tailwind failed. Trying Cloudflare fallback...");
+      document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
     }
   </script>
   
-  <!-- Быстрый CDNJS для загрузки Vue 3 (не блокируется в РФ) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.prod.min.js"></script>
+  <!-- Подключение Vue 3 через российский узел G-Core с резервированием на BootCDN -->
+  <script src="https://gcore.jsdelivr.net/npm/vue@3.3.4/dist/vue.global.prod.js"></script>
   <script>
     if (typeof Vue === 'undefined') {
-      console.warn("CDNJS failed to load Vue. Trying unpkg...");
-      document.write('<script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"><\/script>');
+      console.warn("G-Core Vue failed. Trying BootCDN fallback...");
+      document.write('<script src="https://cdn.bootcdn.net/ajax/libs/vue/3.3.4/vue.global.prod.min.js"><\/script>');
     }
   </script>
   
@@ -29,7 +29,7 @@
   <!-- Мобильная консоль отладки Eruda -->
   <script>
     if (window.location.search.includes('debug=true')) {
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
+      document.write('<script src="https://cdn.bootcdn.net/ajax/libs/eruda/3.0.1/eruda.min.js"><\/script>');
       document.write('<script>eruda.init();<\/script>');
     }
   </script>
@@ -1044,7 +1044,6 @@
             });
           }
 
-          // ДЕТАЛЬНЫЙ ЗАПУСК С ТЕЛЕФОНА И ПК
           async function initConnection() {
             isInitialized = false; 
             isSyncingFromServer = true; 
